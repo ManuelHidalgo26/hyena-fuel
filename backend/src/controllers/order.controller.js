@@ -19,18 +19,16 @@ export const createOrder = async (req, res) => {
         const product = await Product.findById(item.productId);
 
         if (!product || !product.active) {
-        return res
-            .status(404)
-            .json({ message: "Producto no válido" });
+        return res.status(404).json({ message: "Producto no válido" });
         }
 
         if (product.stock < item.quantity) {
-        return res
-            .status(400)
-            .json({ message: `Stock insuficiente para ${product.name}` });
+        return res.status(400).json({
+            message: `Stock insuficiente para ${product.name}`,
+        });
         }
 
-        const subtotal = product.price * item.quantity;
+      const subtotal = product.price * item.quantity;
         totalAmount += subtotal;
 
         orderItems.push({
@@ -52,7 +50,6 @@ export const createOrder = async (req, res) => {
     });
 
     res.status(201).json(order);
-
     } catch (error) {
     console.error("❌ Error creando pedido:", error);
     res.status(500).json({ message: "Error interno del servidor" });
@@ -69,5 +66,34 @@ export const getOrders = async (req, res) => {
     } catch (error) {
     console.error("❌ Error obteniendo pedidos:", error);
     res.status(500).json({ message: "Error obteniendo pedidos" });
+    }
+};
+
+/* =========================
+    ACTUALIZAR ESTADO PEDIDO
+========================= */
+export const updateOrderStatus = async (req, res) => {
+    try {
+    const { status } = req.body;
+
+    const allowedStatuses = ["pending", "confirmed", "dispatched"];
+    if (!allowedStatuses.includes(status)) {
+        return res.status(400).json({ message: "Estado inválido" });
+    }
+
+    const order = await Order.findByIdAndUpdate(
+        req.params.id,
+        { status },
+        { new: true }
+    );
+
+    if (!order) {
+        return res.status(404).json({ message: "Pedido no encontrado" });
+    }
+
+    res.json(order);
+    } catch (error) {
+    console.error("❌ Error actualizando estado:", error);
+    res.status(500).json({ message: "Error actualizando pedido" });
     }
 };
