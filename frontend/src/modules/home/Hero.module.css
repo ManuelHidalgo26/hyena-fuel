@@ -1,0 +1,99 @@
+.hero {
+  width: 100%;
+  padding: 4rem 1.5rem;
+  display: flex;
+  justify-content: center;
+  background: var(--background);
+}
+
+.container {
+  max-width: 1200px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3rem;
+}
+
+/* TEXT SIDE */
+.text {
+  flex: 1;
+}
+
+.title {
+  font-size: 3.2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 1rem;
+}
+
+.title span {
+  color: #ff6a00;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  opacity: 0.95;
+  margin-bottom: 2rem;
+}
+
+/* CTA */
+.cta {
+  background: var(--card);
+  color: var(--foreground);
+  padding: 0.9rem 2rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+
+  font-weight: 600;
+  cursor: pointer;
+
+  transition: 
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.cta:hover {
+  transform: scale(1.05);
+  border-color: #ff6a00;
+  box-shadow: 0px 4px 16px rgba(255, 106, 0, 0.4);
+}
+
+/* IMAGE SIDE */
+.imageWrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.image {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 18px;
+
+  /* mismo estilo que las product cards */
+  box-shadow: 0px 2px 12px rgba(0,0,0,0.25);
+  transition: transform 0.3s ease, filter 0.3s;
+}
+
+.image:hover {
+  transform: translateY(-6px) scale(1.03);
+  filter: brightness(1.08);
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .container {
+    flex-direction: column-reverse;
+    text-align: center;
+  }
+
+  .title {
+    font-size: 2.5rem;
+  }
+
+  .subtitle {
+    font-size: 1.1rem;
+  }
+}

@@ -1,0 +1,62 @@
+.footer {
+    background: var(--color-black);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding: 2rem 0;
+    margin-top: 4rem;
+}
+
+.container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+/* Marca */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--color-orange);
+}
+
+/* Links */
+.links {
+    display: flex;
+    gap: 2rem;
+}
+
+.links a {
+    text-decoration: none;
+    color: var(--color-white);
+    transition: 0.2s;
+    font-weight: 500;
+}
+
+.links a:hover {
+    color: var(--color-orange);
+}
+
+/* Copy */
+.copy {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+    
+}
+
+@media (max-width: 768px) {
+.container {
+    flex-direction: column;
+    text-align: center;
+    }
+
+.links {
+    gap: 1.5rem;
+    }
+}

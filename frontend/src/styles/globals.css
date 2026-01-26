@@ -1,0 +1,280 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ----------------------------- */
+/* HYENA BRAND TOKENS (HEX)      */
+/* ----------------------------- */
+
+:root {
+  /* HYENA colors (HEX) */
+  --hyena-black: #0b0b0b;
+  --hyena-dark: #0e0e0e;
+  --hyena-white: #ffffff;
+  --hyena-orange: #ff8a00;
+
+  /* HYENA shadows */
+  --hyena-shadow-soft: 0 6px 16px rgba(0, 0, 0, 0.25);
+  --hyena-shadow-strong: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* Dark mode keeps same brand */
+.dark {
+  --hyena-black: #0b0b0b;
+  --hyena-dark: #0e0e0e;
+  --hyena-white: #ffffff;
+  --hyena-orange: #ff8a00;
+}
+
+/* ----------------------------- */
+/* PRODUCT GRID & PRODUCT CARDS  */
+/* ----------------------------- */
+
+.product-grid {
+  width: 100%;
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+}
+
+.product-card {
+  background: var(--hyena-dark);
+  padding: 20px;
+  border-radius: 16px;
+  text-align: center;
+  border: 1px solid #1f1f1f;
+  box-shadow: var(--hyena-shadow-soft);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--hyena-shadow-strong);
+}
+
+.product-card img {
+  width: 100%;
+  max-width: 250px;
+  border-radius: 10px;
+  opacity: 0.95;
+}
+
+.product-card h3 {
+  color: var(--hyena-orange);
+  margin-top: 15px;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+/* ----------------------------- */
+/* HERO SECTION                  */
+/* ----------------------------- */
+
+.hero {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.hero-image {
+  max-width: 400px;
+  margin-top: 20px;
+  border-radius: 12px;
+  opacity: 0.95;
+}
+
+/* ----------------------------- */
+/* LAYOUT WRAPPER                */
+/* ----------------------------- */
+
+html,
+body {
+  scroll-behavior: smooth;
+  height: 100%;
+  margin: 0;
+}
+
+.layout-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.layout-main {
+  flex: 1;
+}
+
+/* ----------------------------- */
+/* THEME VARIABLES (TAILWIND)    */
+/* ----------------------------- */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+
+  --color-destructive: var(--destructive);
+
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ----------------------------- */
+/* LIGHT MODE VARIABLES          */
+/* ----------------------------- */
+
+:root {
+  --radius: 0.625rem;
+
+  --background: #ffffff;
+  --foreground: #111111;
+
+  --card: #ffffff;
+  --card-foreground: #111111;
+
+  --popover: #ffffff;
+  --popover-foreground: #111111;
+
+  --primary: #111111;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f4f4f5;
+  --secondary-foreground: #111111;
+
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+
+  --accent: #f4f4f5;
+  --accent-foreground: #111111;
+
+  --destructive: #dc2626;
+
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #a1a1aa;
+
+  --chart-1: #f97316;
+  --chart-2: #06b6d4;
+  --chart-3: #6366f1;
+  --chart-4: #22c55e;
+  --chart-5: #eab308;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #111111;
+  --sidebar-primary: #111111;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f4f4f5;
+  --sidebar-accent-foreground: #111111;
+  --sidebar-border: #e4e4e7;
+  --sidebar-ring: #a1a1aa;
+}
+
+/* ----------------------------- */
+/* DARK MODE VARIABLES           */
+/* ----------------------------- */
+
+.dark {
+  --background: #0b0b0b;
+  --foreground: #ffffff;
+
+  --card: #0e0e0e;
+  --card-foreground: #ffffff;
+
+  --popover: #0e0e0e;
+  --popover-foreground: #ffffff;
+
+  --primary: #ffffff;
+  --primary-foreground: #0b0b0b;
+
+  --secondary: #1f1f1f;
+  --secondary-foreground: #ffffff;
+
+  --muted: #1f1f1f;
+  --muted-foreground: #a1a1aa;
+
+  --accent: #1f1f1f;
+  --accent-foreground: #ffffff;
+
+  --destructive: #ef4444;
+
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #71717a;
+
+  --chart-1: #6366f1;
+  --chart-2: #22d3ee;
+  --chart-3: #eab308;
+  --chart-4: #a855f7;
+  --chart-5: #f97316;
+
+  --sidebar: #0e0e0e;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #6366f1;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1f1f1f;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #71717a;
+}
+
+/* ----------------------------- */
+/* BASE LAYER OVERRIDES          */
+/* ----------------------------- */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

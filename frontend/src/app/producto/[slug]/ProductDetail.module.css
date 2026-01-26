@@ -1,0 +1,141 @@
+.container {
+  max-width: 1100px;
+  margin: 4rem auto;
+  padding: 0 2rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+}
+
+/* =========================
+   IMAGE
+========================= */
+
+.imageWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #0f0f0f;
+  border-radius: 12px;
+  padding: 2rem;
+  min-height: 420px;
+}
+
+/* =========================
+   INFO (SLOTS)
+========================= */
+
+.info {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 420px;
+  height: 100%; /* 🔑 */
+}
+
+/* SLOT 1 — TITLE */
+.info h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 0.8rem;
+  min-height: 64px; /* 🔑 mismo espacio */
+}
+
+/* SLOT 2 — DESCRIPTION */
+.description {
+  font-size: 1rem;
+  color: #cfcfcf;
+  line-height: 1.6;
+  margin-bottom: 1.2rem;
+
+  min-height: 96px; /* 🔑 reserva espacio */
+  max-height: 96px;
+  overflow: hidden;
+}
+
+/* SLOT 3 — PRICE */
+.price {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--color-orange);
+  margin-bottom: 1.5rem;
+  min-height: 36px;
+}
+
+/* SLOT 4 — CTA GROUP */
+.addToCart,
+.whatsapp,
+.instagram {
+  width: 100%;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* CTA principal */
+.addToCart {
+  background: var(--color-orange);
+  color: var(--color-black);
+  border: none;
+  font-size: 1rem;
+  margin-top: auto; /* 🔥 empuja CTAs abajo */
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.addToCart:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* WhatsApp */
+.whatsapp {
+  margin-top: 0.8rem;
+  background: #1db954;
+  color: #000;
+}
+
+/* Instagram */
+.instagram {
+  margin-top: 0.8rem;
+  background: linear-gradient(
+    45deg,
+    #f58529,
+    #dd2a7b,
+    #8134af,
+    #515bd4
+  );
+  color: #ffffff;
+  transition: opacity 0.2s ease;
+}
+
+.instagram:hover {
+  opacity: 0.85;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 900px) {
+  .container {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .imageWrapper {
+    min-height: 320px;
+  }
+
+  .info {
+    max-width: 100%;
+  }
+
+  .info h1 {
+    font-size: 1.8rem;
+  }
+}

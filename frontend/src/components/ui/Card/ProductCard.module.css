@@ -1,0 +1,46 @@
+.card {
+  background: #0f0f0f;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* 🔑 todas iguales */
+}
+
+/* IMAGEN */
+.imageWrapper {
+  height: 200px; /* 🔑 mismo alto siempre */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.imageWrapper img {
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* TÍTULO */
+.name {
+  min-height: 48px; /* 🔑 mismo espacio */
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+/* PRECIO */
+.price {
+  min-height: 32px; /* 🔑 mismo espacio */
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--color-orange);
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* CTA */
+.button,
+.addToCart {
+  margin-top: auto; /* 🔥 empuja botones abajo */
+}

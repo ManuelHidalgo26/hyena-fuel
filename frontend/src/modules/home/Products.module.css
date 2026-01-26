@@ -1,0 +1,135 @@
+.products {
+    padding: 4rem 2rem;
+    background: #f2f2f2;
+}
+
+.title {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 3rem;
+    color: #111;
+}
+
+/* =========================
+    Grid
+========================= */
+.grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 2.5rem;
+}
+
+/* =========================
+    Card
+========================= */
+.card {
+    background: #0e0e0e;
+    border-radius: 18px;
+    padding: 1.4rem 1.4rem 1.6rem;
+
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* 🔥 clave */
+
+    box-shadow: 0 14px 35px rgba(0, 0, 0, 0.45);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.6);
+}
+
+/* =========================
+    Card link
+========================= */
+.cardLink {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* =========================
+    Image
+========================= */
+.imageWrapper {
+    background: radial-gradient(
+    circle at top,
+    #a00505 0%,
+    #0b0b0b 60%
+    );
+    border-radius: 14px;
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+
+  height: 190px; /* 🔥 MISMO ALTO PARA TODAS */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.image {
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* =========================
+    Text
+========================= */
+.name {
+  min-height: 48px; /* 🔥 alinea nombres */
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 0.6rem;
+}
+
+.price {
+  min-height: 28px; /* 🔥 alinea precios */
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #e43003;
+    text-align: center;
+    margin-bottom: 0.8rem;
+}
+
+/* =========================
+    CTA container (CLAVE)
+========================= */
+.cta {
+    margin-top: auto; /* 🔥 magia */
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+/* =========================
+    Secondary link
+========================= */
+.detailLink {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #b0b0b0;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.detailLink:hover {
+    color: #e43003;
+}
+
+/* =========================
+    Responsive
+========================= */
+@media (max-width: 768px) {
+    .products {
+    padding: 3rem 1.2rem;
+    }
+
+    .title {
+    font-size: 1.7rem;
+    }
+}
