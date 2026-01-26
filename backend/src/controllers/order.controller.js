@@ -1,6 +1,9 @@
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 
+/* =========================
+    CREAR PEDIDO
+========================= */
 export const createOrder = async (req, res) => {
     try {
     const { items, customerName, customerEmail, customerPhone } = req.body;
@@ -39,18 +42,32 @@ export const createOrder = async (req, res) => {
         });
     }
 
-        const order = await Order.create({
+    const order = await Order.create({
         items: orderItems,
         totalAmount,
         customerName,
         customerEmail,
         customerPhone,
+        status: "pending",
     });
 
-
     res.status(201).json(order);
+
     } catch (error) {
     console.error("❌ Error creando pedido:", error);
     res.status(500).json({ message: "Error interno del servidor" });
-    } 
+    }
+};
+
+/* =========================
+    LISTAR PEDIDOS
+========================= */
+export const getOrders = async (req, res) => {
+    try {
+    const orders = await Order.find().sort({ createdAt: -1 });
+    res.json(orders);
+    } catch (error) {
+    console.error("❌ Error obteniendo pedidos:", error);
+    res.status(500).json({ message: "Error obteniendo pedidos" });
+    }
 };

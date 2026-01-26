@@ -5,7 +5,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
-    // 🛒 Carrito persistente
+  // 🛒 Carrito persistente
     const [cartItems, setCartItems] = useState(() => {
     if (typeof window !== "undefined") {
         const storedCart = localStorage.getItem("cart");
@@ -14,23 +14,23 @@ export function CartProvider({ children }) {
     return [];
     });
 
-    // 🧲 Drawer abierto / cerrado
+  // 🧲 Drawer abierto / cerrado
     const [isCartOpen, setIsCartOpen] = useState(false);
 
-    // 💾 Persistir carrito
+  // 💾 Persistir carrito
     useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cartItems));
     }, [cartItems]);
 
     /* =========================
         Drawer controls
-    ========================= */
+  ========================= */
     const openCart = () => setIsCartOpen(true);
     const closeCart = () => setIsCartOpen(false);
 
     /* =========================
         Cart logic
-    ========================= */
+  ========================= */
     const addItem = (product) => {
     setCartItems((prev) => {
         const existing = prev.find((item) => item._id === product._id);
@@ -86,7 +86,7 @@ export function CartProvider({ children }) {
 
     /* =========================
         Helpers
-    ========================= */
+  ========================= */
     const getTotalItems = () =>
     cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -95,39 +95,48 @@ export function CartProvider({ children }) {
       (acc, item) => acc + item.price * item.quantity,
         0
     );
+
     /* =========================
         Checkout (crear pedido)
-    ========================= */
-const checkout = async ({ name, email, phone }) => {
+  ========================= */
+    const checkout = async ({ name, email, phone }) => {
     if (cartItems.length === 0) {
-    throw new Error("El carrito está vacío");
+        throw new Error("El carrito está vacío");
     }
 
     const payload = {
-    items: cartItems.map((item) => ({
-      productId: item._id, // 👈 _id real de MongoDB
+        items: cartItems.map((item) => ({
+        productId: item._id,
         quantity: item.quantity,
-    })),
-    customerName: name,
-    customerEmail: email,
-    customerPhone: phone,
+        })),
+        customerName: name,
+        customerEmail: email,
+        customerPhone: phone,
     };
 
-    const response = await fetch("http://localhost:4000/api/orders", {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-    });
+    console.log(
+        "📡 API URL:",
+        process.env.NEXT_PUBLIC_API_URL
+    );
+
+    const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/orders`,
+        {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+        }
+    );
 
     if (!response.ok) {
-    throw new Error("Error al crear el pedido");
+        throw new Error("Error al crear el pedido");
     }
 
     const order = await response.json();
-    return order; // 👈 lo usamos después para Mercado Pago
-};
+    return order;
+    };
 
     return (
     <CartContext.Provider

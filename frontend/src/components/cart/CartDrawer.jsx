@@ -99,7 +99,6 @@ export default function CartDrawer() {
                 ))}
               </ul>
 
-              {/* DATOS DEL CLIENTE */}
               <div className={styles.form}>
                 <h3>Datos de contacto</h3>
 
@@ -135,7 +134,8 @@ export default function CartDrawer() {
                   <p><strong>Monto a pagar en Mercado Pago:</strong></p>
                   <p className={styles.payAmount}>${getTotalPrice()}</p>
                   <p className={styles.payHint}>
-                    Ingresá este monto al momento de pagar.Y recordá que debes enviar el comprobante de pago una vez realizado, para así poder ser despachado
+                    Ingresá este monto al momento de pagar y enviá el comprobante
+                    para que podamos despachar tu pedido.
                   </p>
                 </div>
 
