@@ -1,43 +1,53 @@
 "use client";
 
 import styles from "./pedidos.module.css";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+
+const ADMIN_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY;
 
 export default function PedidosClient() {
     const searchParams = useSearchParams();
     const router = useRouter();
-
     const key = searchParams.get("key");
-    const ADMIN_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY;
 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // 🔐 Protección básica
+    // 🔐 Protección mínima
     useEffect(() => {
     if (key !== ADMIN_KEY) {
         router.replace("/");
+        return;
     }
-    }, [key, ADMIN_KEY, router]);
 
-    //📦 Traer pedidos
-    useEffect(() => {
-    async function fetchOrders() {
-        const res = await fetch(
-        "https://hyena-fuel-api.onrender.com/api/orders",
-        { cache: "no-store" }
-        );
-        const data = await res.json();
+    fetch("https://hyena-fuel-api.onrender.com/api/orders", {
+        cache: "no-store",
+    })
+        .then((res) => res.json())
+        .then((data) => {
         setOrders(data);
         setLoading(false);
-    }
+        });
+    }, [key, router]);
 
-    if (key === ADMIN_KEY) {
-        fetchOrders();
-    }
-    }, [key, ADMIN_KEY]);
+    const updateStatus = async (orderId, status) => {
+    await fetch(
+        `https://hyena-fuel-api.onrender.com/api/orders/${orderId}/status`,
+        {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+        }
+    );
+
+    // refrescar lista
+    setOrders((prev) =>
+        prev.map((o) =>
+        o._id === orderId ? { ...o, status } : o
+        )
+    );
+    };
 
     if (loading) {
     return <p className={styles.loading}>Cargando pedidos...</p>;
@@ -78,12 +88,36 @@ export default function PedidosClient() {
                 </p>
 
                 <ul className={styles.items}>
-                {order.items.map((item, index) => (
-                    <li key={index}>
+                {order.items.map((item, i) => (
+                    <li key={i}>
                     {item.quantity}× {item.name}
                     </li>
                 ))}
                 </ul>
+
+                <div className={styles.actions}>
+                {order.status === "pending" && (
+                    <button
+                    className={styles.confirm}
+                    onClick={() =>
+                        updateStatus(order._id, "confirmed")
+                    }
+                    >
+                    Confirmar pago
+                    </button>
+                )}
+
+                {order.status !== "dispatched" && (
+                    <button
+                    className={styles.dispatch}
+                    onClick={() =>
+                        updateStatus(order._id, "dispatched")
+                    }
+                    >
+                    Marcar despachado
+                    </button>
+                )}
+                </div>
             </div>
             );
         })}
