@@ -18,9 +18,56 @@ export default function CartDrawer() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [orderSuccess, setOrderSuccess] = useState(false);
+
+  /* =========================
+      MENSAJE POST PEDIDO
+  ========================= */
+  if (orderSuccess) {
+    return (
+      <div className={styles.successOverlay}>
+        <div className={styles.successBox}>
+          <h2>✅ Pedido registrado</h2>
+          <p>
+            Tu pedido fue creado correctamente.
+            <br />
+            Enviá el comprobante de pago para que podamos despacharlo.
+          </p>
+
+          <div className={styles.successActions}>
+            <a
+              href="https://wa.me/549XXXXXXXXXX"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              📲 WhatsApp
+            </a>
+
+            <a
+              href="https://www.instagram.com/hyenafuel/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              📸 Instagram
+            </a>
+          </div>
+
+          <button
+            className={styles.closeSuccess}
+            onClick={() => setOrderSuccess(false)}
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!isCartOpen) return null;
 
+  /* =========================
+      CHECKOUT
+  ========================= */
   const handleCheckout = async () => {
     if (!name || !email || !phone) {
       alert("Por favor completá tus datos de contacto antes de continuar.");
@@ -46,6 +93,7 @@ export default function CartDrawer() {
 
       console.log("✅ Pedido creado desde la web:", order);
       closeCart();
+      setOrderSuccess(true);
     } catch (error) {
       console.error(error);
       alert("Error al crear el pedido");
@@ -99,6 +147,7 @@ export default function CartDrawer() {
                 ))}
               </ul>
 
+              {/* DATOS CLIENTE */}
               <div className={styles.form}>
                 <h3>Datos de contacto</h3>
 
@@ -124,6 +173,7 @@ export default function CartDrawer() {
                 />
               </div>
 
+              {/* RESUMEN */}
               <div className={styles.summary}>
                 <div className={styles.total}>
                   <span>Total del carrito</span>
@@ -134,8 +184,8 @@ export default function CartDrawer() {
                   <p><strong>Monto a pagar en Mercado Pago:</strong></p>
                   <p className={styles.payAmount}>${getTotalPrice()}</p>
                   <p className={styles.payHint}>
-                    Ingresá este monto al momento de pagar y enviá el comprobante
-                    para que podamos despachar tu pedido.
+                    Ingresá este monto al pagar y enviá el comprobante para que
+                    podamos despachar tu pedido.
                   </p>
                 </div>
 
