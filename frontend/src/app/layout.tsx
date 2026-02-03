@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Script from "next/script";
 
 import "../styles/globals.css";
 import Navbar from "../components/layout/Navbar/Navbar";
@@ -22,6 +23,20 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className="layout-body">
+        {/* Google Analytics 4 */}
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="ga4-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
+          `}
+        </Script>
+
         <CartProvider>
           <Navbar />
           <CartDrawer />
@@ -32,4 +47,3 @@ export default function RootLayout({
     </html>
   );
 }
-
