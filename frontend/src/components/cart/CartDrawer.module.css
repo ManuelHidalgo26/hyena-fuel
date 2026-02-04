@@ -1,5 +1,5 @@
 /* =========================
-   Overlay
+    Overlay
 ========================= */
 .overlay {
   position: fixed;
@@ -10,7 +10,7 @@
 }
 
 /* =========================
-   Drawer
+    Drawer
 ========================= */
 .drawer {
   position: fixed;
@@ -28,7 +28,7 @@
 }
 
 /* =========================
-   Header
+    Header
 ========================= */
 .header {
   display: flex;
@@ -58,7 +58,7 @@
 }
 
 /* =========================
-   Content
+    Content
 ========================= */
 .content {
   padding: 1.4rem;
@@ -67,7 +67,7 @@
 }
 
 /* =========================
-   Empty state
+    Empty state
 ========================= */
 .empty {
   text-align: center;
@@ -77,7 +77,7 @@
 }
 
 /* =========================
-   Product list
+    Product list
 ========================= */
 .list {
   list-style: none;
@@ -117,7 +117,7 @@
 }
 
 /* =========================
-   Quantity controls
+    Quantity controls
 ========================= */
 .quantity {
   display: flex;
@@ -142,11 +142,41 @@
 }
 
 /* =========================
-   Summary
+    Summary
 ========================= */
 .summary {
   margin-top: 1.5rem;
 }
+
+.clearCart {
+  width: 100%;
+  padding: 0.75rem;
+
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+
+  color: #414141;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.clearCart:hover {
+  background: #f5f5f5;
+  border-color: #999;
+  color: #000;
+}
+
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem; /* 🔥 separación REAL entre botones */
+  margin-top: 1.2rem; /* aire respecto al contenido de arriba */
+}
+
 
 .total {
   display: flex;
@@ -158,13 +188,13 @@
 }
 
 /* =========================
-   Checkout button (CTA)
+    Checkout button (CTA)
 ========================= */
 .checkout {
   width: 100%;
   padding: 0.9rem;
-  background: var(--color-orange);
-  color: var(--color-black);
+  background: #ff6a00;
+  color: #000;
   border: none;
   border-radius: 6px;
   font-weight: 700;
@@ -263,7 +293,7 @@
 
 
 /* =========================
-   Animation
+    Animation
 ========================= */
 @keyframes slideIn {
   from {

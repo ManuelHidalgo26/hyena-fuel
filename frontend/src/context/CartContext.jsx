@@ -1,11 +1,13 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from "react";
+import { trackEvent, GA_EVENTS } from "../lib/ga";
+import Toast from "../components/ui/Toast";
 
 const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
-  // 🛒 Carrito persistente
+    // 🛒 Carrito persistente
     const [cartItems, setCartItems] = useState(() => {
     if (typeof window !== "undefined") {
         const storedCart = localStorage.getItem("cart");
@@ -14,26 +16,49 @@ export function CartProvider({ children }) {
     return [];
     });
 
-  // 🧲 Drawer abierto / cerrado
+    // 🧲 Drawer abierto / cerrado
     const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // 💾 Persistir carrito
+    // 🔔 Toast feedback
+    const [toast, setToast] = useState(null);
+
     useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cartItems));
     }, [cartItems]);
 
-    /* =========================
-        Drawer controls
-  ========================= */
     const openCart = () => setIsCartOpen(true);
     const closeCart = () => setIsCartOpen(false);
 
     /* =========================
+        Toast helper
+    ========================= */
+    const showToast = (message) => {
+    setToast(message);
+    };
+
+    /* =========================
         Cart logic
-  ========================= */
+    ========================= */
     const addItem = (product) => {
+    // 🔔 Feedback inmediato
+    showToast("Producto agregado al carrito");
+
     setCartItems((prev) => {
         const existing = prev.find((item) => item._id === product._id);
+
+        // 📊 GA — add_to_cart
+        trackEvent(GA_EVENTS.ADD_TO_CART, {
+        currency: "ARS",
+        value: product.price,
+        items: [
+            {
+            item_id: product._id,
+            item_name: product.name,
+            price: product.price,
+            quantity: 1,
+            },
+        ],
+        });
 
         if (existing) {
         return prev.map((item) =>
@@ -86,7 +111,7 @@ export function CartProvider({ children }) {
 
     /* =========================
         Helpers
-  ========================= */
+    ========================= */
     const getTotalItems = () =>
     cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -98,7 +123,7 @@ export function CartProvider({ children }) {
 
     /* =========================
         Checkout (crear pedido)
-  ========================= */
+    ========================= */
     const checkout = async ({ name, email, phone }) => {
     if (cartItems.length === 0) {
         throw new Error("El carrito está vacío");
@@ -114,18 +139,11 @@ export function CartProvider({ children }) {
         customerPhone: phone,
     };
 
-    console.log(
-        "📡 API URL:",
-        process.env.NEXT_PUBLIC_API_URL
-    );
-
     const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/orders`,
         {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
         }
     );
@@ -134,8 +152,7 @@ export function CartProvider({ children }) {
         throw new Error("Error al crear el pedido");
     }
 
-    const order = await response.json();
-    return order;
+    return response.json();
     };
 
     return (
@@ -156,6 +173,14 @@ export function CartProvider({ children }) {
         }}
     >
         {children}
+
+        {/* 🔔 Toast global */}
+        {toast && (
+        <Toast
+            message={toast}
+            onClose={() => setToast(null)}
+        />
+        )}
     </CartContext.Provider>
     );
 }

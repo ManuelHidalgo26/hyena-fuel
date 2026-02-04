@@ -16,7 +16,7 @@ export default function Hero() {
                         Suplementos diseñados para atletas que no negocian con la mediocridad.
                     </p>
 
-                    <button className={styles.cta}>Ver productos</button>
+                    <button className={styles.cta}> <a href="/#products">Ver productos</a></button>
                 </div>
 
                 <div className={styles.imageWrapper}>

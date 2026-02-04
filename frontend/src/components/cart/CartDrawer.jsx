@@ -13,6 +13,7 @@ export default function CartDrawer() {
     decrease,
     getTotalPrice,
     checkout,
+    clearCart,
   } = useCart();
 
   const [name, setName] = useState("");
@@ -175,31 +176,43 @@ export default function CartDrawer() {
 
               {/* RESUMEN */}
               <div className={styles.summary}>
-                <div className={styles.total}>
-                  <span>Total del carrito</span>
-                  <strong>${getTotalPrice()}</strong>
-                </div>
+  <div className={styles.total}>
+    <span>Total del carrito</span>
+    <strong>${getTotalPrice()}</strong>
+  </div>
 
-                <div className={styles.payInfo}>
-                  <p><strong>Monto a pagar en Mercado Pago:</strong></p>
-                  <p className={styles.payAmount}>${getTotalPrice()}</p>
-                  <p className={styles.payHint}>
-                    Ingresá este monto al pagar y enviá el comprobante para que
-                    podamos despachar tu pedido.
-                  </p>
-                </div>
+  <div className={styles.payInfo}>
+    <p><strong>Monto a pagar en Mercado Pago:</strong></p>
+    <p className={styles.payAmount}>${getTotalPrice()}</p>
+    <p className={styles.payHint}>
+      Ingresá este monto al pagar y enviá el comprobante para que
+      podamos despachar tu pedido.
+    </p>
+  </div>
 
-                <button
-                  className={styles.checkout}
-                  onClick={handleCheckout}
-                >
-                  Finalizar compra
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </aside>
-    </>
+  {/* Acción secundaria */}
+  <div className={styles.actions}>
+  <button
+    className={styles.clearCart}
+    onClick={clearCart}
+  >
+    Vaciar carrito
+  </button>
+
+  <button
+    className={styles.checkout}
+    onClick={handleCheckout}
+  >
+    Finalizar compra
+  </button>
+</div>
+
+</div>
+
+  </>
+    )}
+    </div>
+  </aside>
+  </>
   );
 }

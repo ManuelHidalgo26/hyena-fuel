@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import Script from "next/script";
-
 import "../styles/globals.css";
 import Navbar from "../components/layout/Navbar/Navbar";
 import Footer from "../components/layout/Footer/Footer";
@@ -40,7 +39,7 @@ export default function RootLayout({
         <CartProvider>
           <Navbar />
           <CartDrawer />
-          <main>{children}</main>
+          <main className="main-content">{children}</main>
           <Footer />
         </CartProvider>
       </body>

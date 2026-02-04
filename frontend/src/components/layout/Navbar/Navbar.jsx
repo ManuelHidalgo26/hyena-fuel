@@ -45,9 +45,9 @@ export default function Navbar() {
           className={styles.cartButton}
           onClick={openCart}
           aria-label="Abrir carrito"
-          data-count={mounted && getTotalItems() > 0 ? getTotalItems() : ""}
+          data-count={getTotalItems() > 0 ? getTotalItems() : ""}
         >
-          🛒
+        🛒
         </button>
 
         {/* Burger mobile */}

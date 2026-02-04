@@ -1,0 +1,30 @@
+.toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 3000;
+
+    background: #0b0b0b;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-left: 4px solid #ff6a00;
+
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+    transform: translateY(10px);
+    opacity: 0;
+    }
+    to {
+    transform: translateY(0);
+    opacity: 1;
+    }
+}

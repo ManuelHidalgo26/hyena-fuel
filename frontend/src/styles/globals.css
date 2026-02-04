@@ -74,6 +74,10 @@
 /* HERO SECTION                  */
 /* ----------------------------- */
 
+.main-content {
+  padding-top: 160px; /* ajustá a la altura real del navbar */
+}
+
 .hero {
   width: 100%;
   display: flex;

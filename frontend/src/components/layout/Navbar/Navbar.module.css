@@ -1,8 +1,8 @@
 .navbar {
   width: 100%;
+  position: fixed;
   background: #0b0b0b;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  position: sticky;
   top: 0;
   z-index: 50;
 }
@@ -39,7 +39,7 @@
 }
 
 /* =========================
-   CART BUTTON + BADGE
+    CART BUTTON + BADGE
 ========================= */
 
 .cartButton {
@@ -86,7 +86,7 @@
 }
 
 /* =========================
-   BURGER (mobile)
+    BURGER (mobile)
 ========================= */
 
 .burger {
@@ -99,7 +99,7 @@
 }
 
 /* =========================
-   MOBILE MENU
+    MOBILE MENU
 ========================= */
 
 .mobileMenu {
@@ -107,7 +107,7 @@
 }
 
 /* =========================
-   RESPONSIVE
+    RESPONSIVE
 ========================= */
 
 @media (max-width: 768px) {
