@@ -2,7 +2,7 @@
 
 import styles from "./pedidos.module.css";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const ADMIN_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY;
 
@@ -13,6 +13,7 @@ export default function PedidosClient() {
 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState("all"); // all | mercadopago | transferencia
 
     // 🔐 Protección mínima
     useEffect(() => {
@@ -41,13 +42,15 @@ export default function PedidosClient() {
         }
     );
 
-    // refrescar lista
     setOrders((prev) =>
-        prev.map((o) =>
-        o._id === orderId ? { ...o, status } : o
-        )
+        prev.map((o) => (o._id === orderId ? { ...o, status } : o))
     );
     };
+
+    const filteredOrders = useMemo(() => {
+    if (filter === "all") return orders;
+    return orders.filter((o) => o.paymentMethod === filter);
+    }, [orders, filter]);
 
     if (loading) {
     return <p className={styles.loading}>Cargando pedidos...</p>;
@@ -57,8 +60,30 @@ export default function PedidosClient() {
     <section className={styles.container}>
         <h1 className={styles.title}>📦 Pedidos</h1>
 
+        {/* FILTRO */}
+        <div className={styles.filters}>
+        <button
+            className={filter === "all" ? styles.active : ""}
+            onClick={() => setFilter("all")}
+        >
+            Todos
+        </button>
+        <button
+            className={filter === "transferencia" ? styles.active : ""}
+            onClick={() => setFilter("transferencia")}
+        >
+            Transferencia
+        </button>
+        <button
+            className={filter === "mercadopago" ? styles.active : ""}
+            onClick={() => setFilter("mercadopago")}
+        >
+            Mercado Pago
+        </button>
+        </div>
+
         <div className={styles.list}>
-        {orders.map((order) => {
+        {filteredOrders.map((order) => {
             const date = new Date(order.createdAt);
 
             return (
@@ -72,20 +97,54 @@ export default function PedidosClient() {
                     })}
                 </span>
 
-                <span
+                <div className={styles.badges}>
+                    <span
+                    className={`${styles.badge} ${
+                        order.paymentMethod === "transferencia"
+                        ? styles.transferencia
+                        : styles.mercadopago
+                    }`}
+                    >
+                    {order.paymentMethod === "transferencia"
+                        ? "TRANSFERENCIA"
+                        : "MERCADO PAGO"}
+                    </span>
+
+                    <span
                     className={`${styles.status} ${styles[order.status]}`}
-                >
+                    >
                     {order.status}
-                </span>
+                    </span>
+                </div>
                 </div>
 
                 <p className={styles.name}>{order.customerName}</p>
                 <p className={styles.phone}>📞 {order.customerPhone}</p>
                 <p className={styles.email}>📧 {order.customerEmail}</p>
 
-                <p className={styles.total}>
-                💰 ${order.totalAmount.toLocaleString("es-AR")}
+                {/* DESGLOSE */}
+                <div className={styles.prices}>
+                <p>Subtotal: ${order.subtotal?.toLocaleString("es-AR")}</p>
+
+                {order.discount > 0 && (
+                    <p className={styles.discount}>
+                    Descuento: -$
+                    {order.discount.toLocaleString("es-AR")}
+                    </p>
+                )}
+
+                <p>
+                    Envío:{" "}
+                    {order.shippingCost === 0
+                    ? "GRATIS"
+                    : `$${order.shippingCost.toLocaleString("es-AR")}`}
                 </p>
+
+                <p className={styles.total}>
+                    💰 Total: $
+                    {order.totalFinal?.toLocaleString("es-AR")}
+                </p>
+                </div>
 
                 <ul className={styles.items}>
                 {order.items.map((item, i) => (
@@ -99,9 +158,7 @@ export default function PedidosClient() {
                 {order.status === "pending" && (
                     <button
                     className={styles.confirm}
-                    onClick={() =>
-                        updateStatus(order._id, "confirmed")
-                    }
+                    onClick={() => updateStatus(order._id, "confirmed")}
                     >
                     Confirmar pago
                     </button>
@@ -110,9 +167,7 @@ export default function PedidosClient() {
                 {order.status !== "dispatched" && (
                     <button
                     className={styles.dispatch}
-                    onClick={() =>
-                        updateStatus(order._id, "dispatched")
-                    }
+                    onClick={() => updateStatus(order._id, "dispatched")}
                     >
                     Marcar despachado
                     </button>

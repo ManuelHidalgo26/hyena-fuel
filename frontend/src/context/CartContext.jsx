@@ -6,8 +6,16 @@ import Toast from "../components/ui/Toast";
 
 const CartContext = createContext(null);
 
+/* =========================
+    Envíos Córdoba (reglas)
+========================= */
+const FREE_SHIPPING_THRESHOLD = 120000;
+const SHIPPING_COST = 5000;
+
 export function CartProvider({ children }) {
-    // 🛒 Carrito persistente
+    /* =========================
+        State
+    ========================= */
     const [cartItems, setCartItems] = useState(() => {
     if (typeof window !== "undefined") {
         const storedCart = localStorage.getItem("cart");
@@ -16,10 +24,7 @@ export function CartProvider({ children }) {
     return [];
     });
 
-    // 🧲 Drawer abierto / cerrado
     const [isCartOpen, setIsCartOpen] = useState(false);
-
-    // 🔔 Toast feedback
     const [toast, setToast] = useState(null);
 
     useEffect(() => {
@@ -29,24 +34,18 @@ export function CartProvider({ children }) {
     const openCart = () => setIsCartOpen(true);
     const closeCart = () => setIsCartOpen(false);
 
-    /* =========================
-        Toast helper
-    ========================= */
-    const showToast = (message) => {
-    setToast(message);
-    };
+    const showToast = (message) => setToast(message);
 
     /* =========================
         Cart logic
     ========================= */
     const addItem = (product) => {
-    // 🔔 Feedback inmediato
     showToast("Producto agregado al carrito");
 
     setCartItems((prev) => {
         const existing = prev.find((item) => item._id === product._id);
 
-        // 📊 GA — add_to_cart
+        // GA
         trackEvent(GA_EVENTS.ADD_TO_CART, {
         currency: "ARS",
         value: product.price,
@@ -73,7 +72,8 @@ export function CartProvider({ children }) {
         {
             _id: product._id,
             name: product.name,
-            price: product.price,
+          price: product.price, // precio lista
+          transferPrice: product.transferPrice ?? null, // 👈 CLAVE
             image: product.images?.[0] || null,
             quantity: 1,
         },
@@ -110,7 +110,7 @@ export function CartProvider({ children }) {
     const clearCart = () => setCartItems([]);
 
     /* =========================
-        Helpers
+        Helpers generales
     ========================= */
     const getTotalItems = () =>
     cartItems.reduce((acc, item) => acc + item.quantity, 0);
@@ -122,9 +122,48 @@ export function CartProvider({ children }) {
     );
 
     /* =========================
-        Checkout (crear pedido)
+        🔥 PRECIOS SEGÚN MÉTODO
     ========================= */
-    const checkout = async ({ name, email, phone }) => {
+    const getSubtotalByPaymentMethod = (paymentMethod) => {
+    return cartItems.reduce((acc, item) => {
+        const priceToUse =
+        paymentMethod === "transferencia" &&
+        typeof item.transferPrice === "number"
+            ? item.transferPrice
+            : item.price;
+
+      return acc + priceToUse * item.quantity;
+    }, 0);
+    };
+
+    const getDiscountByPaymentMethod = (paymentMethod) => {
+    if (paymentMethod !== "transferencia") return 0;
+
+    return cartItems.reduce((acc, item) => {
+        if (typeof item.transferPrice !== "number") return acc;
+      return acc + (item.price - item.transferPrice) * item.quantity;
+    }, 0);
+    };
+
+    /* =========================
+        Envío Córdoba
+    ========================= */
+    const getShippingCost = (paymentMethod = "mercadopago") => {
+    const subtotal = getSubtotalByPaymentMethod(paymentMethod);
+    return subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+    };
+
+    const getMissingForFreeShipping = (paymentMethod = "mercadopago") => {
+    const subtotal = getSubtotalByPaymentMethod(paymentMethod);
+    return subtotal >= FREE_SHIPPING_THRESHOLD
+        ? 0
+        : FREE_SHIPPING_THRESHOLD - subtotal;
+    };
+
+    /* =========================
+        Checkout
+    ========================= */
+    const checkout = async ({ name, email, phone, paymentMethod }) => {
     if (cartItems.length === 0) {
         throw new Error("El carrito está vacío");
     }
@@ -137,6 +176,7 @@ export function CartProvider({ children }) {
         customerName: name,
         customerEmail: email,
         customerPhone: phone,
+        paymentMethod,
     };
 
     const response = await fetch(
@@ -148,11 +188,13 @@ export function CartProvider({ children }) {
         }
     );
 
+    const data = await response.json();
+
     if (!response.ok) {
-        throw new Error("Error al crear el pedido");
+        throw new Error(data.message || "Error al crear el pedido");
     }
 
-    return response.json();
+    return data;
     };
 
     return (
@@ -169,12 +211,18 @@ export function CartProvider({ children }) {
         clearCart,
         getTotalItems,
         getTotalPrice,
+
+        // 🔥 clave para el drawer
+        getSubtotalByPaymentMethod,
+        getDiscountByPaymentMethod,
+        getShippingCost,
+        getMissingForFreeShipping,
+
         checkout,
         }}
     >
         {children}
 
-        {/* 🔔 Toast global */}
         {toast && (
         <Toast
             message={toast}

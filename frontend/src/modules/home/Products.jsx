@@ -8,53 +8,84 @@ export default async function Products() {
   const products = await getProducts();
 
   return (
-    // 👇 ESTE id es el que permite que el navbar haga scroll
     <section id="products" className={styles.products}>
       <h2 className={styles.title}>Nuestros productos</h2>
 
       <div className={styles.grid}>
-        {products.map((product) => (
-          <div key={product._id} className={styles.card}>
+        {products.map((product) => {
+          const hasTransferPrice =
+            typeof product.transferPrice === "number" &&
+            product.transferPrice < product.price;
 
-            {/* IMAGEN */}
-            <Link
-              href={`/producto/${product.slug}`}
-              className={styles.cardLink}
-            >
-              <div className={styles.imageWrapper}>
-                {product.images?.[0] && (
-                  <Image
-                    src={product.images[0]}
-                    alt={product.name}
-                    width={260}
-                    height={260}
-                    className={styles.image}
-                  />
-                )}
-              </div>
-            </Link>
+          const saving = hasTransferPrice
+            ? product.price - product.transferPrice
+            : 0;
 
-            {/* NOMBRE */}
-            <h3 className={styles.name}>{product.name}</h3>
-
-            {/* PRECIO */}
-            <div className={styles.price}>${product.price}</div>
-
-            {/* CTA */}
-            <div className={styles.cta}>
-              <AddToCartButton product={product} />
-
+          return (
+            <div key={product._id} className={styles.card}>
+              {/* IMAGEN */}
               <Link
                 href={`/producto/${product.slug}`}
-                className={styles.detailLink}
+                className={styles.cardLink}
               >
-                Ver detalle
+                <div className={styles.imageWrapper}>
+                  {product.images?.[0] && (
+                    <Image
+                      src={product.images[0]}
+                      alt={product.name}
+                      width={260}
+                      height={260}
+                      className={styles.image}
+                    />
+                  )}
+                </div>
               </Link>
-            </div>
 
-          </div>
-        ))}
+              {/* NOMBRE */}
+              <h3 className={styles.name}>{product.name}</h3>
+
+              {/* PRECIOS */}
+              <div className={styles.prices}>
+                {hasTransferPrice && (
+                  <>
+                    <div className={styles.transferPrice}>
+                      ${product.transferPrice.toLocaleString("es-AR")}
+                    </div>
+
+                    <div className={styles.saving}>
+                      Ahorrás ${saving.toLocaleString("es-AR")} pagando por
+                      transferencia
+                    </div>
+
+                    <div className={styles.listPrice}>
+                      ${product.price.toLocaleString("es-AR")}
+                    </div>
+                  </>
+                )}
+
+                {!hasTransferPrice && (
+                  <div className={styles.transferPrice}>
+                    ${product.price.toLocaleString("es-AR")}
+                  </div>
+                )}
+              </div>
+
+              {/* CTA */}
+              <div className={styles.cta}>
+                <AddToCartButton product={product} />
+
+                <Link
+                  href={`/producto/${product.slug}`}
+                  className={styles.detailLink}
+                >
+                  Ver detalle
+                </Link>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
 }
+

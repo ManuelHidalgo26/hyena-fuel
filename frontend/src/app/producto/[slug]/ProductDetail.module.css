@@ -117,6 +117,32 @@
   opacity: 0.85;
 }
 
+.prices {
+  margin: 1rem 0;
+}
+
+.transferPrice {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #e43003;
+}
+
+.listPrice {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #999;
+  text-decoration: line-through;
+  margin-top: 0.3rem;
+}
+
+.saving {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #2ecc71;
+  margin-top: 0.4rem;
+}
+
+
 /* =========================
    RESPONSIVE
 ========================= */

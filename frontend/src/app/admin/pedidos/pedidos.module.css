@@ -1,155 +1,236 @@
+/* =========================
+   CONTENEDOR GENERAL
+========================= */
 .container {
-    padding: 2.5rem;
-    background: #0b0b0b;
-    min-height: 100vh;
+  padding: 2.5rem;
+  background: #0b0b0b;
+  min-height: 100vh;
 }
 
+/* =========================
+   TÍTULO
+========================= */
 .title {
-    text-align: center;
-    font-size: 2.2rem;
-    font-weight: 900;
-    color: #ffffff;
-    margin-bottom: 2.5rem;
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin-bottom: 2.5rem;
 }
 
-/* LISTA */
+/* =========================
+   FILTROS
+========================= */
+.filters {
+  display: flex;
+  gap: 0.8rem;
+  margin-bottom: 2.2rem;
+  justify-content: center;
+}
+
+.filters button {
+  padding: 0.6rem 1.3rem;
+  border-radius: 10px;
+  border: none;
+  font-weight: 900;
+  cursor: pointer;
+  background: #1c1c1c;
+  color: #fff;
+  letter-spacing: 0.4px;
+  transition: all 0.2s ease;
+}
+
+.filters button:hover {
+  background: #333;
+}
+
+.filters .active {
+  background: #ff4d1c;
+  color: #000;
+}
+
+/* =========================
+   LISTA
+========================= */
 .list {
-    display: grid;
-    gap: 1.8rem;
+  display: grid;
+  gap: 2rem;
 }
 
-/* CARD */
+/* =========================
+   CARD PEDIDO
+========================= */
 .card {
-    background: linear-gradient(145deg, #838282, #6b5f58);
-    border-radius: 14px;
-    padding: 1.6rem 1.8rem;
-    border-left: 5px solid #e43003;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(145deg, #111, #644747);
+  border-radius: 18px;
+  padding: 1.6rem 1.8rem;
+  border-left: 6px solid #e43003;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
 }
 
-/* HEADER */
+/* =========================
+   HEADER DEL PEDIDO
+========================= */
 .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-}
-
-.left {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-}
-
-.name {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
 .date {
-    font-size: 0.8rem;
-    color: #d8d8d8;
+  font-size: 0.8rem;
+  color: #bdbdbd;
+  font-weight: 600;
 }
 
-.total {
-    font-size: 1.2rem;
-    font-weight: 900;
-    color: #24100b;
+/* =========================
+   BADGES
+========================= */
+.badges {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
 
-/* CONTACTO */
-.contact {
-    margin-top: 0.9rem;
-    padding: 0.8rem 1rem;
-    background: #121212;
-    border-radius: 10px;
-    font-size: 0.9rem;
-    color: #f1f1f1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
+.badge {
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
 }
 
-.contact span {
-    color: #ffffff;
-    font-weight: 600;
+.transferencia {
+  background: #2ecc71;
+  color: #000;
 }
 
-/* PRODUCTOS */
-.products {
-    margin-top: 1.2rem;
-    padding: 1rem;
-    background: #0f0f0f;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+.mercadopago {
+  background: #3498db;
+  color: #000;
 }
 
-.productsTitle {
-    font-size: 0.85rem;
-    font-weight: 800;
-    color: #ff4d1c;
-    margin-bottom: 0.6rem;
-    text-transform: uppercase;
-}
-
-.productItem {
-    font-size: 0.95rem;
-    color: #eaeaea;
-    padding: 0.3rem 0;
-    border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
-}
-
-.productItem:last-child {
-    border-bottom: none;
-}
-
-/* ACCIONES */
-.actions {
-    margin-top: 1.2rem;
-    display: flex;
-    gap: 0.8rem;
-}
-
-.confirm {
-    flex: 1;
-    padding: 0.6rem;
-    border-radius: 8px;
-    border: none;
-    font-weight: 800;
-    cursor: pointer;
-    background: #ff4d1c;
-    color: #000;
-}
-
-.dispatch {
-    flex: 1;
-    padding: 0.6rem;
-    border-radius: 8px;
-    border: none;
-    font-weight: 800;
-    cursor: pointer;
-    background: #2ecc71;
-    color: #000;
-}
+/* =========================
+   ESTADO
+========================= */
 .status {
-    padding: 0.3rem 0.6rem;
-    border-radius: 6px;
-    font-weight: 800;
-    font-size: 0.75rem;
-    text-transform: uppercase;
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .pending {
-    background: #555;
-    color: #fff;
+  background: #555;
+  color: #fff;
 }
 
 .confirmed {
-    background: #ff9800;
-    color: #000;
+  background: #ff9800;
+  color: #000;
 }
 
 .dispatched {
-    background: #2ecc71;
-    color: #000;
+  background: #2ecc71;
+  color: #000;
+}
+
+/* =========================
+   CLIENTE
+========================= */
+.name {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin-bottom: 0.3rem;
+}
+
+.phone,
+.email {
+  font-size: 0.85rem;
+  color: #d0d0d0;
+}
+
+/* =========================
+   BLOQUE ECONÓMICO (CLAVE)
+========================= */
+.prices {
+  margin: 1.2rem 0;
+  padding: 1.2rem;
+  background: #0f0f0f;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.prices p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #ffffff;
+}
+
+.discount {
+  color: #2ecc71;
+  font-weight: 900;
+}
+
+.prices .total {
+  margin-top: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #ff4d1c;
+}
+
+/* =========================
+   PRODUCTOS
+========================= */
+.items {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+}
+
+.items li {
+  font-size: 0.9rem;
+  color: #eaeaea;
+  padding: 0.35rem 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.items li:last-child {
+  border-bottom: none;
+}
+
+/* =========================
+   ACCIONES
+========================= */
+.actions {
+  margin-top: 1.4rem;
+  display: flex;
+  gap: 0.8rem;
+}
+
+.confirm {
+  flex: 1;
+  padding: 0.7rem;
+  border-radius: 10px;
+  border: none;
+  font-weight: 900;
+  cursor: pointer;
+  background: #ff4d1c;
+  color: #000;
+}
+
+.dispatch {
+  flex: 1;
+  padding: 0.7rem;
+  border-radius: 10px;
+  border: none;
+  font-weight: 900;
+  cursor: pointer;
+  background: #2ecc71;
+  color: #000;
 }

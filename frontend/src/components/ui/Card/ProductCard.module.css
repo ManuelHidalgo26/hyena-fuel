@@ -5,9 +5,18 @@
   display: flex;
   flex-direction: column;
   height: 100%; /* 🔑 todas iguales */
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-/* IMAGEN */
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* =========================
+    IMAGEN
+========================= */
 .imageWrapper {
   height: 200px; /* 🔑 mismo alto siempre */
   display: flex;
@@ -21,26 +30,97 @@
   object-fit: contain;
 }
 
-/* TÍTULO */
+/* =========================
+    TÍTULO
+========================= */
 .name {
   min-height: 48px; /* 🔑 mismo espacio */
   font-weight: 700;
   text-align: center;
   margin-bottom: 0.5rem;
+  color: #ffffff;
 }
 
-/* PRECIO */
-.price {
-  min-height: 32px; /* 🔑 mismo espacio */
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: var(--color-orange);
+/* =========================
+    PRECIOS
+========================= */
+.prices {
   text-align: center;
   margin-bottom: 1rem;
 }
 
-/* CTA */
-.button,
-.addToCart {
+/* Precio transferencia (destacado) */
+.transferPrice {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #2ecc71;
+  line-height: 1.1;
+}
+
+.transferPrice span {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+/* Ahorro */
+.savings {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #b6f2c2;
+  margin: 0.25rem 0 0.4rem;
+}
+
+/* Precio lista (tarjeta / MP) */
+.listPrice {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #aaa;
+  text-decoration: line-through;
+}
+
+.listPrice span {
+  display: block;
+  font-size: 0.65rem;
+  text-decoration: none;
+  opacity: 0.7;
+}
+
+/* =========================
+    CTA
+========================= */
+.cta {
   margin-top: auto; /* 🔥 empuja botones abajo */
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.addToCart {
+  padding: 0.65rem;
+  border-radius: 8px;
+  border: none;
+  font-weight: 800;
+  cursor: pointer;
+  background: #ff6a00;
+  color: #000;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.addToCart:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 20px rgba(255, 106, 0, 0.4);
+}
+
+.detail {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #bbb;
+  text-decoration: none;
+}
+
+.detail:hover {
+  color: #ffffff;
 }

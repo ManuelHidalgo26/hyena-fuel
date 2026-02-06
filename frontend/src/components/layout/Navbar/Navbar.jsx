@@ -37,7 +37,6 @@ export default function Navbar() {
           <Link href="/">Inicio</Link>
           <Link href="/about">Nosotros</Link>
           <Link href="/#products">Productos</Link>
-          
         </nav>
 
         {/* Carrito */}
@@ -45,9 +44,13 @@ export default function Navbar() {
           className={styles.cartButton}
           onClick={openCart}
           aria-label="Abrir carrito"
-          data-count={getTotalItems() > 0 ? getTotalItems() : ""}
+          data-count={
+            mounted && getTotalItems() > 0
+              ? getTotalItems()
+              : ""
+          }
         >
-        🛒
+          🛒
         </button>
 
         {/* Burger mobile */}
@@ -66,7 +69,6 @@ export default function Navbar() {
           <Link href="/" onClick={() => setOpen(false)}>Inicio</Link>
           <Link href="/about" onClick={() => setOpen(false)}>Nosotros</Link>
           <Link href="/#products">Productos</Link>
-          
         </nav>
       )}
     </header>

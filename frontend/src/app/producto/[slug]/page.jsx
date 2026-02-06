@@ -34,7 +34,32 @@ export default async function ProductDetail({ params }) {
             <p className={styles.description}>{product.description}</p>
         )}
 
-        <div className={styles.price}>${product.price}</div>
+        {/* PRECIOS */}
+<div className={styles.prices}>
+  {typeof product.transferPrice === "number" &&
+  product.transferPrice < product.price ? (
+    <>
+      <div className={styles.transferPrice}>
+        ${product.transferPrice.toLocaleString("es-AR")}
+      </div>
+
+      <div className={styles.saving}>
+        Ahorrás $
+        {(product.price - product.transferPrice).toLocaleString("es-AR")} pagando
+        por transferencia
+      </div>
+
+      <div className={styles.listPrice}>
+        ${product.price.toLocaleString("es-AR")}
+      </div>
+    </>
+  ) : (
+    <div className={styles.transferPrice}>
+      ${product.price.toLocaleString("es-AR")}
+    </div>
+  )}
+</div>
+
 
         {/* Botón carrito */}
         <AddToCart product={product} />

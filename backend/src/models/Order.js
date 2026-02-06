@@ -30,20 +30,54 @@ const orderItemSchema = new mongoose.Schema(
 
 const orderSchema = new mongoose.Schema(
     {
+    /* =========================
+        ITEMS
+    ========================= */
     items: {
         type: [orderItemSchema],
         required: true,
     },
 
+    /* =========================
+        PRECIOS (NUEVOS)
+    ========================= */
+    subtotal: {
+        type: Number,
+        required: true,
+    },
+
+    discount: {
+        type: Number,
+        required: true,
+        default: 0,
+    },
+
+    shippingCost: {
+        type: Number,
+        required: true,
+        default: 0,
+    },
+
+    totalFinal: {
+        type: Number,
+        required: true,
+    },
+
+    /* =========================
+        LEGACY / COMPATIBILIDAD
+    ========================= */
     totalAmount: {
         type: Number,
         required: true,
     },
 
-    status: {
+    /* =========================
+        PAGO
+    ========================= */
+    paymentMethod: {
         type: String,
-        enum: ["pending", "paid", "cancelled"],
-        default: "pending",
+        enum: ["mercadopago", "transferencia"],
+        default: null,
     },
 
     paymentId: {
@@ -51,11 +85,18 @@ const orderSchema = new mongoose.Schema(
         default: null,
     },
 
-    paymentMethod: {
+    /* =========================
+        ESTADO
+    ========================= */
+    status: {
         type: String,
-        default: null,
+        enum: ["pending", "paid", "cancelled"],
+        default: "pending",
     },
 
+    /* =========================
+        CLIENTE
+    ========================= */
     customerName: {
         type: String,
         default: null,
@@ -67,10 +108,9 @@ const orderSchema = new mongoose.Schema(
     },
 
     customerPhone: {
-    type: String,
-    default: null,
+        type: String,
+        default: null,
     },
-    
     },
     {
     timestamps: true,

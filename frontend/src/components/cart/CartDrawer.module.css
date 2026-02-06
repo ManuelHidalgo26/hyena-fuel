@@ -292,6 +292,34 @@
 }
 
 
+.shipping,
+.grandTotal {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.6rem;
+  font-weight: 600;
+}
+
+.freeShippingHint {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #ff6a00;
+}
+
+.freeShippingSuccess {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #1fbf75;
+  font-weight: 700;
+}
+
+.shippingNote {
+  margin-top: 0.6rem;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+
 /* =========================
     Animation
 ========================= */

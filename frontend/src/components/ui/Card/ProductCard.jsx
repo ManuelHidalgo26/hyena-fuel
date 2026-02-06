@@ -10,9 +10,29 @@
 
     <h3 className={styles.name}>{product.name}</h3>
 
-    <div className={styles.price}>${product.price}</div>
+    {/* PRECIOS */}
+    <div className={styles.prices}>
+    {product.transferPrice && (
+        <>
+        <div className={styles.transferPrice}>
+            ${product.transferPrice.toLocaleString("es-AR")}
+            <span>Transferencia</span>
+        </div>
 
-  {/* CONTENEDOR DE CTAs */}
+        <div className={styles.savings}>
+            Ahorrás $
+            {(product.price - product.transferPrice).toLocaleString("es-AR")}
+        </div>
+        </>
+    )}
+
+    <div className={styles.listPrice}>
+        ${product.price.toLocaleString("es-AR")}
+        <span>Débito / Crédito</span>
+    </div>
+    </div>
+
+    {/* CTAs */}
     <div className={styles.cta}>
     <button
         className={styles.addToCart}
@@ -29,3 +49,4 @@
     </Link>
     </div>
 </div>
+

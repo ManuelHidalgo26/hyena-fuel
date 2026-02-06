@@ -18,6 +18,10 @@ const productSchema = new mongoose.Schema(
         required: true,
         min: 0,
     },
+    transferPrice: {
+        type: Number,
+        default: null,
+    },
     stock: {
         type: Number,
         required: true,
