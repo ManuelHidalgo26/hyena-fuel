@@ -1,33 +1,69 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import styles from "./Hero.module.css";
-import placeholder from "@/public/images/proximamente.png";
+
+const slides = [
+  { src: "/images/Foto1.jpeg", alt: "Hyena Fuel - Entrená con los mejores" },
+  { src: "/images/Foto2.jpeg", alt: "Hyena Fuel - Combustible para tu entrenamiento" },
+  { src: "/images/Foto3.jpeg", alt: "Hyena Fuel - Suplementos de calidad" },
+];
 
 export default function Hero() {
-    return (
-        <section className={styles.hero}>
-            <div className={styles.container}>
+  const [current, setCurrent] = useState(0);
 
-                <div className={styles.text}>
-                    <h1 className={styles.title}>
-                        HYENA FUEL Combustible para tu entrenamiento.
-                    </h1>
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
-                    <p className={styles.subtitle}>
-                        Suplementos diseñados para atletas que no negocian con la mediocridad.
-                    </p>
+  return (
+    <section className={styles.hero}>
+      <div className={styles.container}>
 
-                    <button className={styles.cta}> <a href="/#products">Ver productos</a></button>
-                </div>
+        <div className={styles.text}>
+          <h1 className={styles.title}>
+            HYENA FUEL <span>Combustible para tu entrenamiento.</span>
+          </h1>
+          <p className={styles.subtitle}>
+            Suplementos diseñados para atletas que no negocian con la mediocridad.
+          </p>
+          <button className={styles.cta}>
+            <a href="/#products">Ver productos</a>
+          </button>
+        </div>
 
-                <div className={styles.imageWrapper}>
-                    <Image
-                        src={placeholder}
-                        alt="Hyena Fuel Hero"
-                        className={styles.image}
-                        priority
-                    />
-                </div>
+        <div className={styles.carouselWrapper}>
+          {slides.map((slide, index) => (
+            <div
+              key={index}
+              className={`${styles.slide} ${index === current ? styles.active : ""}`}
+            >
+              <Image
+                src={slide.src}
+                alt={slide.alt}
+                fill
+                className={styles.image}
+                priority={index === 0}
+              />
             </div>
-        </section>
-    );
+          ))}
+
+          <div className={styles.dots}>
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                className={`${styles.dot} ${index === current ? styles.activeDot : ""}`}
+                onClick={() => setCurrent(index)}
+              />
+            ))}
+          </div>
+        </div>
+
+      </div>
+    </section>
+  );
 }
