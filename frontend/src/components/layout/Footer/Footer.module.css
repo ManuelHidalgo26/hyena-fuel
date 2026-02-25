@@ -1,62 +1,169 @@
 .footer {
-    background: var(--color-black);
-    border-top: 1px solid rgba(255,255,255,0.1);
-    padding: 2rem 0;
-    margin-top: 4rem;
+  background: var(--color-black);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 3rem 0 0 0;
+  margin-top: 4rem;
 }
 
 .container {
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 2rem;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0 2rem 3rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 2.5rem;
 }
 
-/* Marca */
+/* BRAND */
 .brand {
-    display: flex;
-    align-items: center;
-    gap: 0.7rem;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--color-orange);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-/* Links */
+.tagline {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.85rem;
+  margin: 0;
+  max-width: 160px;
+}
+
+/* COLUMN TITLE */
+.colTitle {
+  display: block;
+  color: #ff6a00;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.8rem;
+}
+
+/* LINKS */
 .links {
-    display: flex;
-    gap: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
 }
 
 .links a {
-    text-decoration: none;
-    color: var(--color-white);
-    transition: 0.2s;
-    font-weight: 500;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: color 0.2s;
 }
 
 .links a:hover {
-    color: var(--color-orange);
+  color: #ff6a00;
 }
 
-/* Copy */
-.copy {
-    color: rgba(255,255,255,0.6);
-    font-size: 0.85rem;
-    
+/* INFO */
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 280px;
 }
 
+.shipping {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.shippingIcon {
+  font-size: 1rem;
+  margin-top: 1px;
+}
+
+/* PAYMENT */
+.payment {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.paymentBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.badge {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.8);
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.paymentNote {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.78rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* SOCIAL */
+.social {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.instaLink {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.instaLink:hover {
+  color: #ff6a00;
+}
+
+/* BOTTOM BAR */
+.bottomBar {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 1.2rem 2rem;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.82rem;
+}
+
+/* RESPONSIVE */
 @media (max-width: 768px) {
-.container {
+  .container {
     flex-direction: column;
+    align-items: center;
     text-align: center;
-    }
+  }
 
-.links {
-    gap: 1.5rem;
-    }
+  .paymentBadges {
+    justify-content: center;
+  }
+
+  .instaLink {
+    justify-content: center;
+  }
+
+  .shipping {
+    justify-content: center;
+  }
+
+  .info {
+    align-items: center;
+  }
 }
