@@ -1,0 +1,56 @@
+.banner {
+  width: 100%;
+  position: fixed;
+  top: 192px;
+  left: 0;
+  z-index: 49;
+  background: #111111;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.45rem 0;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: background 0.4s ease;
+}
+
+.banner.success {
+  background: #0d3320;
+}
+
+.track {
+  display: inline-flex;
+  gap: 4rem;
+  animation: marquee 20s linear infinite;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+  transform: translateX(-50%);
+}
+
+.banner.success .track {
+  color: #2ecc71;
+  font-weight: 700;
+}
+
+.track span {
+  white-space: nowrap;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+@media (max-width: 768px) {
+  .banner {
+    top: 192px;
+  }
+
+  .track {
+    font-size: 0.78rem;
+    animation-duration: 16s;
+  }
+}

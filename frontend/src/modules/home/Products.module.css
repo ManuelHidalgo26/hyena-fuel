@@ -154,3 +154,70 @@
     font-size: 1.7rem;
   }
 }
+
+
+/* =========================
+   TOOLBAR (búsqueda + filtros)
+========================= */
+.toolbar {
+  max-width: 1200px;
+  margin: 0 auto 2.5rem auto;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 0.75rem 1.2rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #0e0e0e;
+  color: #ffffff;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.searchInput::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.searchInput:focus {
+  border-color: #ff6a00;
+}
+
+.sortSelect {
+  padding: 0.75rem 1.2rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #0e0e0e;
+  color: #ffffff;
+  font-size: 0.95rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.sortSelect:focus {
+  border-color: #ff6a00;
+}
+
+/* NO RESULTS */
+.noResults {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1rem;
+  margin: 3rem 0;
+}
+
+/* RESPONSIVE TOOLBAR */
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+  }
+
+  .sortSelect {
+    width: 100%;
+  }
+}

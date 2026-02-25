@@ -5,6 +5,7 @@ import Navbar from "../components/layout/Navbar/Navbar";
 import Footer from "../components/layout/Footer/Footer";
 import { CartProvider } from "../context/CartContext";
 import CartDrawer from "../components/cart/CartDrawer";
+import ShippingBanner from "../components/layout/ShippingBanner";
 
 export const metadata = {
   title: "HYENA FUEL",
@@ -35,9 +36,9 @@ export default function RootLayout({
             gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
           `}
         </Script>
-
         <CartProvider>
           <Navbar />
+          <ShippingBanner />
           <CartDrawer />
           <main className="main-content">{children}</main>
           <Footer />
