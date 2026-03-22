@@ -206,6 +206,12 @@
   opacity: 0.9;
 }
 
+.checkout:disabled {
+  background: #888;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .payInfo {
   margin-top: 1rem;
   padding: 0.8rem;

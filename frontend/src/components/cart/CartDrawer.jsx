@@ -26,6 +26,7 @@ export default function CartDrawer() {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   /* =========================
       MÉTODO DE PAGO
@@ -91,6 +92,7 @@ export default function CartDrawer() {
       return;
     }
 
+    setIsLoading(true);
     try {
       const order = await checkout({
         name,
@@ -112,6 +114,8 @@ export default function CartDrawer() {
     } catch (error) {
       console.error(error);
       alert("Error al crear el pedido");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -276,8 +280,9 @@ export default function CartDrawer() {
               <button
                 className={styles.checkout}
                 onClick={handleCheckout}
+                disabled={isLoading}
               >
-                Finalizar compra
+                {isLoading ? "Procesando..." : "Finalizar compra"}
               </button>
             </div>
           </div>
