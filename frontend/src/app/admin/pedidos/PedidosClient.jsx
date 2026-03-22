@@ -121,6 +121,9 @@ export default function PedidosClient() {
                 <p className={styles.name}>{order.customerName}</p>
                 <p className={styles.phone}>📞 {order.customerPhone}</p>
                 <p className={styles.email}>📧 {order.customerEmail}</p>
+                {order.customerAddress && (
+                  <p className={styles.email}>📍 {order.customerAddress}</p>
+                )}
 
                 {/* DESGLOSE */}
                 <div className={styles.prices}>
