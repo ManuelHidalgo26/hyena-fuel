@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import styles from "./CartDrawer.module.css";
 import { useCart } from "../../context/CartContext";
 
@@ -27,6 +27,7 @@ export default function CartDrawer() {
   const [address, setAddress] = useState("");
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const processingRef = useRef(false);
 
   /* =========================
       MÉTODO DE PAGO
@@ -87,11 +88,14 @@ export default function CartDrawer() {
       CHECKOUT
   ========================= */
   const handleCheckout = async () => {
+    if (processingRef.current) return;
+
     if (!name || !email || !phone || !address) {
       alert("Completá todos tus datos antes de continuar.");
       return;
     }
 
+    processingRef.current = true;
     setIsLoading(true);
     try {
       const order = await checkout({
@@ -115,6 +119,7 @@ export default function CartDrawer() {
       console.error(error);
       alert("Error al crear el pedido");
     } finally {
+      processingRef.current = false;
       setIsLoading(false);
     }
   };
