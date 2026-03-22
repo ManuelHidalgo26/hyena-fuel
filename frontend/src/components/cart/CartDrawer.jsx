@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import styles from "./CartDrawer.module.css";
 import { useCart } from "../../context/CartContext";
 
@@ -26,6 +26,8 @@ export default function CartDrawer() {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const processingRef = useRef(false);
 
   /* =========================
       MÉTODO DE PAGO
@@ -86,11 +88,15 @@ export default function CartDrawer() {
       CHECKOUT
   ========================= */
   const handleCheckout = async () => {
+    if (processingRef.current) return;
+
     if (!name || !email || !phone || !address) {
       alert("Completá todos tus datos antes de continuar.");
       return;
     }
 
+    processingRef.current = true;
+    setIsLoading(true);
     try {
       const order = await checkout({
         name,
@@ -112,6 +118,9 @@ export default function CartDrawer() {
     } catch (error) {
       console.error(error);
       alert("Error al crear el pedido");
+    } finally {
+      processingRef.current = false;
+      setIsLoading(false);
     }
   };
 
@@ -276,8 +285,9 @@ export default function CartDrawer() {
               <button
                 className={styles.checkout}
                 onClick={handleCheckout}
+                disabled={isLoading}
               >
-                Finalizar compra
+                {isLoading ? "Procesando..." : "Finalizar compra"}
               </button>
             </div>
           </div>
