@@ -24,6 +24,7 @@ export default function CartDrawer() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
   const [orderSuccess, setOrderSuccess] = useState(false);
 
   /* =========================
@@ -60,18 +61,10 @@ export default function CartDrawer() {
           <p>
             Tu pedido fue creado correctamente.
             <br />
-            Enviá el comprobante de pago para continuar.
+            Nos pondremos en contacto para coordinar el envío y el pago.
           </p>
 
           <div className={styles.successActions}>
-            <a
-              href="https://wa.me/549XXXXXXXXXX"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              📲 WhatsApp
-            </a>
-
             <a
               href="https://www.instagram.com/hyenafuel/"
               target="_blank"
@@ -93,8 +86,8 @@ export default function CartDrawer() {
       CHECKOUT
   ========================= */
   const handleCheckout = async () => {
-    if (!name || !email || !phone) {
-      alert("Completá tus datos antes de continuar.");
+    if (!name || !email || !phone || !address) {
+      alert("Completá todos tus datos antes de continuar.");
       return;
     }
 
@@ -103,6 +96,7 @@ export default function CartDrawer() {
         name,
         email,
         phone,
+        address,
         paymentMethod,
       });
 
@@ -197,6 +191,13 @@ export default function CartDrawer() {
               placeholder="Teléfono"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+            />
+
+            <input
+              type="text"
+              placeholder="Dirección de envío (calle, número, ciudad)"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
             />
           </div>
 
