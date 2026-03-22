@@ -163,7 +163,7 @@ export function CartProvider({ children }) {
     /* =========================
         Checkout
     ========================= */
-    const checkout = async ({ name, email, phone, paymentMethod }) => {
+    const checkout = async ({ name, email, phone, address, paymentMethod }) => {
     if (cartItems.length === 0) {
         throw new Error("El carrito está vacío");
     }
@@ -176,6 +176,7 @@ export function CartProvider({ children }) {
         customerName: name,
         customerEmail: email,
         customerPhone: phone,
+        customerAddress: address,
         paymentMethod,
     };
 

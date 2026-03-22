@@ -111,6 +111,11 @@ const orderSchema = new mongoose.Schema(
         type: String,
         default: null,
     },
+
+    customerAddress: {
+        type: String,
+        default: null,
+    },
     },
     {
     timestamps: true,

@@ -17,6 +17,7 @@ export const createOrder = async (req, res) => {
         customerName,
         customerEmail,
         customerPhone,
+        customerAddress,
         paymentMethod,
     } = req.body;
 
@@ -97,6 +98,7 @@ export const createOrder = async (req, res) => {
         customerName,
         customerEmail,
         customerPhone,
+        customerAddress,
 
         status: "pending",
     });
