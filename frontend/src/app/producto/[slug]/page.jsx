@@ -64,16 +64,6 @@ export default async function ProductDetail({ params }) {
         {/* Botón carrito */}
         <AddToCart product={product} />
 
-        {/* WhatsApp */}
-        <a
-            className={styles.whatsapp}
-            href={`https://wa.me/549XXXXXXXXXX?text=Hola, quiero el producto ${product.name}`}
-            target="_blank"
-            rel="noopener noreferrer"
-        >
-            Consultar por WhatsApp
-        </a>
-
         {/* Instagram */}
         <a
             className={styles.instagram}

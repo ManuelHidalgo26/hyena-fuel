@@ -64,7 +64,6 @@
 
 /* SLOT 4 — CTA GROUP */
 .addToCart,
-.whatsapp,
 .instagram {
   width: 100%;
   height: 48px;
@@ -90,13 +89,6 @@
 .addToCart:hover {
   opacity: 0.9;
   transform: translateY(-1px);
-}
-
-/* WhatsApp */
-.whatsapp {
-  margin-top: 0.8rem;
-  background: #1db954;
-  color: #000;
 }
 
 /* Instagram */
