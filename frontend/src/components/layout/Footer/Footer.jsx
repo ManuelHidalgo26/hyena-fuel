@@ -2,7 +2,7 @@ import styles from "./Footer.module.css";
 import Image from "next/image";
 import Link from "next/link";
 import logo from "../../../../public/images/hyena-fuel-logo.png";
-import { FaInstagram } from "react-icons/fa";
+import { FaInstagram, FaWhatsapp } from "react-icons/fa";
 export default function Footer() {
     return (
     <footer className={styles.footer}>
@@ -50,6 +50,9 @@ export default function Footer() {
             <span className={styles.colTitle}>Seguinos</span>
             <a href="https://www.instagram.com/hyenafuel/" target="_blank" rel="noopener noreferrer" className={styles.instaLink}>
                 <FaInstagram />@hyenafuel
+            </a>
+            <a href="https://wa.me/549XXXXXXXXXX" target="_blank" rel="noopener noreferrer" className={styles.whatsappLink}>
+                <FaWhatsapp />WhatsApp
             </a>
         </div>
 

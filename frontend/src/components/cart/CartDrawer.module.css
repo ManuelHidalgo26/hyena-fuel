@@ -288,6 +288,10 @@
   font-weight: 700;
 }
 
+.whatsappBtn {
+  background: #25d366 !important;
+}
+
 .successBox button {
   background: transparent;
   border: 1px solid #555;

@@ -55,6 +55,10 @@ export default function CartDrawer() {
   /* =========================
       POST CHECKOUT
   ========================= */
+  const WHATSAPP_MSG = encodeURIComponent(
+    "Hola! Acabo de hacer un pedido en Hyena Fuel, les mando el comprobante."
+  );
+
   if (orderSuccess) {
     return (
       <div className={styles.successOverlay}>
@@ -67,6 +71,14 @@ export default function CartDrawer() {
           </p>
 
           <div className={styles.successActions}>
+            <a
+              href={`https://wa.me/549XXXXXXXXXX?text=${WHATSAPP_MSG}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.whatsappBtn}
+            >
+              💬 WhatsApp
+            </a>
             <a
               href="https://www.instagram.com/hyenafuel/"
               target="_blank"
