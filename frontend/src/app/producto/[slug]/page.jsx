@@ -61,18 +61,20 @@ export default async function ProductDetail({ params }) {
 </div>
 
 
-        {/* Botón carrito */}
-        <AddToCart product={product} />
+        <div className={styles.ctaGroup}>
+          {/* Botón carrito */}
+          <AddToCart product={product} />
 
-        {/* Instagram */}
-        <a
-            className={styles.instagram}
-            href="https://www.instagram.com/hyenafuel"
-            target="_blank"
-            rel="noopener noreferrer"
-        >
-            Seguinos en Instagram
-        </a>
+          {/* Instagram */}
+          <a
+              className={styles.instagram}
+              href="https://www.instagram.com/hyenafuel"
+              target="_blank"
+              rel="noopener noreferrer"
+          >
+              Seguinos en Instagram
+          </a>
+        </div>
         </div>
     </section>
     );
