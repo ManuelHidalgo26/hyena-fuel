@@ -14,6 +14,9 @@
   --hyena-white: #ffffff;
   --hyena-orange: #ff8a00;
 
+  /* Component alias — usado en AddToCartButton y otros */
+  --color-orange: #ff6a00;
+
   /* HYENA shadows */
   --hyena-shadow-soft: 0 6px 16px rgba(0, 0, 0, 0.25);
   --hyena-shadow-strong: 0 18px 40px rgba(0, 0, 0, 0.45);

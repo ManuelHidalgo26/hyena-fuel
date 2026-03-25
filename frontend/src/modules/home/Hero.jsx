@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import styles from "./Hero.module.css";
 
 const slides = [
@@ -31,9 +32,9 @@ export default function Hero() {
           <p className={styles.subtitle}>
             Suplementos diseñados para atletas que no negocian con la mediocridad.
           </p>
-          <button className={styles.cta}>
-            <a href="/#products">Ver productos</a>
-          </button>
+          <Link href="/#products" className={styles.cta}>
+            Ver productos
+          </Link>
         </div>
 
         <div className={styles.carouselWrapper}>

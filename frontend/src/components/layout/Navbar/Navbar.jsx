@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import logo from "../../../../public/images/hyena-fuel-logo.png";
 import { useState, useEffect } from "react";
+import { FaShoppingCart } from "react-icons/fa";
 import { useCart } from "../../../context/CartContext";
 
 export default function Navbar() {
@@ -50,7 +51,7 @@ export default function Navbar() {
               : ""
           }
         >
-          🛒
+          <FaShoppingCart />
         </button>
 
         {/* Burger mobile */}
