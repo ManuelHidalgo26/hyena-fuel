@@ -148,6 +148,38 @@
   margin-top: 1.5rem;
 }
 
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.discountRow {
+  color: #2ecc71;
+  font-weight: 600;
+}
+
+/* Trust badges */
+.trustBadges {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  padding-top: 0.8rem;
+  margin-top: 0.8rem;
+  border-top: 1px solid #eee;
+}
+
+.trustBadge {
+  font-size: 0.72rem;
+  color: #777;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
 .clearCart {
   width: 100%;
   padding: 0.75rem;
@@ -245,11 +277,36 @@
 }
 
 .form input {
-  padding: 0.6rem;
+  padding: 0.65rem 0.8rem;
   border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: #111;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  color: #111;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form input:focus {
+  border-color: #ff6a00;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.discountBadge {
+  background: #2ecc71;
   color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
 }
 
 .successOverlay {

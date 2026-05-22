@@ -149,6 +149,72 @@
   color: #25d366;
 }
 
+/* NEWSLETTER */
+.newsletter {
+  margin-top: 1.2rem;
+}
+
+.newsletterForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.newsletterInput {
+  padding: 0.55rem 0.8rem;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.newsletterInput::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.newsletterInput:focus {
+  border-color: #ff6a00;
+}
+
+.newsletterBtn {
+  padding: 0.55rem 1rem;
+  border-radius: 7px;
+  border: none;
+  background: #ff6a00;
+  color: #000;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.newsletterBtn:hover {
+  opacity: 0.85;
+}
+
+.newsletterBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.newsletterSuccess {
+  font-size: 0.82rem;
+  color: #2ecc71;
+  margin: 0;
+}
+
+.newsletterNote {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+}
+
 /* BOTTOM BAR */
 .bottomBar {
   border-top: 1px solid rgba(255, 255, 255, 0.07);

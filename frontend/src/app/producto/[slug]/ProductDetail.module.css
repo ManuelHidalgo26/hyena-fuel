@@ -157,6 +157,34 @@
   margin-top: 0.4rem;
 }
 
+/* Stock badges */
+.stockBadge {
+  display: inline-block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.35rem 0.8rem;
+  border-radius: 6px;
+  margin-bottom: 0.8rem;
+}
+
+.outOfStock {
+  background: rgba(200, 0, 0, 0.15);
+  color: #ff4444;
+  border: 1px solid rgba(200, 0, 0, 0.3);
+}
+
+.lowStock {
+  background: rgba(255, 106, 0, 0.15);
+  color: #ff6a00;
+  border: 1px solid rgba(255, 106, 0, 0.3);
+}
+
+.mediumStock {
+  background: rgba(255, 200, 0, 0.12);
+  color: #e8a000;
+  border: 1px solid rgba(255, 200, 0, 0.3);
+}
+
 
 /* =========================
    RESPONSIVE

@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import NextImage from "next/image";
 import styles from "./CartDrawer.module.css";
 import { useCart } from "../../context/CartContext";
+import { trackEvent, GA_EVENTS } from "../../lib/ga";
 
 export default function CartDrawer() {
   const {
@@ -11,6 +13,7 @@ export default function CartDrawer() {
     cartItems,
     increase,
     decrease,
+    clearCart,
 
     getSubtotalByPaymentMethod,
     getDiscountByPaymentMethod,
@@ -18,7 +21,6 @@ export default function CartDrawer() {
     getMissingForFreeShipping,
 
     checkout,
-    clearCart,
   } = useCart();
 
   const [name, setName] = useState("");
@@ -29,32 +31,20 @@ export default function CartDrawer() {
   const [isLoading, setIsLoading] = useState(false);
   const processingRef = useRef(false);
 
-  /* =========================
-      MÉTODO DE PAGO
-  ========================= */
   const [paymentMethod, setPaymentMethod] = useState("mercadopago");
 
-  /* =========================
-      CÁLCULOS DINÁMICOS
-  ========================= */
   const subtotal = getSubtotalByPaymentMethod(paymentMethod);
   const discount = getDiscountByPaymentMethod(paymentMethod);
   const shippingCost = getShippingCost(paymentMethod);
   const missingForFree = getMissingForFreeShipping(paymentMethod);
-  const totalFinal = subtotal + shippingCost;
+  const totalFinal = subtotal - discount + shippingCost;
 
-  /* =========================
-      AUTO-CLOSE
-  ========================= */
   useEffect(() => {
     if (isCartOpen && cartItems.length === 0) {
       closeCart();
     }
   }, [cartItems, isCartOpen, closeCart]);
 
-  /* =========================
-      POST CHECKOUT
-  ========================= */
   const WHATSAPP_MSG = encodeURIComponent(
     "Hola! Acabo de hacer un pedido en Hyena Fuel, les mando el comprobante."
   );
@@ -65,9 +55,9 @@ export default function CartDrawer() {
         <div className={styles.successBox}>
           <h2>✅ Pedido registrado</h2>
           <p>
-            Tu pedido fue creado correctamente.
-            <br />
-            Nos pondremos en contacto para coordinar el envío y el pago.
+            {paymentMethod === "mercadopago"
+              ? "Te redirigimos a MercadoPago para completar el pago. Una vez aprobado, coordinamos el envío."
+              : "Envianos el comprobante de transferencia por WhatsApp para confirmar tu pedido."}
           </p>
 
           <div className={styles.successActions}>
@@ -96,9 +86,6 @@ export default function CartDrawer() {
 
   if (!isCartOpen) return null;
 
-  /* =========================
-      CHECKOUT
-  ========================= */
   const handleCheckout = async () => {
     if (processingRef.current) return;
 
@@ -109,6 +96,7 @@ export default function CartDrawer() {
 
     processingRef.current = true;
     setIsLoading(true);
+
     try {
       const order = await checkout({
         name,
@@ -118,18 +106,53 @@ export default function CartDrawer() {
         paymentMethod,
       });
 
+      // GA4 purchase event
+      trackEvent(GA_EVENTS.PURCHASE, {
+        transaction_id: order._id,
+        value: totalFinal,
+        currency: "ARS",
+        items: cartItems.map((item) => ({
+          item_id: item._id,
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+      });
+
       if (paymentMethod === "mercadopago") {
-        window.open(
-          "https://link.mercadopago.com.ar/hyenafuel",
-          "_blank"
-        );
+        try {
+          const payRes = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/payments/create`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                items: cartItems.map((item) => ({
+                  name: item.name,
+                  price: item.price,
+                  quantity: item.quantity,
+                })),
+                orderId: order._id,
+                customerEmail: email,
+              }),
+            }
+          );
+          const payData = await payRes.json();
+          const checkoutUrl =
+            payData.checkoutUrl ||
+            "https://link.mercadopago.com.ar/hyenafuel";
+          window.open(checkoutUrl, "_blank");
+        } catch {
+          window.open("https://link.mercadopago.com.ar/hyenafuel", "_blank");
+        }
       }
 
+      clearCart();
       closeCart();
       setOrderSuccess(true);
     } catch (error) {
       console.error(error);
-      alert("Error al crear el pedido");
+      alert("Error al crear el pedido. Intentá de nuevo.");
     } finally {
       processingRef.current = false;
       setIsLoading(false);
@@ -164,9 +187,11 @@ export default function CartDrawer() {
               return (
                 <li key={item._id} className={styles.item}>
                   {item.image && (
-                    <img
+                    <NextImage
                       src={item.image}
                       alt={item.name}
+                      width={60}
+                      height={60}
                       className={styles.image}
                     />
                   )}
@@ -226,40 +251,41 @@ export default function CartDrawer() {
           <div className={styles.form}>
             <h3>Método de pago</h3>
 
-            <label>
+            <label className={styles.radioLabel}>
               <input
                 type="radio"
                 checked={paymentMethod === "mercadopago"}
                 onChange={() => setPaymentMethod("mercadopago")}
               />
-              Débito / Crédito
+              💳 Débito / Crédito (MercadoPago)
             </label>
 
-            <label>
+            <label className={styles.radioLabel}>
               <input
                 type="radio"
                 checked={paymentMethod === "transferencia"}
                 onChange={() => setPaymentMethod("transferencia")}
               />
-              Transferencia bancaria
+              🏦 Transferencia bancaria&nbsp;
+              <span className={styles.discountBadge}>10% OFF</span>
             </label>
           </div>
 
           {/* RESUMEN */}
           <div className={styles.summary}>
-            <div>
+            <div className={styles.summaryRow}>
               <span>Subtotal:</span>
               <strong>${subtotal.toLocaleString("es-AR")}</strong>
             </div>
 
             {discount > 0 && (
-              <div className={styles.discount}>
-                <span>Descuento:</span>
+              <div className={`${styles.summaryRow} ${styles.discountRow}`}>
+                <span>Descuento transferencia:</span>
                 <strong>- ${discount.toLocaleString("es-AR")}</strong>
               </div>
             )}
 
-            <div>
+            <div className={styles.summaryRow}>
               <span>Envío:</span>
               <strong>
                 {shippingCost === 0
@@ -274,7 +300,7 @@ export default function CartDrawer() {
               </p>
             ) : (
               <p className={styles.freeShippingSuccess}>
-                Envío gratis aplicado
+                ✓ Envío gratis aplicado
               </p>
             )}
 
@@ -301,6 +327,13 @@ export default function CartDrawer() {
               >
                 {isLoading ? "Procesando..." : "Finalizar compra"}
               </button>
+            </div>
+
+            {/* TRUST BADGES */}
+            <div className={styles.trustBadges}>
+              <span className={styles.trustBadge}>🔒 Pago seguro</span>
+              <span className={styles.trustBadge}>🚚 Envío a todo Córdoba</span>
+              <span className={styles.trustBadge}>↩️ Cambios disponibles</span>
             </div>
           </div>
         </div>

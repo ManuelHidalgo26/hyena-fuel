@@ -92,6 +92,21 @@ export default function ProductsClient({ products }) {
 
                 <h3 className={styles.name}>{product.name}</h3>
 
+                {/* STOCK BADGE */}
+                {product.stock > 0 && product.stock <= 5 && (
+                  <div className={styles.stockBadgeLow}>
+                    🔥 Últimas {product.stock} unidades
+                  </div>
+                )}
+                {product.stock > 5 && product.stock <= 10 && (
+                  <div className={styles.stockBadgeMed}>
+                    ⚠️ Pocas unidades
+                  </div>
+                )}
+                {product.stock === 0 && (
+                  <div className={styles.stockBadgeOut}>Sin stock</div>
+                )}
+
                 <div className={styles.prices}>
                 {hasTransferPrice && (
                     <>
