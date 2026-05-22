@@ -26,14 +26,14 @@ export default function PedidosClient() {
             return;
         }
 
-        Promise.all([
+        Promise.allSettled([
             fetch(`${API}/api/orders`, { cache: "no-store" }).then((r) => r.json()),
             fetch(`${API}/api/newsletter`, { cache: "no-store" }).then((r) => r.json()),
             fetch(`${API}/api/reviews/pending`, { cache: "no-store" }).then((r) => r.json()),
-        ]).then(([ordersData, subsData, reviewsData]) => {
-            setOrders(ordersData);
-            setSubscribers(subsData);
-            setPendingReviews(Array.isArray(reviewsData) ? reviewsData : []);
+        ]).then(([ordersRes, subsRes, reviewsRes]) => {
+            setOrders(Array.isArray(ordersRes.value) ? ordersRes.value : []);
+            setSubscribers(Array.isArray(subsRes.value) ? subsRes.value : []);
+            setPendingReviews(Array.isArray(reviewsRes.value) ? reviewsRes.value : []);
             setLoading(false);
         });
     }, [key, router]);
@@ -213,7 +213,6 @@ export default function PedidosClient() {
                 </>
             )}
 
-            {/* ===== SUSCRIPTORES ===== */}
             {/* ===== PRODUCTOS ===== */}
             {tab === "productos" && <AdminProductos />}
 
