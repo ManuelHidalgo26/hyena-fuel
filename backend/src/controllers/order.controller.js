@@ -19,6 +19,7 @@ export const createOrder = async (req, res) => {
         customerPhone,
         customerAddress,
         paymentMethod,
+        deliveryMethod = "envio",
     } = req.body;
 
 
@@ -73,7 +74,7 @@ export const createOrder = async (req, res) => {
         ENVÍO (CÓRDOBA)
     ========================= */
     let shippingCost = 0;
-    if (subtotal < 120000) {
+    if (deliveryMethod !== "retiro" && subtotal < 120000) {
         shippingCost = 5000;
     }
 
@@ -94,6 +95,7 @@ export const createOrder = async (req, res) => {
         totalAmount: totalFinal,
 
         paymentMethod,
+        deliveryMethod,
 
         customerName,
         customerEmail,

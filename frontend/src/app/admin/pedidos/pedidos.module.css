@@ -600,6 +600,16 @@
   color: #000;
 }
 
+.retiro {
+  background: #f39c12;
+  color: #000;
+}
+
+.envio {
+  background: #555;
+  color: #fff;
+}
+
 /* =========================
    ESTADO
 ========================= */

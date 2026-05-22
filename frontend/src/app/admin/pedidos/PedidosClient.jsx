@@ -149,6 +149,9 @@ export default function PedidosClient() {
                                                     ? "TRANSFERENCIA"
                                                     : "MERCADO PAGO"}
                                             </span>
+                                            <span className={`${styles.badge} ${order.deliveryMethod === "retiro" ? styles.retiro : styles.envio}`}>
+                                                {order.deliveryMethod === "retiro" ? "🏪 RETIRO" : "🚚 ENVÍO"}
+                                            </span>
                                             <span className={`${styles.status} ${styles[order.status]}`}>
                                                 {order.status}
                                             </span>

@@ -80,6 +80,12 @@ const orderSchema = new mongoose.Schema(
         default: null,
     },
 
+    deliveryMethod: {
+        type: String,
+        enum: ["envio", "retiro"],
+        default: "envio",
+    },
+
     paymentId: {
         type: String,
         default: null,

@@ -166,7 +166,7 @@ export function CartProvider({ children }) {
     /* =========================
         Checkout
     ========================= */
-    const checkout = async ({ name, email, phone, address, paymentMethod }) => {
+    const checkout = async ({ name, email, phone, address, paymentMethod, deliveryMethod = "envio" }) => {
     if (cartItems.length === 0) {
         throw new Error("El carrito está vacío");
     }
@@ -181,6 +181,7 @@ export function CartProvider({ children }) {
         customerPhone: phone,
         customerAddress: address,
         paymentMethod,
+        deliveryMethod,
     };
 
     const response = await fetch(

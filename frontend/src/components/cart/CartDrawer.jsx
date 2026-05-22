@@ -34,12 +34,14 @@ export default function CartDrawer() {
   const processingRef = useRef(false);
 
   const [paymentMethod, setPaymentMethod] = useState("mercadopago");
+  const [deliveryMethod, setDeliveryMethod] = useState("envio");
 
   const subtotal = getSubtotalByPaymentMethod(paymentMethod);
   const discount = getDiscountByPaymentMethod(paymentMethod);
   const shippingCost = getShippingCost(paymentMethod);
   const missingForFree = getMissingForFreeShipping(paymentMethod);
-  const totalFinal = subtotal - discount + shippingCost;
+  const effectiveShipping = deliveryMethod === "retiro" ? 0 : shippingCost;
+  const totalFinal = subtotal - discount + effectiveShipping;
 
   useEffect(() => {
     if (isCartOpen && cartItems.length === 0) {
@@ -66,8 +68,13 @@ export default function CartDrawer() {
           <h2>✅ Pedido registrado</h2>
           <p>
             {paymentMethod === "mercadopago"
-              ? "Te redirigimos a MercadoPago para completar el pago. Una vez aprobado, coordinamos el envío."
-              : <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>hyena.fuel</strong> y envianos el comprobante por WhatsApp o Instagram para confirmar tu pedido.</>}
+              ? deliveryMethod === "retiro"
+                ? "Te redirigimos a MercadoPago. Una vez aprobado el pago, coordinamos el retiro por WhatsApp o Instagram."
+                : "Te redirigimos a MercadoPago para completar el pago. Una vez aprobado, coordinamos el envío."
+              : deliveryMethod === "retiro"
+                ? <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>hyena.fuel</strong> y envianos el comprobante por WhatsApp o Instagram. ¡Coordinamos el retiro por el mismo canal!</>
+                : <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>hyena.fuel</strong> y envianos el comprobante por WhatsApp o Instagram para confirmar tu pedido.</>
+            }
           </p>
 
           <div className={styles.successActions}>
@@ -100,7 +107,7 @@ export default function CartDrawer() {
   const handleCheckout = async () => {
     if (processingRef.current) return;
 
-    if (!name || !email || !phone || !address) {
+    if (!name || !email || !phone || (deliveryMethod === "envio" && !address)) {
       alert("Completá todos tus datos antes de continuar.");
       return;
     }
@@ -126,8 +133,9 @@ export default function CartDrawer() {
         name,
         email,
         phone,
-        address,
+        address: deliveryMethod === "retiro" ? "Retiro en persona" : address,
         paymentMethod,
+        deliveryMethod,
       });
 
       // GA4 purchase
@@ -248,6 +256,30 @@ export default function CartDrawer() {
             })}
           </ul>
 
+          {/* ENTREGA */}
+          <div className={styles.form}>
+            <h3>Entrega</h3>
+
+            <label className={styles.radioLabel}>
+              <input
+                type="radio"
+                checked={deliveryMethod === "envio"}
+                onChange={() => setDeliveryMethod("envio")}
+              />
+              🚚 Envío a domicilio
+            </label>
+
+            <label className={styles.radioLabel}>
+              <input
+                type="radio"
+                checked={deliveryMethod === "retiro"}
+                onChange={() => setDeliveryMethod("retiro")}
+              />
+              🏪 Retiro en persona&nbsp;
+              <span className={styles.discountBadge}>¡SIN COSTO!</span>
+            </label>
+          </div>
+
           {/* DATOS CLIENTE */}
           <div className={styles.form}>
             <h3>Datos de contacto</h3>
@@ -273,12 +305,14 @@ export default function CartDrawer() {
               onChange={(e) => setPhone(e.target.value)}
             />
 
-            <input
-              type="text"
-              placeholder="Dirección de envío (calle, número, ciudad)"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-            />
+            {deliveryMethod === "envio" && (
+              <input
+                type="text"
+                placeholder="Dirección de envío (calle, número, ciudad)"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+              />
+            )}
           </div>
 
           {/* MÉTODO DE PAGO */}
@@ -322,17 +356,20 @@ export default function CartDrawer() {
             <div className={styles.summaryRow}>
               <span>Envío:</span>
               <strong>
-                {shippingCost === 0
-                  ? "GRATIS"
-                  : `$${shippingCost.toLocaleString("es-AR")}`}
+                {deliveryMethod === "retiro"
+                  ? <span className={styles.freeText}>Retiro sin costo</span>
+                  : effectiveShipping === 0
+                    ? "GRATIS"
+                    : `$${effectiveShipping.toLocaleString("es-AR")}`}
               </strong>
             </div>
 
-            {missingForFree > 0 ? (
+            {deliveryMethod === "envio" && missingForFree > 0 && (
               <p className={styles.freeShippingHint}>
                 Te faltan ${missingForFree.toLocaleString("es-AR")} para envío gratis
               </p>
-            ) : (
+            )}
+            {deliveryMethod === "envio" && missingForFree === 0 && (
               <p className={styles.freeShippingSuccess}>
                 ✓ Envío gratis aplicado
               </p>
