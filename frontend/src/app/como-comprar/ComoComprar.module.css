@@ -1,0 +1,164 @@
+.page {
+  background: #0b0b0b;
+  color: #fff;
+  min-height: 100vh;
+  padding: 80px 1.5rem 60px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.title span {
+  color: #ff6a00;
+}
+
+.subtitle {
+  color: #aaa;
+  font-size: 1.1rem;
+  margin-bottom: 3rem;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: center;
+  background: #141414;
+  border-left: 4px solid #ff6a00;
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.step.reverse {
+  direction: rtl;
+}
+
+.step.reverse > * {
+  direction: ltr;
+}
+
+.stepContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.stepNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  background: #ff6a00;
+  color: #000;
+  font-weight: 900;
+  font-size: 1.1rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.stepTitle {
+  font-size: 1.3rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.stepDesc {
+  color: #ccc;
+  font-size: 0.97rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.stepDesc strong {
+  color: #ff6a00;
+}
+
+.stepDesc ul {
+  margin: 0.5rem 0 0 1.2rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.screenshot {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid #2a2a2a;
+  display: block;
+}
+
+.cta {
+  margin-top: 4rem;
+  text-align: center;
+  padding: 2.5rem;
+  background: #141414;
+  border-radius: 16px;
+  border: 1px solid #2a2a2a;
+}
+
+.ctaTitle {
+  font-size: 1.6rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.ctaText {
+  color: #bbb;
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+}
+
+.ctaBtn {
+  display: inline-block;
+  background: #ff6a00;
+  color: #000;
+  font-weight: 900;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.85rem 2.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.ctaBtn:hover {
+  background: #e05a00;
+}
+
+@media (max-width: 700px) {
+  .step {
+    grid-template-columns: 1fr;
+    direction: ltr;
+  }
+
+  .step.reverse {
+    direction: ltr;
+  }
+
+  .screenshot {
+    order: -1;
+  }
+}

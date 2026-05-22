@@ -38,6 +38,7 @@ export default function Navbar() {
           <Link href="/">Inicio</Link>
           <Link href="/about">Nosotros</Link>
           <Link href="/#products">Productos</Link>
+          <Link href="/como-comprar">Cómo comprar</Link>
         </nav>
 
         {/* Carrito */}
@@ -69,7 +70,8 @@ export default function Navbar() {
         <nav className={styles.mobileMenu}>
           <Link href="/" onClick={() => setOpen(false)}>Inicio</Link>
           <Link href="/about" onClick={() => setOpen(false)}>Nosotros</Link>
-          <Link href="/#products">Productos</Link>
+          <Link href="/#products" onClick={() => setOpen(false)}>Productos</Link>
+          <Link href="/como-comprar" onClick={() => setOpen(false)}>Cómo comprar</Link>
         </nav>
       )}
     </header>
