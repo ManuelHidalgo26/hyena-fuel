@@ -2,6 +2,7 @@ import Image from "next/image";
 import { getProductBySlug } from "../../../lib/api/products.api";
 import styles from "./ProductDetail.module.css";
 import AddToCart from "./AddToCart";
+import TrackViewItem from "./TrackViewItem";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -57,6 +58,7 @@ export default async function ProductDetail({ params }) {
       </div>
 
       <div className={styles.info}>
+        <TrackViewItem product={product} />
         <h1>{product.name}</h1>
 
         {/* STOCK BADGE */}

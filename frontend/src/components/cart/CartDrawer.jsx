@@ -5,6 +5,7 @@ import NextImage from "next/image";
 import styles from "./CartDrawer.module.css";
 import { useCart } from "../../context/CartContext";
 import { trackEvent, GA_EVENTS } from "../../lib/ga";
+import { fbTrack } from "../../lib/fbpixel";
 
 export default function CartDrawer() {
   const {
@@ -42,8 +43,16 @@ export default function CartDrawer() {
   useEffect(() => {
     if (isCartOpen && cartItems.length === 0) {
       closeCart();
+      return;
     }
-  }, [cartItems, isCartOpen, closeCart]);
+    if (isCartOpen && cartItems.length > 0) {
+      trackEvent(GA_EVENTS.VIEW_CART, {
+        currency: "ARS",
+        value: cartItems.reduce((s, i) => s + i.price * i.quantity, 0),
+        items: cartItems.map((i) => ({ item_id: i._id, item_name: i.name, price: i.price, quantity: i.quantity })),
+      });
+    }
+  }, [isCartOpen, cartItems, closeCart]);
 
   const WHATSAPP_MSG = encodeURIComponent(
     "Hola! Acabo de hacer un pedido en Hyena Fuel, les mando el comprobante."
@@ -97,6 +106,19 @@ export default function CartDrawer() {
     processingRef.current = true;
     setIsLoading(true);
 
+    // GA4 + FB begin_checkout / InitiateCheckout
+    trackEvent(GA_EVENTS.BEGIN_CHECKOUT, {
+      currency: "ARS",
+      value: totalFinal,
+      items: cartItems.map((i) => ({ item_id: i._id, item_name: i.name, price: i.price, quantity: i.quantity })),
+    });
+    fbTrack("InitiateCheckout", {
+      content_ids: cartItems.map((i) => i._id),
+      num_items: cartItems.reduce((s, i) => s + i.quantity, 0),
+      value: totalFinal,
+      currency: "ARS",
+    });
+
     try {
       const order = await checkout({
         name,
@@ -106,7 +128,7 @@ export default function CartDrawer() {
         paymentMethod,
       });
 
-      // GA4 purchase event
+      // GA4 purchase
       trackEvent(GA_EVENTS.PURCHASE, {
         transaction_id: order._id,
         value: totalFinal,
@@ -117,6 +139,15 @@ export default function CartDrawer() {
           price: item.price,
           quantity: item.quantity,
         })),
+      });
+
+      // Facebook Pixel purchase
+      fbTrack("Purchase", {
+        content_ids: cartItems.map((i) => i._id),
+        content_type: "product",
+        value: totalFinal,
+        currency: "ARS",
+        num_items: cartItems.reduce((s, i) => s + i.quantity, 0),
       });
 
       if (paymentMethod === "mercadopago") {

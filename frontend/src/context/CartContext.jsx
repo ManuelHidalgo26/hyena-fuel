@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { trackEvent, GA_EVENTS } from "../lib/ga";
+import { fbTrack } from "../lib/fbpixel";
 import Toast from "../components/ui/Toast";
 
 const CartContext = createContext(null);
@@ -45,18 +46,20 @@ export function CartProvider({ children }) {
     setCartItems((prev) => {
         const existing = prev.find((item) => item._id === product._id);
 
-        // GA
+        // GA4
         trackEvent(GA_EVENTS.ADD_TO_CART, {
         currency: "ARS",
         value: product.price,
-        items: [
-            {
-            item_id: product._id,
-            item_name: product.name,
-            price: product.price,
-            quantity: 1,
-            },
-        ],
+        items: [{ item_id: product._id, item_name: product.name, price: product.price, quantity: 1 }],
+        });
+
+        // Facebook Pixel
+        fbTrack("AddToCart", {
+        content_ids: [product._id],
+        content_name: product.name,
+        content_type: "product",
+        value: product.price,
+        currency: "ARS",
         });
 
         if (existing) {
