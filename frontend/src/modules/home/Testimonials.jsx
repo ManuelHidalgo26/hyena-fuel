@@ -152,17 +152,17 @@ function ReviewForm() {
 
 export default function Testimonials() {
   const [reviews, setReviews] = useState([]);
-  const [loaded, setLoaded] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews`)
       .then((r) => r.json())
       .then((data) => { setReviews(Array.isArray(data) ? data : []); })
-      .catch(() => {})
-      .finally(() => setLoaded(true));
+      .catch(() => {});
   }, []);
 
-  const displayed = loaded && reviews.length > 0 ? reviews : STATIC;
+  const all = [...STATIC, ...reviews];
+  const displayed = showAll ? all : all.slice(0, 6);
 
   return (
     <section className={styles.section}>
@@ -174,6 +174,17 @@ export default function Testimonials() {
           <ReviewCard key={r._id} review={r} />
         ))}
       </div>
+
+      {all.length > 6 && (
+        <div className={styles.showMoreWrapper}>
+          <button
+            className={styles.showMoreBtn}
+            onClick={() => setShowAll((v) => !v)}
+          >
+            {showAll ? "Ver menos ↑" : `Ver todas las reseñas (${all.length}) ↓`}
+          </button>
+        </div>
+      )}
 
       <div className={styles.formWrapper}>
         <ReviewForm />
