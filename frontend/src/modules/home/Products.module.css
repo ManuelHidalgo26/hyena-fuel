@@ -203,6 +203,43 @@
   border-color: #ff6a00;
 }
 
+/* Stock badges */
+.stockBadgeLow {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #ff6a00;
+  background: rgba(255, 106, 0, 0.12);
+  border: 1px solid rgba(255, 106, 0, 0.25);
+  border-radius: 5px;
+  padding: 0.2rem 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.stockBadgeMed {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #e8a000;
+  background: rgba(255, 200, 0, 0.1);
+  border: 1px solid rgba(255, 200, 0, 0.25);
+  border-radius: 5px;
+  padding: 0.2rem 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.stockBadgeOut {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #ff4444;
+  background: rgba(200, 0, 0, 0.1);
+  border: 1px solid rgba(200, 0, 0, 0.2);
+  border-radius: 5px;
+  padding: 0.2rem 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
 /* NO RESULTS */
 .noResults {
   text-align: center;

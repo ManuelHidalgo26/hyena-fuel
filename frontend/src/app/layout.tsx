@@ -8,10 +8,30 @@ import CartDrawer from "../components/cart/CartDrawer";
 import ShippingBanner from "../components/layout/ShippingBanner";
 
 export const metadata = {
-  title: "HYENA FUEL",
-  description: "HYENA FUEL — Combustible para tu entrenamiento",
-  icons: {
-    icon: "/favicon.ico",
+  title: "HYENA FUEL | Suplementos deportivos en Córdoba",
+  description:
+    "Suplementos deportivos de calidad para atletas que no negocian con la mediocridad. Whey Protein, Creatina, Pre-Entreno y más. Envío gratis en Córdoba.",
+  keywords: "suplementos deportivos córdoba, proteína whey, creatina, pre-entreno, BCAA",
+  icons: { icon: "/favicon.ico" },
+  openGraph: {
+    title: "HYENA FUEL | Suplementos deportivos en Córdoba",
+    description:
+      "Suplementos deportivos de calidad para atletas que no negocian con la mediocridad.",
+    type: "website",
+    locale: "es_AR",
+    images: [
+      {
+        url: "/images/hyena-fuel-logo.png",
+        width: 400,
+        height: 180,
+        alt: "HYENA FUEL Logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HYENA FUEL | Suplementos deportivos",
+    description: "Combustible para tu entrenamiento. Suplementos de calidad en Córdoba.",
   },
 };
 

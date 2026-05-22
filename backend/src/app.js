@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 
 import orderRoutes from "./routes/order.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
+import webhookRoutes from "./routes/webhook.routes.js";
+import newsletterRoutes from "./routes/newsletter.routes.js";
 import routes from "./routes.js";
 
 dotenv.config();
@@ -28,6 +30,8 @@ app.get("/", (req, res) => {
 ========================= */
 app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/payments/webhook", webhookRoutes);
+app.use("/api/newsletter", newsletterRoutes);
 app.use("/api", routes);
 
 /* =========================
