@@ -72,7 +72,7 @@ export default function CartDrawer() {
                 ? <>¡Pedido registrado! Retirá en <strong>Junín 5393, Córdoba</strong> — lunes a viernes de 8 a 12 hs o de 16 a 20 hs. Coordiná el horario por WhatsApp o Instagram.</>
                 : "Te redirigimos a MercadoPago para completar el pago. Una vez aprobado, coordinamos el envío."
               : deliveryMethod === "retiro"
-                ? <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>hyena.fuel</strong> y avisanos el comprobante. Retirá en <strong>Junín 5393, Córdoba</strong> — lunes a viernes de 8 a 12 hs o de 16 a 20 hs.</>
+                ? <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>hyena.fuel</strong> y envianos el comprobante. Retirá en <strong>Junín 5393, Córdoba</strong> — lunes a viernes de 8 a 12 hs o de 16 a 20 hs.</>
                 : <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>hyena.fuel</strong> y envianos el comprobante por WhatsApp o Instagram para confirmar tu pedido.</>
             }
           </p>
