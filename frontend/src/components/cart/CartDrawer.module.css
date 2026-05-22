@@ -349,6 +349,10 @@
   background: #25d366 !important;
 }
 
+.instagramBtn {
+  background: linear-gradient(45deg, #f58529, #dd2a7b, #8134af) !important;
+}
+
 .successBox button {
   background: transparent;
   border: 1px solid #555;

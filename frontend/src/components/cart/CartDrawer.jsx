@@ -66,7 +66,7 @@ export default function CartDrawer() {
           <p>
             {paymentMethod === "mercadopago"
               ? "Te redirigimos a MercadoPago para completar el pago. Una vez aprobado, coordinamos el envío."
-              : "Transferí al alias hyena.fuel y envianos el comprobante por WhatsApp para confirmar tu pedido."}
+              : "Transferí al alias hyena.fuel y envianos el comprobante por WhatsApp o Instagram para confirmar tu pedido."}
           </p>
 
           <div className={styles.successActions}>
@@ -82,6 +82,7 @@ export default function CartDrawer() {
               href="https://www.instagram.com/hyenafuel/"
               target="_blank"
               rel="noopener noreferrer"
+              className={styles.instagramBtn}
             >
               📸 Instagram
             </a>
