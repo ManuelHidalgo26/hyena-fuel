@@ -395,9 +395,116 @@
   border-top: 1px solid rgba(255,255,255,0.06);
 }
 
-@media (max-width: 600px) {
-  .productFormGrid { grid-template-columns: 1fr; }
-  .productCardHeader { flex-direction: column; align-items: flex-start; }
+/* =========================
+   RESPONSIVE MOBILE
+========================= */
+@media (max-width: 768px) {
+  /* Layout general */
+  .container {
+    padding: 1rem 0.9rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+    margin-bottom: 1.2rem;
+  }
+
+  /* Tabs — 2 columnas */
+  .tabs {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tab,
+  .tabActive {
+    flex: 1 1 calc(50% - 0.5rem);
+    min-width: 0;
+    padding: 0.55rem 0.6rem;
+    font-size: 0.78rem;
+    text-align: center;
+  }
+
+  /* Filtros */
+  .filters {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .filters button {
+    flex: 1 1 calc(33% - 0.5rem);
+    padding: 0.5rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  /* Card pedido */
+  .card {
+    padding: 1rem 0.9rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .badges {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  /* Productos — form */
+  .productFormGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .productForm {
+    padding: 1.1rem;
+  }
+
+  /* Productos — card */
+  .productCardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.7rem;
+  }
+
+  .stockControl {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .productCardActions {
+    flex-wrap: wrap;
+  }
+
+  .editBtn {
+    flex: 1;
+    text-align: center;
+  }
+
+  /* Suscriptores */
+  .subRow {
+    flex-wrap: wrap;
+    gap: 0.2rem;
+  }
+
+  .subDate {
+    width: 100%;
+    padding-left: 28px;
+  }
+
+  /* Reseñas */
+  .reviewCard {
+    padding: 1rem;
+  }
+
+  .reviewActions {
+    flex-direction: column;
+  }
 }
 
 /* =========================
