@@ -66,7 +66,7 @@ export default function CartDrawer() {
           <p>
             {paymentMethod === "mercadopago"
               ? "Te redirigimos a MercadoPago para completar el pago. Una vez aprobado, coordinamos el envío."
-              : "Envianos el comprobante de transferencia por WhatsApp para confirmar tu pedido."}
+              : "Transferí al alias hyena.fuel y envianos el comprobante por WhatsApp para confirmar tu pedido."}
           </p>
 
           <div className={styles.successActions}>
