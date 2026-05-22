@@ -32,7 +32,7 @@ export default function ProductsClient({ products }) {
 
     return (
     <>
-        {/* BARRA DE BÚSQUEDA Y FILTROS */}
+      {/* BARRA DE BÚSQUEDA Y FILTROS */}
         <div className={styles.toolbar}>
         <input
             type="text"
@@ -56,7 +56,7 @@ export default function ProductsClient({ products }) {
       {/* SIN RESULTADOS */}
         {filtered.length === 0 && (
         <p className={styles.noResults}>
-            No encontramos productos para "{search}"
+            No encontramos productos para &ldquo;{search}&rdquo;
         </p>
         )}
 
@@ -141,6 +141,22 @@ export default function ProductsClient({ products }) {
             </div>
             );
         })}
+        </div>
+
+        {/* BANNER A PEDIDO */}
+        <div className={styles.pedidoBanner}>
+          <p className={styles.pedidoTitle}>¿No encontrás lo que necesitás?</p>
+          <p className={styles.pedidoText}>
+            Trabajamos a pedido — consultanos por Instagram y lo conseguimos para vos.
+          </p>
+          <a
+            href="https://www.instagram.com/hyenafuel/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.pedidoLink}
+          >
+            Consultar por Instagram →
+          </a>
         </div>
     </>
     );

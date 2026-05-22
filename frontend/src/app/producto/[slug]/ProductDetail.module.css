@@ -114,6 +114,28 @@
   box-shadow: 0 0 14px rgba(255, 138, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
+/* A pedido */
+.pedidoBtn {
+  width: 100%;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  color: #aaa;
+  background: transparent;
+  transition: border-color 0.2s, color 0.2s;
+  text-align: center;
+}
+.pedidoBtn:hover {
+  border-color: #ff6a00;
+  color: #ff9a40;
+}
+
 /* Instagram */
 .instagram {
   margin-top: 0.8rem;

@@ -24,3 +24,23 @@
   transform: translateY(0);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
+
+/* A pedido */
+.pedidoBtn {
+  width: 100%;
+  padding: 0.75rem;
+  display: block;
+  text-align: center;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: transparent;
+  color: #aaa;
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-decoration: none;
+  transition: border-color 0.2s, color 0.2s;
+}
+.pedidoBtn:hover {
+  border-color: #ff6a00;
+  color: #ff6a00;
+}

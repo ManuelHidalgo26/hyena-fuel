@@ -3,6 +3,7 @@
 import styles from "./pedidos.module.css";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import AdminProductos from "./AdminProductos";
 
 const API = "https://hyena-fuel-api.onrender.com";
 const ADMIN_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY;
@@ -12,7 +13,7 @@ export default function PedidosClient() {
     const router = useRouter();
     const key = searchParams.get("key");
 
-    const [tab, setTab] = useState("pedidos"); // "pedidos" | "suscriptores" | "resenas"
+    const [tab, setTab] = useState("pedidos"); // "pedidos" | "productos" | "resenas" | "suscriptores"
     const [orders, setOrders] = useState([]);
     const [subscribers, setSubscribers] = useState([]);
     const [pendingReviews, setPendingReviews] = useState([]);
@@ -84,6 +85,12 @@ export default function PedidosClient() {
                     onClick={() => setTab("suscriptores")}
                 >
                     📧 Suscriptores ({subscribers.length})
+                </button>
+                <button
+                    className={tab === "productos" ? styles.tabActive : styles.tab}
+                    onClick={() => setTab("productos")}
+                >
+                    🛒 Productos
                 </button>
                 <button
                     className={tab === "resenas" ? styles.tabActive : styles.tab}
@@ -207,6 +214,9 @@ export default function PedidosClient() {
             )}
 
             {/* ===== SUSCRIPTORES ===== */}
+            {/* ===== PRODUCTOS ===== */}
+            {tab === "productos" && <AdminProductos />}
+
             {/* ===== RESEÑAS ===== */}
             {tab === "resenas" && (
                 <div className={styles.subsContainer}>

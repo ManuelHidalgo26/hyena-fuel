@@ -240,6 +240,47 @@
   margin-bottom: 0.5rem;
 }
 
+/* Banner a pedido */
+.pedidoBanner {
+  max-width: 600px;
+  margin: 3rem auto 0;
+  text-align: center;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 2rem 2.5rem;
+}
+
+.pedidoTitle {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 0.4rem;
+}
+
+.pedidoText {
+  font-size: 0.9rem;
+  color: #777;
+  margin-bottom: 1.2rem;
+  line-height: 1.5;
+}
+
+.pedidoLink {
+  display: inline-block;
+  padding: 0.65rem 1.6rem;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid #ff6a00;
+  color: #ff6a00;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.pedidoLink:hover {
+  background: #ff6a00;
+  color: #000;
+}
+
 /* NO RESULTS */
 .noResults {
   text-align: center;

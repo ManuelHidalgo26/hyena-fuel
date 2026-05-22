@@ -193,6 +193,214 @@
 .deleteBtn:hover { background: #444; }
 
 /* =========================
+   PANEL PRODUCTOS
+========================= */
+.flashMsg {
+  text-align: center;
+  background: rgba(255,106,0,0.15);
+  border: 1px solid rgba(255,106,0,0.3);
+  color: #ff9a40;
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 1.4rem;
+}
+
+.addProductHeader {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.productForm {
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 1.6rem;
+  margin-bottom: 1.8rem;
+}
+
+.productFormTitle {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 1.2rem;
+}
+
+.productFormGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.fieldLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: #888;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fieldInput,
+.fieldTextarea {
+  background: #0b0b0b;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.88rem;
+  padding: 0.6rem 0.8rem;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+
+.fieldInput:focus,
+.fieldTextarea:focus { border-color: #ff6a00; }
+
+.fieldTextarea { resize: vertical; }
+
+.productList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.productCard {
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 1.2rem 1.4rem;
+  transition: border-color 0.2s;
+}
+
+.productCard:hover { border-color: rgba(255,106,0,0.25); }
+
+.productInactive { opacity: 0.5; }
+
+.productCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.productCardInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.productThumb {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #0b0b0b;
+}
+
+.productName {
+  font-weight: 800;
+  color: #fff;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.productPrices {
+  font-size: 0.78rem;
+  color: #777;
+  margin-top: 0.2rem;
+}
+
+.inactiveBadge {
+  background: #333;
+  color: #888;
+  font-size: 0.65rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.stockControl {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stockLabel {
+  font-size: 0.75rem;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.stockInput {
+  width: 70px;
+  background: #0b0b0b;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 7px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0.4rem 0.6rem;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.stockInput:focus { border-color: #ff6a00; }
+
+.stockSaveBtn {
+  padding: 0.4rem 0.75rem;
+  border-radius: 7px;
+  border: none;
+  background: #ff6a00;
+  color: #000;
+  font-weight: 800;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+.stockSaveBtn:hover { opacity: 0.85; }
+
+.productCardActions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+
+.editBtn {
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: transparent;
+  color: #ccc;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.editBtn:hover { background: #1c1c1c; color: #fff; }
+
+.editForm {
+  margin-top: 1.2rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+@media (max-width: 600px) {
+  .productFormGrid { grid-template-columns: 1fr; }
+  .productCardHeader { flex-direction: column; align-items: flex-start; }
+}
+
+/* =========================
    FILTROS
 ========================= */
 .filters {
