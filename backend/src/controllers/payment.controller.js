@@ -34,7 +34,7 @@ export const createPaymentPreference = async (req, res) => {
     }
 
     if (process.env.BACKEND_URL) {
-      body.notification_url = `${process.env.BACKEND_URL}/api/payments/webhook`;
+      body.notification_url = `${process.env.BACKEND_URL}/api/payments/webhook/mercadopago`;
     }
 
     const response = await preference.create({ body });

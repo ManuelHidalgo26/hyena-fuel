@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import NextImage from "next/image";
 import styles from "./CartDrawer.module.css";
 import { useCart } from "../../context/CartContext";
 import { trackEvent, GA_EVENTS } from "../../lib/ga";
@@ -186,9 +187,11 @@ export default function CartDrawer() {
               return (
                 <li key={item._id} className={styles.item}>
                   {item.image && (
-                    <img
+                    <NextImage
                       src={item.image}
                       alt={item.name}
+                      width={60}
+                      height={60}
                       className={styles.image}
                     />
                   )}
