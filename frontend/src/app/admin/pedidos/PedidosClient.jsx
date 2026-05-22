@@ -48,6 +48,19 @@ export default function PedidosClient() {
         setPendingReviews((prev) => prev.filter((r) => r._id !== id));
     };
 
+    const clearCompleted = async () => {
+        const completed = orders.filter((o) => ["dispatched", "paid", "cancelled"].includes(o.status));
+        if (completed.length === 0) return alert("No hay pedidos finalizados para limpiar.");
+        const ok = window.confirm(`¿Eliminar ${completed.length} pedido${completed.length !== 1 ? "s" : ""} finalizado${completed.length !== 1 ? "s" : ""}? Esta acción no se puede deshacer.`);
+        if (!ok) return;
+        const res = await fetch(`${API}/api/orders/completed`, { method: "DELETE" });
+        if (res.ok) {
+            const { deleted } = await res.json();
+            setOrders((prev) => prev.filter((o) => !["dispatched", "paid", "cancelled"].includes(o.status)));
+            alert(`✓ ${deleted} pedido${deleted !== 1 ? "s" : ""} eliminado${deleted !== 1 ? "s" : ""}.`);
+        }
+    };
+
     const updateStatus = async (orderId, status) => {
         await fetch(`${API}/api/orders/${orderId}/status`, {
             method: "PATCH",
@@ -123,6 +136,14 @@ export default function PedidosClient() {
                             Mercado Pago
                         </button>
                     </div>
+
+                    {orders.some((o) => ["dispatched", "paid", "cancelled"].includes(o.status)) && (
+                        <div className={styles.clearCompletedWrapper}>
+                            <button className={styles.clearCompletedBtn} onClick={clearCompleted}>
+                                🗑 Limpiar finalizados ({orders.filter((o) => ["dispatched", "paid", "cancelled"].includes(o.status)).length})
+                            </button>
+                        </div>
+                    )}
 
                     <div className={styles.list}>
                         {filteredOrders.map((order) => {

@@ -508,6 +508,32 @@
 }
 
 /* =========================
+   LIMPIAR FINALIZADOS
+========================= */
+.clearCompletedWrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.2rem;
+}
+
+.clearCompletedBtn {
+  padding: 0.5rem 1.1rem;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 68, 68, 0.4);
+  background: rgba(255, 68, 68, 0.08);
+  color: #ff6b6b;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.clearCompletedBtn:hover {
+  background: rgba(255, 68, 68, 0.18);
+  border-color: rgba(255, 68, 68, 0.7);
+}
+
+/* =========================
    FILTROS
 ========================= */
 .filters {

@@ -113,8 +113,19 @@ export const createOrder = async (req, res) => {
 };
 
 /* =========================
-    LISTAR PEDIDOS
+    LIMPIAR PEDIDOS FINALIZADOS
 ========================= */
+export const deleteCompletedOrders = async (req, res) => {
+    try {
+        const result = await Order.deleteMany({
+            status: { $in: ["dispatched", "paid", "cancelled"] },
+        });
+        res.json({ deleted: result.deletedCount });
+    } catch (error) {
+        console.error("❌ Error eliminando pedidos finalizados:", error);
+        res.status(500).json({ message: "Error eliminando pedidos" });
+    }
+};
 export const getOrders = async (req, res) => {
     try {
     const orders = await Order.find().sort({ createdAt: -1 });
