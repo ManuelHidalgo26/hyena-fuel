@@ -29,6 +29,7 @@ export default function CartDrawer() {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [orderTotal, setOrderTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const processingRef = useRef(false);
 
@@ -66,7 +67,7 @@ export default function CartDrawer() {
           <p>
             {paymentMethod === "mercadopago"
               ? "Te redirigimos a MercadoPago para completar el pago. Una vez aprobado, coordinamos el envío."
-              : "Transferí al alias hyena.fuel y envianos el comprobante por WhatsApp o Instagram para confirmar tu pedido."}
+              : <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>hyena.fuel</strong> y envianos el comprobante por WhatsApp o Instagram para confirmar tu pedido.</>}
           </p>
 
           <div className={styles.successActions}>
@@ -179,6 +180,7 @@ export default function CartDrawer() {
         }
       }
 
+      setOrderTotal(totalFinal);
       clearCart();
       closeCart();
       setOrderSuccess(true);
