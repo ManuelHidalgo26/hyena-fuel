@@ -12,9 +12,10 @@ export default function PedidosClient() {
     const router = useRouter();
     const key = searchParams.get("key");
 
-    const [tab, setTab] = useState("pedidos"); // "pedidos" | "suscriptores"
+    const [tab, setTab] = useState("pedidos"); // "pedidos" | "suscriptores" | "resenas"
     const [orders, setOrders] = useState([]);
     const [subscribers, setSubscribers] = useState([]);
+    const [pendingReviews, setPendingReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("all");
 
@@ -27,12 +28,24 @@ export default function PedidosClient() {
         Promise.all([
             fetch(`${API}/api/orders`, { cache: "no-store" }).then((r) => r.json()),
             fetch(`${API}/api/newsletter`, { cache: "no-store" }).then((r) => r.json()),
-        ]).then(([ordersData, subsData]) => {
+            fetch(`${API}/api/reviews/pending`, { cache: "no-store" }).then((r) => r.json()),
+        ]).then(([ordersData, subsData, reviewsData]) => {
             setOrders(ordersData);
             setSubscribers(subsData);
+            setPendingReviews(Array.isArray(reviewsData) ? reviewsData : []);
             setLoading(false);
         });
     }, [key, router]);
+
+    const approveReview = async (id) => {
+        await fetch(`${API}/api/reviews/${id}/approve`, { method: "PATCH" });
+        setPendingReviews((prev) => prev.filter((r) => r._id !== id));
+    };
+
+    const deleteReview = async (id) => {
+        await fetch(`${API}/api/reviews/${id}`, { method: "DELETE" });
+        setPendingReviews((prev) => prev.filter((r) => r._id !== id));
+    };
 
     const updateStatus = async (orderId, status) => {
         await fetch(`${API}/api/orders/${orderId}/status`, {
@@ -71,6 +84,12 @@ export default function PedidosClient() {
                     onClick={() => setTab("suscriptores")}
                 >
                     📧 Suscriptores ({subscribers.length})
+                </button>
+                <button
+                    className={tab === "resenas" ? styles.tabActive : styles.tab}
+                    onClick={() => setTab("resenas")}
+                >
+                    ⭐ Reseñas {pendingReviews.length > 0 && `(${pendingReviews.length} pendiente${pendingReviews.length !== 1 ? "s" : ""})`}
                 </button>
             </div>
 
@@ -188,6 +207,43 @@ export default function PedidosClient() {
             )}
 
             {/* ===== SUSCRIPTORES ===== */}
+            {/* ===== RESEÑAS ===== */}
+            {tab === "resenas" && (
+                <div className={styles.subsContainer}>
+                    {pendingReviews.length === 0 ? (
+                        <p className={styles.subsHint}>No hay reseñas pendientes de aprobación.</p>
+                    ) : (
+                        <>
+                            <p className={styles.subsHint}>
+                                {pendingReviews.length} reseña{pendingReviews.length !== 1 ? "s" : ""} esperando tu aprobación para publicarse.
+                            </p>
+                            <div className={styles.reviewsList}>
+                                {pendingReviews.map((r) => (
+                                    <div key={r._id} className={styles.reviewCard}>
+                                        <div className={styles.reviewHeader}>
+                                            <span className={styles.reviewName}>{r.name}</span>
+                                            <span className={styles.reviewStars}>{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
+                                            <span className={styles.subDate}>
+                                                {new Date(r.createdAt).toLocaleDateString("es-AR")}
+                                            </span>
+                                        </div>
+                                        <p className={styles.reviewText}>&ldquo;{r.text}&rdquo;</p>
+                                        <div className={styles.reviewActions}>
+                                            <button className={styles.approveBtn} onClick={() => approveReview(r._id)}>
+                                                ✓ Aprobar y publicar
+                                            </button>
+                                            <button className={styles.deleteBtn} onClick={() => deleteReview(r._id)}>
+                                                ✗ Eliminar
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
+
             {tab === "suscriptores" && (
                 <div className={styles.subsContainer}>
                     <p className={styles.subsHint}>

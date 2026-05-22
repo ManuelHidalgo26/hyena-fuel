@@ -1,62 +1,182 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import styles from "./Testimonials.module.css";
 
-const testimonials = [
+const STATIC = [
   {
+    _id: "s1",
     name: "Martín R.",
-    location: "Córdoba Capital",
-    role: "Culturismo amateur",
     text: "La proteína es de muy buena calidad, sin rellenos. Llegó en 2 días bien empaquetada. Me gustó que te aclaran todo antes de comprar.",
-    stars: 5,
+    rating: 5,
+    location: "Córdoba Capital",
   },
   {
+    _id: "s2",
     name: "Lucía T.",
-    location: "Villa Carlos Paz",
-    role: "CrossFit",
     text: "Llevo 3 meses usando la creatina y el pre-entreno. Los resultados son reales. El precio por transferencia es muy conveniente.",
-    stars: 5,
+    rating: 5,
+    location: "Córdoba Capital",
   },
   {
+    _id: "s3",
     name: "Federico M.",
-    location: "Córdoba",
-    role: "Entrenamiento funcional",
     text: "Me contacté por Instagram y me respondieron al toque. Los suplementos son originales y el envío gratis a partir de $120k es un golazo.",
-    stars: 5,
+    rating: 5,
+    location: "Córdoba Capital",
   },
 ];
 
-function StarRating({ count }) {
+function Stars({ count, interactive = false, onSelect }) {
   return (
-    <div className={styles.stars} aria-label={`${count} estrellas`}>
-      {"★".repeat(count)}
-      {"☆".repeat(5 - count)}
+    <div className={styles.stars}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <span
+          key={n}
+          className={n <= count ? styles.starFilled : styles.starEmpty}
+          onClick={() => interactive && onSelect?.(n)}
+          style={interactive ? { cursor: "pointer" } : undefined}
+        >
+          ★
+        </span>
+      ))}
     </div>
   );
 }
 
+function ReviewCard({ review }) {
+  return (
+    <div className={styles.card}>
+      <Stars count={review.rating} />
+      <p className={styles.text}>&ldquo;{review.text}&rdquo;</p>
+      <div className={styles.author}>
+        <div className={styles.avatar}>{review.name.charAt(0).toUpperCase()}</div>
+        <div>
+          <p className={styles.authorName}>{review.name}</p>
+          {review.location && (
+            <p className={styles.authorRole}>{review.location}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReviewForm() {
+  const [name, setName] = useState("");
+  const [text, setText] = useState("");
+  const [rating, setRating] = useState(5);
+  const [hover, setHover] = useState(0);
+  const [status, setStatus] = useState(null); // "success" | "error"
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!name.trim() || !text.trim() || loading) return;
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/reviews`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, text, rating }),
+        }
+      );
+      setStatus(res.ok ? "success" : "error");
+      if (res.ok) { setName(""); setText(""); setRating(5); }
+    } catch {
+      setStatus("error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (status === "success") {
+    return (
+      <div className={styles.formSuccess}>
+        ✅ ¡Gracias por tu reseña! Será publicada una vez revisada.
+      </div>
+    );
+  }
+
+  return (
+    <form className={styles.form} onSubmit={handleSubmit}>
+      <h3 className={styles.formTitle}>Dejá tu reseña</h3>
+
+      {/* Star selector */}
+      <div className={styles.starSelector}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <span
+            key={n}
+            className={(hover || rating) >= n ? styles.starFilled : styles.starEmpty}
+            onMouseEnter={() => setHover(n)}
+            onMouseLeave={() => setHover(0)}
+            onClick={() => setRating(n)}
+          >
+            ★
+          </span>
+        ))}
+      </div>
+
+      <input
+        className={styles.input}
+        type="text"
+        placeholder="Tu nombre"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        required
+        maxLength={60}
+      />
+
+      <textarea
+        className={styles.textarea}
+        placeholder="Contanos tu experiencia (máx. 300 caracteres)"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        required
+        maxLength={300}
+        rows={3}
+      />
+
+      {status === "error" && (
+        <p className={styles.formError}>Error al enviar. Intentá de nuevo.</p>
+      )}
+
+      <button className={styles.submitBtn} type="submit" disabled={loading}>
+        {loading ? "Enviando..." : "Enviar reseña"}
+      </button>
+    </form>
+  );
+}
+
 export default function Testimonials() {
+  const [reviews, setReviews] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews`)
+      .then((r) => r.json())
+      .then((data) => { setReviews(Array.isArray(data) ? data : []); })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, []);
+
+  const displayed = loaded && reviews.length > 0 ? reviews : STATIC;
+
   return (
     <section className={styles.section}>
       <h2 className={styles.title}>Lo que dicen nuestros clientes</h2>
       <p className={styles.subtitle}>Atletas reales, resultados reales.</p>
 
       <div className={styles.grid}>
-        {testimonials.map((t) => (
-          <div key={t.name} className={styles.card}>
-            <StarRating count={t.stars} />
-            <p className={styles.text}>&ldquo;{t.text}&rdquo;</p>
-            <div className={styles.author}>
-              <div className={styles.avatar}>
-                {t.name.charAt(0)}
-              </div>
-              <div>
-                <p className={styles.authorName}>{t.name}</p>
-                <p className={styles.authorRole}>
-                  {t.role} · {t.location}
-                </p>
-              </div>
-            </div>
-          </div>
+        {displayed.map((r) => (
+          <ReviewCard key={r._id} review={r} />
         ))}
+      </div>
+
+      <div className={styles.formWrapper}>
+        <ReviewForm />
       </div>
     </section>
   );
