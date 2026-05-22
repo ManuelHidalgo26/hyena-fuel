@@ -19,7 +19,7 @@ const testimonials = [
     name: "Federico M.",
     location: "Córdoba",
     role: "Entrenamiento funcional",
-    text: "El soporte por WhatsApp es muy ágil, te responden rápido. Los suplementos son originales y el envío gratis a partir de $120k es un golazo.",
+    text: "Me contacté por Instagram y me respondieron al toque. Los suplementos son originales y el envío gratis a partir de $120k es un golazo.",
     stars: 5,
   },
 ];

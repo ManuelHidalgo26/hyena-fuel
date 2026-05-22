@@ -19,6 +19,102 @@
 }
 
 /* =========================
+   TABS
+========================= */
+.tabs {
+  display: flex;
+  gap: 0.8rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+}
+
+.tab,
+.tabActive {
+  padding: 0.65rem 1.6rem;
+  border-radius: 12px;
+  border: none;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab {
+  background: #1c1c1c;
+  color: #aaa;
+}
+
+.tab:hover {
+  background: #282828;
+  color: #fff;
+}
+
+.tabActive {
+  background: #ff4d1c;
+  color: #000;
+}
+
+/* =========================
+   SUSCRIPTORES
+========================= */
+.subsContainer {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.subsHint {
+  text-align: center;
+  color: #888;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.subsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: #111;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+.subRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1.2rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  transition: background 0.15s;
+}
+
+.subRow:last-child {
+  border-bottom: none;
+}
+
+.subRow:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.subIndex {
+  font-size: 0.75rem;
+  color: #555;
+  min-width: 28px;
+}
+
+.subEmail {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #eee;
+  font-weight: 500;
+}
+
+.subDate {
+  font-size: 0.78rem;
+  color: #666;
+}
+
+/* =========================
    FILTROS
 ========================= */
 .filters {

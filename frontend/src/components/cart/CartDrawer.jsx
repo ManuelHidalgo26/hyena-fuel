@@ -333,7 +333,6 @@ export default function CartDrawer() {
             <div className={styles.trustBadges}>
               <span className={styles.trustBadge}>🔒 Pago seguro</span>
               <span className={styles.trustBadge}>🚚 Envío a todo Córdoba</span>
-              <span className={styles.trustBadge}>↩️ Cambios disponibles</span>
             </div>
           </div>
         </div>
