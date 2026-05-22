@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import styles from "./ComoComprar.module.css";
+import { LightboxImage } from "./Lightbox";
 
 export const metadata = {
   title: "Cómo comprar — HYENA FUEL",
@@ -134,13 +134,16 @@ export default function ComoComprarPage() {
                 <h2 className={styles.stepTitle}>{step.title}</h2>
                 <p className={styles.stepDesc}>{step.desc}</p>
               </div>
-              <Image
-                src={step.img}
-                alt={step.alt}
-                width={480}
-                height={300}
-                className={styles.screenshot}
-              />
+              <div className={styles.screenshotWrap}>
+                <LightboxImage
+                  src={step.img}
+                  alt={step.alt}
+                  width={480}
+                  height={300}
+                  className={styles.screenshot}
+                />
+                <span className={styles.zoomHint}>🔍 Clic para ampliar</span>
+              </div>
             </div>
           ))}
         </div>
