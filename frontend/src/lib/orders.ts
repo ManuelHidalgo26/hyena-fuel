@@ -8,6 +8,16 @@ export const SHIPPING_COST = 5000;
 export type PaymentMethod = "transferencia" | "mercadopago";
 export type DeliveryMethod = "envio" | "retiro";
 
+/**
+ * Estados en los que una orden "gana" comisión de verdad (ADR 0002 #5): `commission_total`
+ * se congela al crear la orden, pero solo es pagable/acumulable a partir de `confirmed`.
+ * `pending` todavía no se confirmó y `cancelled` se excluye siempre de liquidaciones.
+ */
+export const PAYABLE_ORDER_STATUSES = ["confirmed", "dispatched", "paid"] as const;
+
+/** Único estado que se excluye de "ventas" del vendedor: un pedido cancelado no fue una venta. */
+export const CANCELLED_ORDER_STATUS = "cancelled";
+
 export type OrderLineItem = {
   productId: string;
   quantity: number;

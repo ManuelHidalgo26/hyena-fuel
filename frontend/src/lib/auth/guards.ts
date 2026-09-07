@@ -74,3 +74,32 @@ export async function requireAdmin(): Promise<AdminGuardResult> {
 
   return { authorized: true, user };
 }
+
+export type SellerGuardResult =
+  | { authorized: true; user: SessionUser }
+  | { authorized: false; response: NextResponse };
+
+/**
+ * Guard para Route Handlers del portal vendedor (`src/app/api/seller/**`).
+ * Mismo patrón que `requireAdmin()`: re-verifica sesión + rol server-side
+ * (defensa en profundidad además del middleware y de RLS, ADR 0003).
+ */
+export async function requireSeller(): Promise<SellerGuardResult> {
+  const user = await getSessionUser();
+
+  if (!user) {
+    return {
+      authorized: false,
+      response: NextResponse.json({ error: "No autenticado" }, { status: 401 }),
+    };
+  }
+
+  if (user.role !== "seller") {
+    return {
+      authorized: false,
+      response: NextResponse.json({ error: "No autorizado" }, { status: 403 }),
+    };
+  }
+
+  return { authorized: true, user };
+}
