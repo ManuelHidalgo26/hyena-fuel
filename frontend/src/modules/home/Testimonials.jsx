@@ -75,11 +75,14 @@ function ReviewForm() {
     if (!name.trim() || !text.trim() || loading) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/reviews", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, text, rating }),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/reviews`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, text, rating }),
+        }
+      );
       setStatus(res.ok ? "success" : "error");
       if (res.ok) { setName(""); setText(""); setRating(5); }
     } catch {
@@ -152,7 +155,7 @@ export default function Testimonials() {
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
-    fetch("/api/reviews")
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews`)
       .then((r) => r.json())
       .then((data) => { setReviews(Array.isArray(data) ? data : []); })
       .catch(() => {});
