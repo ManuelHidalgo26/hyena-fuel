@@ -69,8 +69,8 @@ export default function CartDrawer() {
           <p>
             {paymentMethod === "mercadopago"
               ? deliveryMethod === "retiro"
-                ? <>¡Pedido registrado! Retirá en <strong>Junín 5393, Córdoba</strong> — lunes a viernes de 8 a 12 hs o de 16 a 20 hs. Coordiná el horario por WhatsApp o Instagram.</>
-                : "Te redirigimos a MercadoPago para completar el pago. Una vez aprobado, coordinamos el envío."
+                ? <>¡Pedido registrado! Retirá en <strong>Junín 5393, Córdoba</strong> — lunes a viernes de 8 a 12 hs o de 16 a 20 hs. Coordinamos el horario y el pago (tarjeta/efectivo) por WhatsApp o Instagram.</>
+                : "Recibimos tu pedido. Coordinamos el pago (tarjeta/efectivo) y la entrega por WhatsApp."
               : deliveryMethod === "retiro"
                 ? <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>hyena.fuel</strong> y envianos el comprobante. Retirá en <strong>Junín 5393, Córdoba</strong> — lunes a viernes de 8 a 12 hs o de 16 a 20 hs.</>
                 : <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>hyena.fuel</strong> y envianos el comprobante por WhatsApp o Instagram para confirmar tu pedido.</>
@@ -159,34 +159,6 @@ export default function CartDrawer() {
         currency: "ARS",
         num_items: cartItems.reduce((s, i) => s + i.quantity, 0),
       });
-
-      if (paymentMethod === "mercadopago") {
-        try {
-          const payRes = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/payments/create`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                items: cartItems.map((item) => ({
-                  name: item.name,
-                  price: item.price,
-                  quantity: item.quantity,
-                })),
-                orderId: order._id,
-                customerEmail: email,
-              }),
-            }
-          );
-          const payData = await payRes.json();
-          const checkoutUrl =
-            payData.checkoutUrl ||
-            "https://link.mercadopago.com.ar/hyenafuel";
-          window.open(checkoutUrl, "_blank");
-        } catch {
-          window.open("https://link.mercadopago.com.ar/hyenafuel", "_blank");
-        }
-      }
 
       setOrderTotal(totalFinal);
       clearCart();
@@ -325,7 +297,7 @@ export default function CartDrawer() {
                 checked={paymentMethod === "mercadopago"}
                 onChange={() => setPaymentMethod("mercadopago")}
               />
-              💳 Débito / Crédito (MercadoPago)
+              💳 Tarjeta / efectivo (coordinamos por WhatsApp)
             </label>
 
             <label className={styles.radioLabel}>

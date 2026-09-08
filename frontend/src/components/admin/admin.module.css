@@ -1,0 +1,886 @@
+/* =====================================================================
+   HYENA FUEL — Sistema visual del panel admin (Fase 1, tarea 8a)
+   =====================================================================
+   Fuente de verdad de tokens: src/styles/globals.css (bloque
+   "ADMIN PANEL TOKENS"), que a su vez reusa los tokens de marca
+   --hyena-*. Este módulo NO define colores nuevos, solo layout/estructura
+   sobre esos tokens.
+
+   Convención tipográfica: no se introduce una fuente display (Anton) acá
+   — no existe en el repo hoy (ni siquiera cargada por next/font en ningún
+   lado). Los títulos usan el mismo idioma que ya está en
+   panel.module.css/login.module.css: sans-serif del sistema en bold/900.
+   Si Fase 2 carga Anton para toda la marca, este archivo hereda el cambio
+   sin tocar nada (no hay font-family hardcodeada acá salvo el fallback).
+
+   Owner: ux. No duplicar clases: extender este archivo antes de crear
+   estilos admin nuevos en otro lado.
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   0. Utilidades
+   --------------------------------------------------------------------- */
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------------------------------------------------------------------
+   1. Shell neutro — panel/layout.tsx (envuelve TODO /panel, login incluido)
+   --------------------------------------------------------------------- */
+
+.neutralShell {
+  min-height: 100vh;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------------------------------
+   2. Nav del panel — panel/(app)/layout.tsx (componente AdminNav)
+   --------------------------------------------------------------------- */
+
+.navBar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--admin-surface);
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.navInner {
+  max-width: 1180px;
+  margin: 0 auto;
+  min-height: 64px;
+  padding: 0.6rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.navBrand {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  flex-shrink: 0;
+}
+
+.navBrandMark {
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  color: var(--admin-text);
+}
+
+.navBrandCaption {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--admin-accent);
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex: 1 1 auto;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navLinks::-webkit-scrollbar {
+  display: none;
+}
+
+.navLink {
+  flex-shrink: 0;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--admin-radius-pill);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--admin-text-muted);
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.navLink:hover {
+  color: var(--admin-text);
+  background: var(--admin-border);
+}
+
+.navLink:focus-visible {
+  outline: none;
+  box-shadow: var(--admin-focus-ring);
+}
+
+.navLinkActive,
+.navLinkActive:hover {
+  color: var(--admin-accent);
+  background: rgba(255, 138, 0, 0.14);
+  border-color: rgba(255, 138, 0, 0.4);
+}
+
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-shrink: 0;
+}
+
+.navUserEmail {
+  font-size: 0.8rem;
+  color: var(--admin-text-muted);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------
+   3. Contenedor de página + header (AdminPageHeader)
+   --------------------------------------------------------------------- */
+
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.pageHeaderText {
+  min-width: 0;
+}
+
+.pageTitle {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--admin-text);
+  margin: 0;
+}
+
+.pageDescription {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  color: var(--admin-text-muted);
+  max-width: 60ch;
+}
+
+.pageHeaderAction {
+  flex-shrink: 0;
+  display: flex;
+  gap: 0.6rem;
+}
+
+/* ---------------------------------------------------------------------
+   4. Botones (AdminButton)
+   --------------------------------------------------------------------- */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 40px;
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--admin-radius-sm);
+  border: 1px solid transparent;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.button:focus-visible {
+  outline: none;
+  box-shadow: var(--admin-focus-ring);
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.buttonSm {
+  min-height: 32px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  border-radius: var(--admin-radius-sm);
+}
+
+.buttonPrimary {
+  background: var(--admin-accent);
+  color: var(--admin-accent-contrast);
+}
+
+.buttonPrimary:hover:not(:disabled) {
+  background: var(--admin-accent-strong);
+}
+
+.buttonSecondary {
+  background: transparent;
+  color: var(--admin-text);
+  border-color: var(--admin-border-strong);
+}
+
+.buttonSecondary:hover:not(:disabled) {
+  border-color: var(--admin-accent);
+  color: var(--admin-accent);
+}
+
+.buttonDanger {
+  background: var(--admin-danger-bg);
+  color: var(--admin-danger-text);
+  border-color: var(--admin-danger-border);
+}
+
+.buttonDanger:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.26);
+  border-color: rgba(220, 38, 38, 0.75);
+}
+
+.buttonGhost {
+  background: transparent;
+  color: var(--admin-text-muted);
+  border-color: transparent;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.buttonGhost:hover:not(:disabled) {
+  color: var(--admin-text);
+  background: var(--admin-border);
+}
+
+.buttonSpinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  opacity: 0.85;
+  animation: adminSpin 0.7s linear infinite;
+}
+
+@keyframes adminSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   5. Badges (AdminBadge + OrderStatusBadge/PaymentMethodBadge/DeliveryMethodBadge)
+   --------------------------------------------------------------------- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--admin-radius-pill);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.badgeOutline {
+  background: transparent !important;
+}
+
+.toneNeutral {
+  color: var(--admin-neutral-text);
+  background: var(--admin-neutral-bg);
+  border-color: var(--admin-neutral-border);
+}
+
+.toneInfo {
+  color: var(--admin-info-text);
+  background: var(--admin-info-bg);
+  border-color: var(--admin-info-border);
+}
+
+.toneAccent {
+  color: var(--admin-accent2-text);
+  background: var(--admin-accent2-bg);
+  border-color: var(--admin-accent2-border);
+}
+
+.toneSuccess {
+  color: var(--admin-success-text);
+  background: var(--admin-success-bg);
+  border-color: var(--admin-success-border);
+}
+
+.toneWarning {
+  color: var(--admin-warning-text);
+  background: var(--admin-warning-bg);
+  border-color: var(--admin-warning-border);
+}
+
+.toneDanger {
+  color: var(--admin-danger-text);
+  background: var(--admin-danger-bg);
+  border-color: var(--admin-danger-border);
+}
+
+/* ---------------------------------------------------------------------
+   6. Filtro segmentado (AdminFilterTabs) — ej. filtro por medio de pago
+   --------------------------------------------------------------------- */
+
+.filterGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.filterTab {
+  padding: 0.5rem 1rem;
+  border-radius: var(--admin-radius-pill);
+  border: 1px solid var(--admin-border-strong);
+  background: transparent;
+  color: var(--admin-text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 36px;
+  transition: all 0.15s ease;
+}
+
+.filterTab:hover {
+  color: var(--admin-text);
+  border-color: var(--admin-text-muted);
+}
+
+.filterTab:focus-visible {
+  outline: none;
+  box-shadow: var(--admin-focus-ring);
+}
+
+.filterTabActive,
+.filterTabActive:hover {
+  background: var(--admin-accent);
+  color: var(--admin-accent-contrast);
+  border-color: var(--admin-accent);
+}
+
+/* ---------------------------------------------------------------------
+   7. Tabla de datos (AdminTable)
+   --------------------------------------------------------------------- */
+
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.table th {
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--admin-text-muted);
+  background: var(--admin-surface-raised);
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid var(--admin-border-strong);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.8rem 1rem;
+  color: var(--admin-text);
+  border-bottom: 1px solid var(--admin-border);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover td {
+  background: var(--admin-surface-raised);
+}
+
+.rowInactive td {
+  opacity: 0.5;
+}
+
+.rowMedia {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.rowThumb {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  object-fit: contain;
+  background: var(--admin-surface-sunken);
+  border-radius: var(--admin-radius-sm);
+}
+
+.rowTitle {
+  font-weight: 800;
+  color: var(--admin-text);
+  font-size: 0.88rem;
+}
+
+.rowSubtitle {
+  margin-top: 0.15rem;
+  font-size: 0.76rem;
+  color: var(--admin-text-muted);
+}
+
+.cellNumeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.cellMuted {
+  color: var(--admin-text-muted);
+}
+
+.cellActions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cellActionsInner {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ---------------------------------------------------------------------
+   8. Patrón de tarjeta (no tabular — ej. reseñas: texto largo por fila)
+   --------------------------------------------------------------------- */
+
+.card {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-left: 3px solid var(--admin-accent);
+  border-radius: var(--admin-radius-md);
+  padding: 1.1rem 1.3rem;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.cardTitle {
+  font-weight: 800;
+  color: var(--admin-text);
+  font-size: 0.92rem;
+}
+
+.cardMeta {
+  font-size: 0.78rem;
+  color: var(--admin-text-muted);
+}
+
+.cardBody {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin: 0 0 1rem;
+}
+
+.cardActions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ---------------------------------------------------------------------
+   9. Formularios (AdminField + inputs)
+   --------------------------------------------------------------------- */
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.fieldWide {
+  grid-column: 1 / -1;
+}
+
+.label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--admin-text-muted);
+}
+
+.requiredMark {
+  color: var(--admin-accent);
+  margin-left: 0.2rem;
+}
+
+.hint {
+  font-size: 0.76rem;
+  color: var(--admin-text-faint);
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  min-height: 40px;
+  background: var(--admin-surface-sunken);
+  border: 1px solid var(--admin-border-strong);
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text);
+  font-size: 0.88rem;
+  font-family: inherit;
+  padding: 0.6rem 0.75rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--admin-text-faint);
+}
+
+.input:focus-visible,
+.textarea:focus-visible,
+.select:focus-visible {
+  border-color: var(--admin-accent);
+  box-shadow: var(--admin-focus-ring);
+}
+
+.input:disabled,
+.textarea:disabled,
+.select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fieldError {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--admin-danger-text);
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 40px;
+  cursor: pointer;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--admin-accent);
+  cursor: pointer;
+}
+
+.checkbox:focus-visible {
+  outline: none;
+  box-shadow: var(--admin-focus-ring);
+}
+
+/* ---------------------------------------------------------------------
+   10. Modal de confirmación (AdminModal)
+   --------------------------------------------------------------------- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 100;
+}
+
+.modal {
+  width: 100%;
+  max-width: 440px;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border-strong);
+  border-radius: var(--admin-radius-lg);
+  padding: 1.75rem;
+  box-shadow: var(--admin-shadow-strong);
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--admin-text);
+}
+
+.modalDescription {
+  margin: 0.6rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--admin-text-muted);
+}
+
+.modalActions {
+  margin-top: 1.75rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* ---------------------------------------------------------------------
+   11. Estados vacío / error (AdminEmptyState / AdminErrorState)
+   --------------------------------------------------------------------- */
+
+.stateBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.4rem;
+  padding: 3.5rem 1.5rem;
+  background: var(--admin-surface);
+  border: 1px dashed var(--admin-border-strong);
+  border-radius: var(--admin-radius-md);
+}
+
+.stateIcon {
+  color: var(--admin-text-faint);
+  margin-bottom: 0.5rem;
+}
+
+.stateTitle {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--admin-text);
+  margin: 0;
+}
+
+.stateDescription {
+  font-size: 0.85rem;
+  color: var(--admin-text-muted);
+  max-width: 40ch;
+  margin: 0;
+}
+
+.stateAction {
+  margin-top: 0.75rem;
+}
+
+.errorBlock {
+  border-style: solid;
+  border-color: var(--admin-danger-border);
+}
+
+.errorBlock .stateIcon {
+  color: var(--admin-danger-text);
+}
+
+/* ---------------------------------------------------------------------
+   12. Skeleton de carga (AdminTableSkeleton)
+   --------------------------------------------------------------------- */
+
+.skeletonWrap {
+  width: 100%;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.skeletonHeaderBar {
+  height: 14px;
+  width: 30%;
+  border-radius: 4px;
+}
+
+.skeletonRow {
+  display: flex;
+  gap: 1rem;
+}
+
+.skeletonBar {
+  height: 14px;
+  border-radius: 4px;
+  background: var(--admin-surface-raised);
+  background-image: linear-gradient(
+    90deg,
+    var(--admin-surface-raised) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    var(--admin-surface-raised) 100%
+  );
+  background-size: 200% 100%;
+  animation: adminSkeletonPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes adminSkeletonPulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonBar {
+    animation: none;
+    background: var(--admin-surface-raised);
+  }
+
+  .buttonSpinner {
+    animation-duration: 1.4s;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   13. Banner de feedback de mutación (error/éxito)
+   --------------------------------------------------------------------- */
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  border-radius: var(--admin-radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+
+.bannerError {
+  color: var(--admin-danger-text);
+  background: var(--admin-danger-bg);
+  border: 1px solid var(--admin-danger-border);
+}
+
+.bannerSuccess {
+  color: var(--admin-success-text);
+  background: var(--admin-success-bg);
+  border: 1px solid var(--admin-success-border);
+}
+
+/* ---------------------------------------------------------------------
+   14. Responsive (desktop-first; que no se rompa en tablet)
+   --------------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .page {
+    padding: 1.25rem 1rem 2.5rem;
+  }
+
+  .navInner {
+    padding: 0.6rem 1rem;
+  }
+
+  .navUserEmail {
+    display: none;
+  }
+
+  .pageHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pageHeaderAction {
+    justify-content: flex-end;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.65rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .modal {
+    padding: 1.35rem;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .navBrandCaption {
+    display: none;
+  }
+
+  .modalActions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .modalActions .button {
+    width: 100%;
+  }
+}

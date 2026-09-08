@@ -102,3 +102,25 @@ export async function getProductById(id: string): Promise<Product | null> {
 export async function getProductByKey(key: string): Promise<Product | null> {
   return isUuid(key) ? getProductById(key) : getProductBySlug(key);
 }
+
+export type ProductSitemapEntry = {
+  slug: string;
+  updatedAt: string;
+};
+
+/** Slug + fecha de modificación de los productos activos, para `sitemap.ts`. Lectura pública (RLS: active=true). */
+export async function getProductSitemapEntries(): Promise<ProductSitemapEntry[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("products")
+    .select("slug, updated_at")
+    .eq("active", true)
+    .returns<{ slug: string; updated_at: string }[]>();
+
+  if (error) {
+    throw new Error(`Error al obtener productos para el sitemap: ${error.message}`);
+  }
+
+  return (data ?? []).map((row) => ({ slug: row.slug, updatedAt: row.updated_at }));
+}
