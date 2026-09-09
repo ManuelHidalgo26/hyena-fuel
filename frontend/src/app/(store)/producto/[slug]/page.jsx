@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { getProductBySlug } from "../../../lib/api/products.api";
+import { getProductBySlug } from "../../../../lib/api/products.api";
 import styles from "./ProductDetail.module.css";
 import AddToCart from "./AddToCart";
 import TrackViewItem from "./TrackViewItem";

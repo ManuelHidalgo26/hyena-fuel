@@ -166,11 +166,17 @@
 /* LAYOUT WRAPPER                */
 /* ----------------------------- */
 
+/* Fondo oscuro global fuera de cualquier `@layer` (spec Fase 2 §2.2): la
+   tienda urbana y el panel son ambos oscuros, así que no hace falta un
+   toggle por pathname (retirado junto con `StoreShell`, ADR 0004). Al no
+   estar en un layer, esta regla gana sobre `body { @apply bg-background }`
+   de `@layer base` sin depender del orden de aparición en el archivo. */
 html,
 body {
   scroll-behavior: smooth;
   height: 100%;
   margin: 0;
+  background: var(--hyena-black);
 }
 
 .layout-body {
@@ -181,14 +187,6 @@ body {
 
 .layout-main {
   flex: 1;
-}
-
-/* `body` tiene `bg-background` (claro) vía @layer base más abajo. En rutas
-   del panel, StoreShell agrega esta clase al `<body>` para que el fondo del
-   propio body sea oscuro (tokens --admin-*) y no se asome el claro en zonas
-   de rebote/overscroll o cualquier borde no cubierto por el div del shell. */
-body.panel-theme {
-  background: var(--admin-bg);
 }
 
 /* ----------------------------- */

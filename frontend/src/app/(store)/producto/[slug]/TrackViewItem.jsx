@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { trackEvent, GA_EVENTS } from "../../../lib/ga";
-import { fbTrack } from "../../../lib/fbpixel";
+import { trackEvent, GA_EVENTS } from "../../../../lib/ga";
+import { fbTrack } from "../../../../lib/fbpixel";
 
 export default function TrackViewItem({ product }) {
   useEffect(() => {

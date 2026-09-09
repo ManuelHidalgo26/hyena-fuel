@@ -1,8 +1,6 @@
 import type { ReactNode } from "react";
 import Script from "next/script";
 import "../styles/globals.css";
-import { CartProvider } from "../context/CartContext";
-import StoreShell from "../components/layout/StoreShell";
 
 export const metadata = {
   title: "HYENA FUEL | Suplementos deportivos en Córdoba",
@@ -67,9 +65,7 @@ export default function RootLayout({
             fbq('track','PageView');
           `}
         </Script>
-        <CartProvider>
-          <StoreShell>{children}</StoreShell>
-        </CartProvider>
+        {children}
       </body>
     </html>
   );

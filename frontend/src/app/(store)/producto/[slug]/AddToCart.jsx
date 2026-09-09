@@ -1,7 +1,7 @@
 "use client";
 
 import { FaCartPlus } from "react-icons/fa";
-import { useCart } from "../../../context/CartContext";
+import { useCart } from "../../../../context/CartContext";
 import styles from "./ProductDetail.module.css";
 
 export default function AddToCart({ product, disabled = false }) {
