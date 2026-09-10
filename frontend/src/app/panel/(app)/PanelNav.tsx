@@ -5,6 +5,7 @@ import { AdminNav, AdminButton, type AdminNavItem } from "../../../components/ad
 import { signOutAction } from "../actions";
 
 const NAV_ITEMS: Array<Pick<AdminNavItem, "href" | "label">> = [
+  { href: "/panel", label: "Inicio" },
   { href: "/panel/pedidos", label: "Pedidos" },
   { href: "/panel/productos", label: "Productos" },
   { href: "/panel/resenas", label: "Reseñas" },
@@ -24,7 +25,9 @@ export default function PanelNav({ userEmail }: PanelNavProps) {
   const pathname = usePathname();
   const items: AdminNavItem[] = NAV_ITEMS.map((item) => ({
     ...item,
-    active: pathname.startsWith(item.href),
+    // "/panel" es prefijo de todas las rutas del panel: match exacto para que
+    // "Inicio" no quede siempre activo (spec-panel-admin-mejoras.md §3.1).
+    active: item.href === "/panel" ? pathname === "/panel" : pathname.startsWith(item.href),
   }));
 
   return (

@@ -53,3 +53,9 @@ export type { AdminErrorStateProps } from "./AdminErrorState";
 
 export { default as AdminTableSkeleton } from "./AdminTableSkeleton";
 export type { AdminTableSkeletonProps } from "./AdminTableSkeleton";
+
+export { default as ImageUploader } from "./ImageUploader";
+export type { ImageUploaderProps } from "./ImageUploader";
+
+export { default as DashboardView } from "./DashboardView";
+export type { DashboardViewProps } from "./DashboardView";

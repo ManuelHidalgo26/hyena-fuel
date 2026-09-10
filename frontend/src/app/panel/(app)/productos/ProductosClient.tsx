@@ -10,10 +10,12 @@ import {
   AdminModal,
   AdminEmptyState,
   AdminBadge,
+  ImageUploader,
 } from "../../../../components/admin";
 import styles from "../../../../components/admin/admin.module.css";
 import type { AdminProduct } from "../../../../lib/products";
 import { readErrorMessage } from "../../../../lib/admin/http";
+import { uploadProductImage } from "../../../../lib/storage/productImages";
 
 type ProductFormFields = {
   name: string;
@@ -23,9 +25,12 @@ type ProductFormFields = {
   cost: string;
   stock: string;
   description: string;
-  images: string;
+  images: string[];
   brand: string;
 };
+
+/** Campos de texto/número del form (todo salvo `images`, que maneja el `ImageUploader` por su cuenta). */
+type ProductTextField = Exclude<keyof ProductFormFields, "images">;
 
 type CreateFormState = ProductFormFields & { active: boolean };
 
@@ -37,7 +42,7 @@ const EMPTY_CREATE_FORM: CreateFormState = {
   cost: "",
   stock: "",
   description: "",
-  images: "",
+  images: [],
   brand: "",
   active: true,
 };
@@ -51,9 +56,27 @@ function toEditForm(product: AdminProduct): ProductFormFields {
     cost: String(product.cost),
     stock: String(product.stock),
     description: product.description ?? "",
-    images: product.images.join("\n"),
+    images: product.images,
     brand: product.brand ?? "",
   };
+}
+
+/**
+ * Margen sobre un precio dado: `null` si no es calculable (cost/price <= 0,
+ * o cualquiera de los dos no finito — ej. mientras el admin tipea un draft
+ * intermedio como "" o "-" en el form de edición, QA-10), nunca "100%" ni
+ * "NaN" falsos (spec §2.1).
+ */
+type Margin = { amount: number; pct: number } | null;
+
+function computeMargin(price: number, cost: number): Margin {
+  if (!Number.isFinite(price) || !Number.isFinite(cost) || price <= 0 || cost <= 0) return null;
+  return { amount: price - cost, pct: ((price - cost) / price) * 100 };
+}
+
+function formatMargin(margin: Margin): string {
+  if (margin === null) return "—";
+  return `$${margin.amount.toLocaleString("es-AR")} (${Math.round(margin.pct)}%)`;
 }
 
 /** Igual al slugify que ya usaba `admin/pedidos/AdminProductos.jsx`: minúsculas, sin diacríticos, guiones. */
@@ -64,14 +87,6 @@ function slugify(text: string): string {
     .replace(/[̀-ͯ]/g, "")
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "");
-}
-
-/** El viejo admin manejaba una sola imagen por texto; acá se admite "una ruta o URL por línea" (spec §1.2). */
-function parseImages(raw: string): string[] {
-  return raw
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
 }
 
 type ProductPayload = {
@@ -137,7 +152,7 @@ function validateProductForm(form: ProductFormFields): ValidationResult {
       cost,
       stock,
       description: form.description.trim() === "" ? null : form.description.trim(),
-      images: parseImages(form.images),
+      images: form.images,
       brand: form.brand.trim() === "" ? null : form.brand.trim(),
     },
     errors: {},
@@ -147,7 +162,8 @@ function validateProductForm(form: ProductFormFields): ValidationResult {
 type ProductFormFieldsGridProps = {
   values: ProductFormFields;
   errors: Record<string, string>;
-  onChange: (field: keyof ProductFormFields, value: string) => void;
+  onChange: (field: ProductTextField, value: string) => void;
+  onImagesChange: (images: string[]) => void;
   idPrefix: string;
 };
 
@@ -156,7 +172,7 @@ type ProductFormFieldsGridProps = {
  * (mismo set de campos, spec Admin UI §1.1/§4): name, slug, brand, price,
  * transferPrice, cost, stock, description, images.
  */
-function ProductFormFieldsGrid({ values, errors, onChange, idPrefix }: ProductFormFieldsGridProps) {
+function ProductFormFieldsGrid({ values, errors, onChange, onImagesChange, idPrefix }: ProductFormFieldsGridProps) {
   const nameId = `${idPrefix}-name`;
   const slugId = `${idPrefix}-slug`;
   const priceId = `${idPrefix}-price`;
@@ -258,19 +274,16 @@ function ProductFormFieldsGrid({ values, errors, onChange, idPrefix }: ProductFo
         />
       </AdminField>
 
-      <AdminField htmlFor={`${idPrefix}-images`} label="Imágenes" wide hint="Una ruta o URL por línea.">
-        <textarea
-          id={`${idPrefix}-images`}
-          className={styles.textarea}
-          value={values.images}
-          onChange={(event) => onChange("images", event.target.value)}
-        />
-      </AdminField>
+      <div className={`${styles.field} ${styles.fieldWide}`}>
+        <span className={styles.label}>Imágenes</span>
+        <ImageUploader value={values.images} onChange={onImagesChange} onUpload={uploadProductImage} />
+        <p className={styles.hint}>La primera imagen es la principal en la tienda.</p>
+      </div>
     </div>
   );
 }
 
-const PRODUCT_TABLE_COLUMN_COUNT = 8;
+const PRODUCT_TABLE_COLUMN_COUNT = 9;
 
 type ProductosClientProps = {
   initialProducts: AdminProduct[];
@@ -312,7 +325,7 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
     setShowCreateForm(false);
   }
 
-  function handleCreateFieldChange(field: keyof ProductFormFields, value: string) {
+  function handleCreateFieldChange(field: ProductTextField, value: string) {
     setCreateForm((prev) => {
       if (field === "name") {
         // Autocompleta el slug mientras el admin no lo haya tocado a mano (paridad con el admin viejo).
@@ -322,8 +335,16 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
     });
   }
 
-  function handleEditFieldChange(field: keyof ProductFormFields, value: string) {
+  function handleCreateImagesChange(images: string[]) {
+    setCreateForm((prev) => ({ ...prev, images }));
+  }
+
+  function handleEditFieldChange(field: ProductTextField, value: string) {
     setEditForm((prev) => (prev ? { ...prev, [field]: value } : prev));
+  }
+
+  function handleEditImagesChange(images: string[]) {
+    setEditForm((prev) => (prev ? { ...prev, images } : prev));
   }
 
   async function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
@@ -491,7 +512,13 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>Nuevo producto</h2>
           <form onSubmit={handleCreateSubmit}>
-            <ProductFormFieldsGrid values={createForm} errors={createErrors} onChange={handleCreateFieldChange} idPrefix="create" />
+            <ProductFormFieldsGrid
+              values={createForm}
+              errors={createErrors}
+              onChange={handleCreateFieldChange}
+              onImagesChange={handleCreateImagesChange}
+              idPrefix="create"
+            />
 
             <label className={styles.checkboxRow} htmlFor="create-active">
               <input
@@ -527,6 +554,7 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
               <th className={styles.cellNumeric}>Precio</th>
               <th className={styles.cellNumeric}>Transferencia</th>
               <th className={styles.cellNumeric}>Costo</th>
+              <th className={styles.cellNumeric}>Margen</th>
               <th className={styles.cellNumeric}>Stock</th>
               <th>Estado</th>
               <th>Acciones</th>
@@ -537,6 +565,17 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
               const isEditing = editingId === product._id;
               const stockDraft = stockDrafts[product._id];
               const stockChanged = stockDraft !== undefined && stockDraft !== String(product.stock);
+              const stockDraftValue = stockDraft !== undefined ? Number(stockDraft) : product.stock;
+              const currentStockValue = Number.isFinite(stockDraftValue) ? stockDraftValue : product.stock;
+              const margin = computeMargin(product.price, product.cost);
+
+              const editCost = isEditing && editForm ? Number(editForm.cost) : null;
+              const editListMargin = editCost !== null ? computeMargin(Number(editForm?.price), editCost) : null;
+              const editTransferPriceRaw = editForm?.transferPrice.trim() ?? "";
+              const editTransferMargin =
+                editCost !== null && editTransferPriceRaw !== ""
+                  ? computeMargin(Number(editTransferPriceRaw), editCost)
+                  : null;
 
               return (
                 <Fragment key={product._id}>
@@ -559,18 +598,38 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
                       {product.transferPrice !== null ? `$${product.transferPrice.toLocaleString("es-AR")}` : "—"}
                     </td>
                     <td className={styles.cellNumeric}>${product.cost.toLocaleString("es-AR")}</td>
+                    <td className={`${styles.cellNumeric} ${margin && margin.amount < 0 ? styles.marginNegative : ""}`}>
+                      {formatMargin(margin)}
+                    </td>
                     <td className={styles.cellNumeric}>
-                      <div className={styles.cellActionsInner}>
+                      <div className={styles.stockStepper}>
+                        <AdminButton
+                          size="sm"
+                          variant="secondary"
+                          className={styles.stockStepButton}
+                          aria-label={`Restar stock de ${product.name}`}
+                          onClick={() => handleStockDraftChange(product._id, String(Math.max(0, currentStockValue - 1)))}
+                        >
+                          −
+                        </AdminButton>
                         <input
                           type="number"
                           min={0}
                           step="1"
-                          className={styles.input}
-                          style={{ maxWidth: 88 }}
+                          className={`${styles.input} ${styles.stockInput}`}
                           value={stockDraft ?? String(product.stock)}
                           onChange={(event) => handleStockDraftChange(product._id, event.target.value)}
                           aria-label={`Stock de ${product.name}`}
                         />
+                        <AdminButton
+                          size="sm"
+                          variant="secondary"
+                          className={styles.stockStepButton}
+                          aria-label={`Sumar stock de ${product.name}`}
+                          onClick={() => handleStockDraftChange(product._id, String(currentStockValue + 1))}
+                        >
+                          +
+                        </AdminButton>
                         {stockChanged && (
                           <AdminButton size="sm" loading={savingStockId === product._id} onClick={() => handleStockSave(product)}>
                             Guardar
@@ -609,8 +668,16 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
                             values={editForm}
                             errors={editErrors}
                             onChange={handleEditFieldChange}
+                            onImagesChange={handleEditImagesChange}
                             idPrefix={`edit-${product._id}`}
                           />
+                          <p className={styles.hint}>
+                            {editListMargin === null
+                              ? "Cargá el costo para ver el margen"
+                              : `Margen sobre lista: ${formatMargin(editListMargin)}${
+                                  editTransferMargin ? ` · Margen sobre transferencia: ${formatMargin(editTransferMargin)}` : ""
+                                }`}
+                          </p>
                           <div className={styles.modalActions}>
                             <AdminButton type="button" variant="secondary" onClick={cancelEdit}>
                               Cancelar

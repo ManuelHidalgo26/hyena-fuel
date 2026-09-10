@@ -797,7 +797,8 @@
     background: var(--admin-surface-raised);
   }
 
-  .buttonSpinner {
+  .buttonSpinner,
+  .uploaderSpinner {
     animation-duration: 1.4s;
   }
 }
@@ -830,7 +831,438 @@
 }
 
 /* ---------------------------------------------------------------------
-   14. Responsive (desktop-first; que no se rompa en tablet)
+   14. Dashboard ("Inicio", DashboardView) — KPI cards + gráficos CSS
+   propios (sin librería, decisión de arqui). Mejoras de panel §3.
+   --------------------------------------------------------------------- */
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 1rem;
+}
+
+.kpiCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  padding: 1.1rem 1.25rem;
+}
+
+.kpiLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--admin-text-muted);
+}
+
+.kpiValue {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--admin-text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.kpiHint {
+  font-size: 0.76rem;
+  color: var(--admin-warning-text);
+}
+
+.kpiBadgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+}
+
+/* Wrap del estado vacío global del dashboard (hasOrders === false, spec §3.6):
+   reemplaza los 3 bloques de gráficos por un único AdminEmptyState. */
+.chartEmptyWrap {
+  margin-top: 0.25rem;
+}
+
+/* Ventas por día (30d): barras verticales CSS, altura ∝ revenue del día. */
+.salesChart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 160px;
+  margin-top: 0.75rem;
+}
+
+.salesBarCol {
+  flex: 1 1 0;
+  height: 100%;
+  min-width: 4px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.salesBar {
+  width: 100%;
+  min-height: 2px;
+  background: var(--admin-accent);
+  border-radius: 2px 2px 0 0;
+  transition: opacity 0.15s ease;
+}
+
+.salesBar:hover {
+  opacity: 0.75;
+}
+
+.salesChartAxis {
+  display: flex;
+  gap: 3px;
+  margin-top: 0.4rem;
+}
+
+.salesAxisTick {
+  flex: 1 1 0;
+  min-width: 4px;
+  font-size: 0.68rem;
+  color: var(--admin-text-faint);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Top productos: barras horizontales CSS, ancho ∝ unidades vendidas. */
+.topProductsList {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.topProductRow {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) minmax(80px, 2fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.topProductName {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--admin-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topProductBarTrack {
+  display: block;
+  height: 10px;
+  background: var(--admin-surface-sunken);
+  border-radius: var(--admin-radius-pill);
+  overflow: hidden;
+}
+
+.topProductBarFill {
+  display: block;
+  height: 100%;
+  background: var(--admin-accent);
+  border-radius: var(--admin-radius-pill);
+}
+
+.topProductValue {
+  font-size: 0.78rem;
+  color: var(--admin-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* Desglose por estado: fila de OrderStatusBadge + conteo. */
+.statusBreakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.statusBreakdownItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.statusBreakdownCount {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--admin-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------
+   15. Margen de ganancia por producto (display-only, Mejoras de panel §2)
+   --------------------------------------------------------------------- */
+
+/* Aplicar junto a .cellNumeric (tabla) cuando el margen calculado es
+   negativo (cost > price): info válida, se muestra en rojo en vez de
+   ocultarla. `null` (cost<=0 || price<=0) se muestra como "—" sin esta clase. */
+.marginNegative {
+  color: var(--admin-danger-text);
+}
+
+/* ---------------------------------------------------------------------
+   16. ImageUploader — drag&drop + preview + reordenar + fallback de URL
+   (Mejoras de panel §1.3)
+   --------------------------------------------------------------------- */
+
+.uploader {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.uploaderDropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  text-align: center;
+  padding: 1.75rem 1.25rem;
+  border: 1.5px dashed var(--admin-border-strong);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface-sunken);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.uploaderDropzone:focus-visible {
+  outline: none;
+  box-shadow: var(--admin-focus-ring);
+  border-color: var(--admin-accent);
+}
+
+.uploaderDropzoneActive {
+  border-color: var(--admin-accent);
+  background: rgba(255, 138, 0, 0.08);
+}
+
+.uploaderDropzoneDisabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.uploaderDropzoneText {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.uploaderDropzoneHint {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--admin-text-faint);
+}
+
+.uploaderFileInput {
+  display: none;
+}
+
+.uploaderErrorList {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.uploaderGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.75rem;
+}
+
+.uploaderPreview {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: var(--admin-surface-sunken);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.uploaderPreviewImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.uploaderPrimaryBadge {
+  position: absolute;
+  top: 0.35rem;
+  left: 0.35rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--admin-radius-pill);
+  background: var(--admin-accent);
+  color: var(--admin-accent-contrast);
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.uploaderPreviewActions {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.3rem;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.75), transparent);
+}
+
+.uploaderIconButton,
+.uploaderIconButtonDanger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--admin-radius-sm);
+  border: 1px solid var(--admin-border-strong);
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.uploaderIconButton:hover:not(:disabled) {
+  border-color: var(--admin-accent);
+  color: var(--admin-accent);
+}
+
+.uploaderIconButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.uploaderIconButtonDanger {
+  color: var(--admin-danger-text);
+  border-color: var(--admin-danger-border);
+}
+
+.uploaderIconButtonDanger:hover {
+  background: var(--admin-danger-bg);
+}
+
+.uploaderIconButton:focus-visible,
+.uploaderIconButtonDanger:focus-visible {
+  outline: none;
+  box-shadow: var(--admin-focus-ring);
+}
+
+.uploaderPreviewPending {
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.uploaderSpinner {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--admin-border-strong);
+  border-top-color: var(--admin-accent);
+  animation: adminSpin 0.7s linear infinite;
+}
+
+.uploaderPendingLabel {
+  font-size: 0.68rem;
+  color: var(--admin-text-muted);
+}
+
+.uploaderUrlRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.uploaderUrlLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--admin-text-muted);
+}
+
+.uploaderUrlInputGroup {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.uploaderUrlInputGroup .input {
+  flex: 1 1 auto;
+}
+
+/* ---------------------------------------------------------------------
+   17. Stepper de stock — normalización de number inputs + `.stockInput`
+   (Mejoras de panel §4). El fix elimina el spinner nativo (que se
+   superponía a los dígitos) en TODOS los type="number" del panel, no solo
+   en stock.
+   --------------------------------------------------------------------- */
+
+.input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.input[type="number"]::-webkit-outer-spin-button,
+.input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Reemplaza el `style={{maxWidth:88}}` inline del stock rápido. Ancho fijo
+   legible para 4-5 dígitos, centrado, tabular. */
+.stockInput {
+  width: 5rem;
+  min-width: 5rem;
+  flex: 0 0 auto;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  padding-left: 0.35rem;
+  padding-right: 0.35rem;
+}
+
+/* Wrapper de los controles −/+ alrededor de .stockInput, dentro de .cellActionsInner. */
+.stockStepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Combinar con AdminButton size="sm" variant="secondary" para un botón
+   cuadrado (min-height 32px de buttonSm + este min-width ~32px). */
+.stockStepButton {
+  min-width: 32px;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* ---------------------------------------------------------------------
+   18. Responsive (desktop-first; que no se rompa en tablet)
    --------------------------------------------------------------------- */
 
 @media (max-width: 768px) {
@@ -882,5 +1314,28 @@
 
   .modalActions .button {
     width: 100%;
+  }
+
+  /* Dashboard: KPI grid colapsa a 2 columnas (spec §3.4: "1-2 col en mobile"). */
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .topProductRow {
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+  }
+
+  .topProductValue {
+    text-align: left;
+  }
+
+  /* ImageUploader: previews más chicas, fallback de URL apilado. */
+  .uploaderGrid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  }
+
+  .uploaderUrlInputGroup {
+    flex-direction: column;
   }
 }
