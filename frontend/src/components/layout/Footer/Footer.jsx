@@ -114,7 +114,7 @@ export default function Footer() {
           <a href="https://www.instagram.com/hyenafuel/" target="_blank" rel="noopener noreferrer" className={styles.instaLink}>
             <FaInstagram />@hyenafuel
           </a>
-          <a href="https://wa.me/549XXXXXXXXXX" target="_blank" rel="noopener noreferrer" className={styles.whatsappLink}>
+          <a href="https://wa.me/5493519152450" target="_blank" rel="noopener noreferrer" className={styles.whatsappLink}>
             <FaWhatsapp />WhatsApp
           </a>
 

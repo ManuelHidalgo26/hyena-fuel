@@ -79,7 +79,7 @@ export default function CartDrawer() {
 
           <div className={styles.successActions}>
             <a
-              href={`https://wa.me/549XXXXXXXXXX?text=${WHATSAPP_MSG}`}
+              href={`https://wa.me/5493519152450?text=${WHATSAPP_MSG}`}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.whatsappBtn}
