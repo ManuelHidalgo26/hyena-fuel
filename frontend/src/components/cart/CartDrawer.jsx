@@ -36,12 +36,17 @@ export default function CartDrawer() {
   const [paymentMethod, setPaymentMethod] = useState("mercadopago");
   const [deliveryMethod, setDeliveryMethod] = useState("envio");
 
+  // `subtotal` ya viene con el descuento por transferencia/efectivo aplicado
+  // (getSubtotalByPaymentMethod usa transferPrice cuando corresponde), igual que
+  // el servidor (lib/orders.calculateOrderTotals → payableSubtotal). `discount`
+  // es solo el monto ahorrado, para mostrarlo — NO se vuelve a restar (eso era el
+  // doble descuento). Total a pagar = subtotal (ya con descuento) + envío.
   const subtotal = getSubtotalByPaymentMethod(paymentMethod);
   const discount = getDiscountByPaymentMethod(paymentMethod);
   const shippingCost = getShippingCost(paymentMethod);
   const missingForFree = getMissingForFreeShipping(paymentMethod);
   const effectiveShipping = deliveryMethod === "retiro" ? 0 : shippingCost;
-  const totalFinal = subtotal - discount + effectiveShipping;
+  const totalFinal = subtotal + effectiveShipping;
 
   useEffect(() => {
     if (isCartOpen && cartItems.length === 0) {
@@ -69,11 +74,11 @@ export default function CartDrawer() {
           <p>
             {paymentMethod === "mercadopago"
               ? deliveryMethod === "retiro"
-                ? <>¡Pedido registrado! Retirá en <strong>Junín 5393, Córdoba</strong> — lunes a viernes de 8 a 12 hs o de 16 a 20 hs. Coordinamos el horario y el pago (tarjeta/efectivo) por WhatsApp o Instagram.</>
-                : "Recibimos tu pedido. Coordinamos el pago (tarjeta/efectivo) y la entrega por WhatsApp."
+                ? <>¡Pedido registrado! Retirá en <strong>Junín 5393, Córdoba</strong> — lunes a viernes de 8 a 12 hs o de 16 a 20 hs. Coordinamos el horario y el pago con tarjeta (débito o crédito) por WhatsApp o Instagram.</>
+                : "Recibimos tu pedido. Coordinamos el pago con tarjeta (débito o crédito) y la entrega por WhatsApp."
               : deliveryMethod === "retiro"
-                ? <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>hyena.fuel</strong> y envianos el comprobante. Retirá en <strong>Junín 5393, Córdoba</strong> — lunes a viernes de 8 a 12 hs o de 16 a 20 hs.</>
-                : <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>hyena.fuel</strong> y envianos el comprobante por WhatsApp o Instagram para confirmar tu pedido.</>
+                ? <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>hyena.fuel</strong> (o coordinás el pago en efectivo) y envianos el comprobante. Retirá en <strong>Junín 5393, Córdoba</strong> — lunes a viernes de 8 a 12 hs o de 16 a 20 hs.</>
+                : <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>hyena.fuel</strong> (o coordinás el pago en efectivo) y envianos el comprobante por WhatsApp o Instagram para confirmar tu pedido.</>
             }
           </p>
 
@@ -297,7 +302,7 @@ export default function CartDrawer() {
                 checked={paymentMethod === "mercadopago"}
                 onChange={() => setPaymentMethod("mercadopago")}
               />
-              💳 Tarjeta / efectivo (coordinamos por WhatsApp)
+              💳 Débito / Crédito
             </label>
 
             <label className={styles.radioLabel}>
@@ -306,7 +311,7 @@ export default function CartDrawer() {
                 checked={paymentMethod === "transferencia"}
                 onChange={() => setPaymentMethod("transferencia")}
               />
-              🏦 Transferencia bancaria&nbsp;
+              🏦 Transferencia / Efectivo&nbsp;
               <span className={styles.discountBadge}>10% OFF</span>
             </label>
           </div>
@@ -320,8 +325,8 @@ export default function CartDrawer() {
 
             {discount > 0 && (
               <div className={`${styles.summaryRow} ${styles.discountRow}`}>
-                <span>Descuento transferencia:</span>
-                <strong>- ${discount.toLocaleString("es-AR")}</strong>
+                <span>Ahorrás con transferencia/efectivo (10% OFF):</span>
+                <strong>${discount.toLocaleString("es-AR")}</strong>
               </div>
             )}
 
