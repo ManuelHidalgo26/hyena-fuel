@@ -3,6 +3,7 @@ import Script from "next/script";
 import "../styles/globals.css";
 
 export const metadata = {
+  metadataBase: new URL("https://www.hyenafuel.com"),
   title: "HYENA FUEL | Suplementos deportivos en Córdoba",
   description:
     "Suplementos deportivos de calidad para atletas que no negocian con la mediocridad. Whey Protein, Creatina, Pre-Entreno y más. Envío gratis en Córdoba.",
