@@ -443,6 +443,18 @@
   opacity: 0.5;
 }
 
+/* La celda sticky de Acciones necesita fondo 100% opaco (ver `.cellActions`
+   arriba) para tapar el contenido que scrollea por debajo; `opacity` en el
+   td licúa ese fondo junto con el contenido, así que en fila inactiva se
+   mantiene el td opaco y se atenúa solo el contenido interno. */
+.rowInactive td.cellActions {
+  opacity: 1;
+}
+
+.rowInactive .cellActionsInner {
+  opacity: 0.5;
+}
+
 .rowMedia {
   display: flex;
   align-items: center;
@@ -483,13 +495,40 @@
 .cellActions {
   text-align: right;
   white-space: nowrap;
+  width: 140px;
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  box-shadow: -8px 0 8px -8px rgba(0, 0, 0, 0.35);
+}
+
+/* Columna "Acciones" fijada a la derecha: mantiene Editar/Desactivar
+   visibles cuando la tabla desborda a lo ancho (mobile). Aplica a la
+   última celda de cualquier tabla admin (td.cellActions + su th par),
+   así que el fondo debe seguir el color de la fila (normal/hover/
+   inactiva) para que el contenido que scrollea por debajo no se
+   transparente. Ancho fijo (140px): columna compacta para el stack
+   vertical de botones (ver `.cellActionsInner`).
+   Nota: se evaluó pinnear también "Estado" (solo Productos) para
+   mostrarlo junto a Acciones, pero a 375px con dos columnas sticky no
+   queda ancho legible para el nombre del producto (queda tapado) —
+   se descartó (verificado con Playwright a 375px). */
+.table td.cellActions {
+  background: var(--admin-surface);
+}
+
+.table th.cellActions {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: var(--admin-surface-raised);
 }
 
 .cellActionsInner {
   display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
 }
 
 /* ---------------------------------------------------------------------

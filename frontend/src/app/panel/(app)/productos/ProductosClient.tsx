@@ -557,7 +557,7 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
               <th className={styles.cellNumeric}>Margen</th>
               <th className={styles.cellNumeric}>Stock</th>
               <th>Estado</th>
-              <th>Acciones</th>
+              <th className={styles.cellActions}>Acciones</th>
             </tr>
           </thead>
           <tbody>

@@ -188,7 +188,7 @@ export default function PedidosClient({ initialOrders }: PedidosClientProps) {
               <th>Entrega</th>
               <th>Estado</th>
               <th className={styles.cellNumeric}>Total</th>
-              <th>Acciones</th>
+              <th className={styles.cellActions}>Acciones</th>
             </tr>
           </thead>
           <tbody>
