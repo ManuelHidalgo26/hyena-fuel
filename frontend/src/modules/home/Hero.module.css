@@ -1,136 +1,193 @@
+/* Hero urbano (design-fase-2.md §6). Fondo oscuro de marca — reemplaza el
+   `background: var(--background)` (blanco) que tenía este componente antes
+   (hallazgo #6, inconsistente con el resto de la tienda oscura). */
 .hero {
-  width: 100%;
-  padding: 4rem 1.5rem;
-  display: flex;
-  justify-content: center;
-  background: var(--background);
+  position: relative;
+  overflow: hidden;
+  padding: var(--hyena-space-8) var(--hyena-container-pad);
+  background:
+    radial-gradient(1px 1px at 0 0, rgba(255, 255, 255, 0.07) 1px, transparent 1px) 0 0 / 20px
+      20px,
+    linear-gradient(180deg, var(--hyena-black) 0%, var(--hyena-dark) 100%);
 }
 
-.container {
-  max-width: 1200px;
-  width: 100%;
-  display: flex;
+/* Franja diagonal naranja tenue (§6, punto 7) */
+.hero::before {
+  content: "";
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  width: 60%;
+  height: 140%;
+  background: linear-gradient(115deg, transparent 45%, rgba(255, 138, 0, 0.1) 50%, transparent 55%);
+  pointer-events: none;
+}
+
+/* Silueta del isotipo como watermark de fondo — mismo tratamiento que el
+   mockup aprobado (`--hero-hyena`), usando el asset real del proyecto. */
+.hyena {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: url("/images/hyena-solo.png") no-repeat center / contain;
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+.grid {
+  position: relative;
+  z-index: 1;
+  max-width: var(--hyena-container-max);
+  margin-inline: auto;
+  display: grid;
+  gap: var(--hyena-space-7);
   align-items: center;
-  justify-content: space-between;
-  gap: 3rem;
+  animation: hero-in var(--hyena-duration-slow) var(--hyena-ease) both;
 }
 
-/* TEXT SIDE */
-.text {
-  flex: 1;
+.grid > div {
+  max-width: 620px;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: var(--hyena-text-micro);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hyena-orange);
+  margin-bottom: var(--hyena-space-3);
 }
 
 .title {
-  font-size: 3.2rem;
-  font-weight: 800;
-  line-height: 1.1;
-  margin-bottom: 1rem;
+  font-family: var(--hyena-font-display);
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+  font-size: var(--hyena-text-display-2xl);
+  color: var(--hyena-text);
 }
 
 .title span {
-  color: #ff6a00;
+  display: block;
+  color: var(--hyena-orange);
 }
 
 .subtitle {
-  font-size: 1.25rem;
-  opacity: 0.95;
-  margin-bottom: 2rem;
+  font-size: var(--hyena-text-lead);
+  color: var(--hyena-text-muted);
+  margin-top: var(--hyena-space-4);
+  max-width: 46ch;
 }
 
-/* CTA */
-.cta {
-  display: inline-block;
-  text-decoration: none;
-  background: var(--card);
-  color: var(--foreground);
-  padding: 0.9rem 2rem;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease,
-    border-color 0.25s ease;
-}
-
-.cta:hover {
-  transform: scale(1.05);
-  border-color: #ff6a00;
-  box-shadow: 0px 4px 16px rgba(255, 106, 0, 0.4);
-}
-
-/* CAROUSEL SIDE */
-.carouselWrapper {
-  flex: 1;
-  position: relative;
-  width: 100%;
-  max-width: 460px;
-  aspect-ratio: 1 / 1;
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0px 2px 12px rgba(0, 0, 0, 0.25);
-}
-
-.slide {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 1s ease;
-}
-
-.slide.active {
-  opacity: 1;
-}
-
-.image {
-  width: 100%;
-  object-position: center top;
-}
-
-/* DOTS */
-.dots {
-  position: absolute;
-  bottom: 0.8rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 3;
+.ctas {
   display: flex;
+  flex-wrap: wrap;
+  gap: var(--hyena-space-3);
+  margin-top: var(--hyena-space-6);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.4);
+  min-height: 48px;
+  padding: 0 1.4rem;
+  border-radius: var(--hyena-radius-sm);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
   cursor: pointer;
-  transition: background 0.3s ease, transform 0.3s ease;
+  border: 2px solid transparent;
+  transition:
+    transform var(--hyena-duration-fast) var(--hyena-ease),
+    box-shadow var(--hyena-duration-fast) var(--hyena-ease),
+    background var(--hyena-duration-fast) var(--hyena-ease),
+    border-color var(--hyena-duration-fast) var(--hyena-ease);
 }
 
-.dot.activeDot {
-  background: #ff6a00;
-  transform: scale(1.3);
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--hyena-focus-ring);
 }
 
-/* RESPONSIVE */
-@media (max-width: 900px) {
-  .container {
-    flex-direction: column-reverse;
-    text-align: center;
+.btnPrimary {
+  background: var(--hyena-orange);
+  color: var(--hyena-orange-contrast);
+  box-shadow: var(--hyena-shadow-glow);
+}
+
+.btnPrimary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 40px rgba(255, 138, 0, 0.65);
+  background: var(--hyena-orange-strong);
+}
+
+.btnSecondary {
+  background: transparent;
+  border-color: var(--hyena-border-strong);
+  color: var(--hyena-text);
+}
+
+.btnSecondary:hover {
+  border-color: var(--hyena-orange);
+  color: var(--hyena-orange);
+}
+
+.trustStrip {
+  margin: var(--hyena-space-7) 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--hyena-space-3);
+}
+
+.trustStrip li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--hyena-text-muted);
+}
+
+.trustIcon {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 138, 0, 0.1);
+  border: 1px solid rgba(255, 138, 0, 0.25);
+  border-radius: var(--hyena-radius-sm);
+  font-size: 1rem;
+}
+
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 900px) {
+  .hyena {
+    inset: 0 0 0 auto;
+    width: 62%;
+    background-position: right center;
+    opacity: 0.22;
   }
 
-  .title {
-    font-size: 2.5rem;
-  }
-
-  .subtitle {
-    font-size: 1.1rem;
-  }
-
-  .carouselWrapper {
-    max-width: 100%;
-    width: 100%;
+  .trustStrip {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 460px;
   }
 }

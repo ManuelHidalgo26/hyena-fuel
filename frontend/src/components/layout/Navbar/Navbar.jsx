@@ -1,79 +1,133 @@
 "use client";
 
-import styles from "./Navbar.module.css";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import logo from "../../../../public/images/hyena-fuel-logo.png";
-import { useState, useEffect } from "react";
 import { FaShoppingCart } from "react-icons/fa";
+import logo from "../../../../public/images/hyena-fuel-logo.png";
 import { useCart } from "../../../context/CartContext";
+import styles from "./Navbar.module.css";
+
+const NAV_LINKS = [
+  { href: "/", label: "Inicio" },
+  { href: "/#products", label: "Productos" },
+  { href: "/como-comprar", label: "Cómo comprar" },
+  { href: "/about", label: "Nosotros" },
+];
 
 export default function Navbar() {
   const { openCart, getTotalItems } = useCart();
   const [open, setOpen] = useState(false);
 
-  // 🔧 FIX hydration
+  // Evita el mismatch de hidratación: el badge del carrito depende de
+  // localStorage, que no existe en el render del servidor.
   const [mounted, setMounted] = useState(false);
-
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  const burgerRef = useRef(null);
+  const closeButtonRef = useRef(null);
+
+  const closeMenu = () => {
+    setOpen(false);
+    burgerRef.current?.focus();
+  };
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      burgerRef.current?.focus();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
+
+  const cartCount = mounted ? getTotalItems() : 0;
+
   return (
     <header className={styles.navbar}>
-      <div className={styles.container}>
-        {/* Logo */}
+      <div className={styles.inner}>
         <Link href="/" className={styles.logo}>
-          <Image
-            src={logo}
-            alt="HYENA FUEL"
-            width={160}
-            height={40}
-            priority
-          />
+          <Image src={logo} alt="HYENA FUEL" width={140} height={35} priority />
         </Link>
 
-        {/* Links desktop */}
-        <nav className={styles.links}>
-          <Link href="/">Inicio</Link>
-          <Link href="/about">Nosotros</Link>
-          <Link href="/#products">Productos</Link>
-          <Link href="/como-comprar">Cómo comprar</Link>
+        <nav className={styles.navLinks} aria-label="Navegación principal">
+          {NAV_LINKS.map((link) => (
+            <Link key={link.href} href={link.href}>
+              {link.label}
+            </Link>
+          ))}
         </nav>
 
-        {/* Carrito */}
-        <button
-          className={styles.cartButton}
-          onClick={openCart}
-          aria-label="Abrir carrito"
-          data-count={
-            mounted && getTotalItems() > 0
-              ? getTotalItems()
-              : ""
-          }
-        >
-          <FaShoppingCart />
-        </button>
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.iconBtn}
+            onClick={openCart}
+            aria-label={
+              cartCount > 0 ? `Abrir carrito, ${cartCount} productos` : "Abrir carrito"
+            }
+          >
+            <FaShoppingCart />
+            {cartCount > 0 && (
+              <span className={styles.cartCount} aria-hidden="true">
+                {cartCount}
+              </span>
+            )}
+          </button>
 
-        {/* Burger mobile */}
-        <button
-          className={styles.burger}
-          onClick={() => setOpen(!open)}
-          aria-label="Abrir menú"
-        >
-          ☰
-        </button>
+          <button
+            ref={burgerRef}
+            type="button"
+            className={styles.burger}
+            onClick={() => setOpen(true)}
+            aria-haspopup="true"
+            aria-controls="navPanel"
+            aria-expanded={open}
+            aria-label="Abrir menú"
+          >
+            ☰
+          </button>
+        </div>
       </div>
 
-      {/* Menú mobile */}
-      {open && (
-        <nav className={styles.mobileMenu}>
-          <Link href="/" onClick={() => setOpen(false)}>Inicio</Link>
-          <Link href="/about" onClick={() => setOpen(false)}>Nosotros</Link>
-          <Link href="/#products" onClick={() => setOpen(false)}>Productos</Link>
-          <Link href="/como-comprar" onClick={() => setOpen(false)}>Cómo comprar</Link>
-        </nav>
-      )}
+      <div
+        id="navPanel"
+        className={`${styles.navPanel} ${open ? styles.navPanelOpen : ""}`}
+        onClick={closeMenu}
+      >
+        <div
+          className={styles.navPanelSheet}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menú de navegación"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            ref={closeButtonRef}
+            type="button"
+            className={styles.navPanelClose}
+            onClick={closeMenu}
+            aria-label="Cerrar menú"
+          >
+            ✕
+          </button>
+          <nav className={styles.navPanelLinks}>
+            {NAV_LINKS.map((link) => (
+              <Link key={link.href} href={link.href} onClick={closeMenu}>
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </div>
     </header>
   );
 }
