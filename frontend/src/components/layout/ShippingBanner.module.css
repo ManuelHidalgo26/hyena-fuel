@@ -1,9 +1,22 @@
+/* flex-shrink: 0 es la causa real del colapso, no un parche cosmético:
+   este div es hijo directo de <body class="layout-body"> (globals.css),
+   que es un flex column con min-height:100vh sobre un <html>/<body> con
+   height:100%. Como el contenido total de la página (main-content) excede
+   esa altura, Flexbox aplica flex-shrink a los hermanos del body. El
+   "automatic minimum size" (min-height:auto) de un flex item con
+   overflow != visible se resuelve a 0 (spec de Flexbox), así que este
+   banner era el único candidato que podía encogerse hasta 0 mientras el
+   resto (header, footer) ya estaba en su piso de contenido — de ahí que
+   colapsara a solo padding+border (~17px) y el ticker se viera recortado.
+   Con flex-shrink:0 el banner conserva su alto natural (padding + línea
+   del ticker) sin participar del reparto de espacio. */
 .banner {
   width: 100%;
   background: var(--hyena-surface-raised);
   border-bottom: 1px solid var(--hyena-border);
   padding: 0.5rem 0;
   overflow: hidden;
+  flex-shrink: 0;
   transition: background var(--hyena-duration-base) ease;
 }
 

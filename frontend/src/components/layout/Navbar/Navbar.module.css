@@ -19,9 +19,25 @@
   gap: 1rem;
 }
 
+/* Tamaño fijo de la "ranura" del logo: el PNG fuente es un lienzo cuadrado
+   de 1024x1024 con el isotipo+wordmark centrado ocupando solo ~50% del ancho
+   y ~16% del alto (mucho margen transparente). El optimizador de next/image
+   solo redimensiona por `width` (nunca por `height`), así que el bitmap
+   servido siempre es cuadrado sin importar el `height` que le pasemos al
+   componente <Image> — de ahí que antes el navbar midiera ~140x140px.
+   object-fit: cover recorta ese margen transparente sobrante manteniendo
+   la proporción real del contenido, sin distorsionarlo. */
 .logo {
   display: flex;
   align-items: center;
+  width: 184px;
+  height: 44px;
+}
+
+.logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* Links desktop */

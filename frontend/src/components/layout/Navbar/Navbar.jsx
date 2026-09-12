@@ -55,7 +55,11 @@ export default function Navbar() {
     <header className={styles.navbar}>
       <div className={styles.inner}>
         <Link href="/" className={styles.logo}>
-          <Image src={logo} alt="HYENA FUEL" width={140} height={35} priority />
+          {/* width/height cuadrados: el PNG fuente es 1024x1024 (ver nota en
+              Navbar.module.css .logo). Pedimos 220x220 para tener resolución
+              de sobra una vez que object-fit: cover recorta al tamaño real
+              de la "ranura" del logo. */}
+          <Image src={logo} alt="HYENA FUEL" width={220} height={220} priority />
         </Link>
 
         <nav className={styles.navLinks} aria-label="Navegación principal">
