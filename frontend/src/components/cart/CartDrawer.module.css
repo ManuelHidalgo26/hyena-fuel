@@ -309,6 +309,116 @@
   border-radius: 4px;
 }
 
+/* =========================
+    Alias de transferencia (checkout)
+    Visible solo cuando paymentMethod === "transferencia",
+    justo debajo del radio "Transferencia / Efectivo".
+========================= */
+.aliasBox {
+  margin-top: 0.6rem;
+  padding: 0.9rem 1rem 1rem;
+  background: #fff3e8;
+  border: 1.5px solid #ff6a00;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.aliasBoxLabel {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #a34700; /* naranja oscuro, ~5.6:1 sobre #fff3e8 (AA) */
+}
+
+.aliasRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.aliasValue {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #111;
+  background: #ffffff;
+  border: 1px solid rgba(255, 106, 0, 0.35);
+  border-radius: 6px;
+  padding: 0.5rem 0.7rem;
+  word-break: break-all;
+  -webkit-user-select: all;
+  user-select: all;
+}
+
+.copyAliasBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 40px;
+  min-width: 40px;
+  padding: 0 0.9rem;
+  background: #ff6a00;
+  color: #000; /* negro sobre naranja: ~7.3:1 (AA), mismo patrón que .checkout */
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease,
+    transform 0.1s ease;
+}
+
+.copyAliasBtn:hover {
+  opacity: 0.9;
+}
+
+.copyAliasBtn:active {
+  transform: scale(0.96);
+}
+
+.copyAliasBtn:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 2px;
+}
+
+.copyAliasBtnCopied {
+  background: #15803d; /* verde oscuro: blanco encima da ~5:1 (AA), a diferencia del #2ecc71 ya usado en .discountBadge (~2.1:1, no lo repitas) */
+  color: #fff;
+}
+
+.copyAliasBtnCopied:hover {
+  opacity: 0.95;
+}
+
+.aliasHint {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #555; /* ~6.8:1 sobre #fff3e8 (AA), más seguro que el #777 ya usado en otras partes del archivo */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copyAliasBtn {
+    transition: none;
+  }
+
+  .copyAliasBtn:active {
+    transform: none;
+  }
+}
+
 .successOverlay {
   position: fixed;
   inset: 0;
