@@ -6,6 +6,7 @@ import styles from "./CartDrawer.module.css";
 import { useCart } from "../../context/CartContext";
 import { trackEvent, GA_EVENTS } from "../../lib/ga";
 import { fbTrack } from "../../lib/fbpixel";
+import { TRANSFER_ALIAS } from "../../lib/payment";
 
 export default function CartDrawer() {
   const {
@@ -33,8 +34,11 @@ export default function CartDrawer() {
   const [isLoading, setIsLoading] = useState(false);
   const processingRef = useRef(false);
 
-  const [paymentMethod, setPaymentMethod] = useState("mercadopago");
+  const [paymentMethod, setPaymentMethod] = useState("transferencia");
   const [deliveryMethod, setDeliveryMethod] = useState("envio");
+
+  const [aliasCopied, setAliasCopied] = useState(false);
+  const aliasCopyTimeoutRef = useRef(null);
 
   // `subtotal` ya viene con el descuento por transferencia/efectivo aplicado
   // (getSubtotalByPaymentMethod usa transferPrice cuando corresponde), igual que
@@ -62,6 +66,32 @@ export default function CartDrawer() {
     }
   }, [isCartOpen, cartItems, closeCart]);
 
+  useEffect(() => {
+    return () => {
+      if (aliasCopyTimeoutRef.current) {
+        clearTimeout(aliasCopyTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleCopyAlias = async () => {
+    try {
+      if (!navigator.clipboard) return;
+      await navigator.clipboard.writeText(TRANSFER_ALIAS);
+    } catch (error) {
+      console.error(error);
+      return;
+    }
+
+    setAliasCopied(true);
+    if (aliasCopyTimeoutRef.current) {
+      clearTimeout(aliasCopyTimeoutRef.current);
+    }
+    aliasCopyTimeoutRef.current = setTimeout(() => {
+      setAliasCopied(false);
+    }, 2000);
+  };
+
   const WHATSAPP_MSG = encodeURIComponent(
     "Hola! Acabo de hacer un pedido en Hyena Fuel, les mando el comprobante."
   );
@@ -77,8 +107,8 @@ export default function CartDrawer() {
                 ? <>¡Pedido registrado! Retirá en <strong>Junín 5393, Córdoba</strong> — lunes a viernes de 8 a 12 hs o de 16 a 20 hs. Coordinamos el horario y el pago con tarjeta (débito o crédito) por WhatsApp o Instagram.</>
                 : "Recibimos tu pedido. Coordinamos el pago con tarjeta (débito o crédito) y la entrega por WhatsApp."
               : deliveryMethod === "retiro"
-                ? <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>hyena.fuel</strong> (o coordinás el pago en efectivo) y envianos el comprobante. Retirá en <strong>Junín 5393, Córdoba</strong> — lunes a viernes de 8 a 12 hs o de 16 a 20 hs.</>
-                : <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>hyena.fuel</strong> (o coordinás el pago en efectivo) y envianos el comprobante por WhatsApp o Instagram para confirmar tu pedido.</>
+                ? <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>{TRANSFER_ALIAS}</strong> (o coordinás el pago en efectivo) y enviános el comprobante. Retirá en <strong>Junín 5393, Córdoba</strong> — lunes a viernes de 8 a 12 hs o de 16 a 20 hs.</>
+                : <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>{TRANSFER_ALIAS}</strong> (o coordinás el pago en efectivo) y enviános el comprobante por WhatsApp o Instagram para confirmar tu pedido.</>
             }
           </p>
 
@@ -314,6 +344,33 @@ export default function CartDrawer() {
               🏦 Transferencia / Efectivo&nbsp;
               <span className={styles.discountBadge}>10% OFF</span>
             </label>
+
+            {paymentMethod === "transferencia" && (
+              <div className={styles.aliasBox}>
+                <p className={styles.aliasBoxLabel}>Alias para transferir</p>
+
+                <div className={styles.aliasRow}>
+                  <span className={styles.aliasValue}>{TRANSFER_ALIAS}</span>
+                  <button
+                    type="button"
+                    className={
+                      aliasCopied
+                        ? `${styles.copyAliasBtn} ${styles.copyAliasBtnCopied}`
+                        : styles.copyAliasBtn
+                    }
+                    onClick={handleCopyAlias}
+                    aria-live="polite"
+                  >
+                    {aliasCopied ? "✅ ¡Copiado!" : "📋 Copiar"}
+                  </button>
+                </div>
+
+                <p className={styles.aliasHint}>
+                  Transferí el total y enviános el comprobante por WhatsApp o
+                  Instagram para confirmar tu pedido.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* RESUMEN */}

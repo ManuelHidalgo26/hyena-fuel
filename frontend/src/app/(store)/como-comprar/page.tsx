@@ -1,6 +1,7 @@
 import Link from "next/link";
 import styles from "./ComoComprar.module.css";
 import { LightboxImage } from "./Lightbox";
+import { TRANSFER_ALIAS } from "../../../lib/payment";
 
 export const metadata = {
   title: "Cómo comprar — HYENA FUEL",
@@ -79,7 +80,7 @@ const steps = [
           </li>
           <li>
             🏦 <strong>Transferencia bancaria</strong> — al alias{" "}
-            <strong>hyena.fuel</strong> y obtenés{" "}
+            <strong>{TRANSFER_ALIAS}</strong> y obtenés{" "}
             <strong>10% de descuento</strong> automático
           </li>
         </ul>
@@ -97,7 +98,7 @@ const steps = [
         <ul>
           <li>
             Si pagás por <strong>transferencia</strong>, envianos el comprobante
-            por WhatsApp o Instagram al alias <strong>hyena.fuel</strong>
+            por WhatsApp o Instagram al alias <strong>{TRANSFER_ALIAS}</strong>
           </li>
           <li>
             Si pagás por <strong>MercadoPago</strong>, completás el pago en la
