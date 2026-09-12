@@ -1,8 +1,11 @@
 import Image from "next/image";
+import { notFound } from "next/navigation";
 import { getProductBySlug } from "../../../../lib/api/products.api";
 import styles from "./ProductDetail.module.css";
 import AddToCart from "./AddToCart";
 import TrackViewItem from "./TrackViewItem";
+
+const SITE_URL = "https://www.hyenafuel.com";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -12,16 +15,16 @@ export async function generateMetadata({ params }) {
     return { title: "Producto no encontrado | HYENA FUEL" };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
   const imageUrl = product.images?.[0]
     ? product.images[0].startsWith("http")
       ? product.images[0]
-      : `${siteUrl}${product.images[0]}`
+      : `${SITE_URL}${product.images[0]}`
     : null;
 
   return {
     title: `${product.name} | HYENA FUEL`,
     description: product.description,
+    alternates: { canonical: `/producto/${slug}` },
     openGraph: {
       title: `${product.name} | HYENA FUEL`,
       description: product.description,
@@ -36,7 +39,7 @@ export default async function ProductDetail({ params }) {
   const product = await getProductBySlug(slug);
 
   if (!product) {
-    return <h2 style={{ padding: "2rem" }}>Producto no encontrado</h2>;
+    notFound();
   }
 
   const isLowStock = product.stock > 0 && product.stock <= 5;

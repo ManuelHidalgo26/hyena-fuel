@@ -21,7 +21,7 @@ const STATIC = [
   {
     _id: "s3",
     name: "Federico M.",
-    text: "Me contacté por Instagram y me respondieron al toque. Los suplementos son originales y el envío gratis a partir de $120k es un golazo.",
+    text: "Me contacté por Instagram y me respondieron al toque. Los suplementos son originales y el envío gratis a partir de $160k es un golazo.",
     rating: 5,
     location: "Córdoba Capital",
   },

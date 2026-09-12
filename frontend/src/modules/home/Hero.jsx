@@ -2,7 +2,7 @@ import Link from "next/link";
 import styles from "./Hero.module.css";
 
 const TRUST_ITEMS = [
-  { icon: "🚚", label: "Envío gratis +$120k" },
+  { icon: "🚚", label: "Envío gratis +$160k" },
   { icon: "🏆", label: "Las mejores marcas" },
   { icon: "🏦", label: "-10% transferencia" },
   { icon: "💬", label: "Atención por WhatsApp" },

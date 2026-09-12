@@ -35,6 +35,9 @@
 
 /* SLOT 1 — TITLE */
 .info h1 {
+  /* Sin esto heredaba --foreground (#111, pensado para fondo claro) del
+     body: contra el fondo #0b0b0b de la tienda daba ~1:1 (ilegible). */
+  color: var(--hyena-text);
   font-size: 2.2rem;
   font-weight: 800;
   margin-bottom: 0.8rem;
@@ -161,7 +164,9 @@
 .transferPrice {
   font-size: 1.6rem;
   font-weight: 900;
-  color: #e43003;
+  /* #e43003 daba 4.43:1 sobre #0b0b0b (justo debajo de AA). El token de
+     marca --hyena-ember es el mismo rojo-naranja, más brillante: 5.57:1. */
+  color: var(--hyena-ember);
 }
 
 .listPrice {

@@ -27,6 +27,7 @@ export const metadata = {
   description:
     "Suplementos deportivos de calidad para atletas que no negocian con la mediocridad. Whey Protein, Creatina, Pre-Entreno y más. Envío gratis en Córdoba.",
   keywords: "suplementos deportivos córdoba, proteína whey, creatina, pre-entreno, BCAA",
+  alternates: { canonical: "/" },
   icons: { icon: "/favicon.ico" },
   openGraph: {
     title: "HYENA FUEL | Suplementos deportivos en Córdoba",

@@ -10,7 +10,7 @@ const CartContext = createContext(null);
 /* =========================
     Envíos Córdoba (reglas)
 ========================= */
-const FREE_SHIPPING_THRESHOLD = 120000;
+const FREE_SHIPPING_THRESHOLD = 160000;
 const SHIPPING_COST = 5000;
 
 export function CartProvider({ children }) {

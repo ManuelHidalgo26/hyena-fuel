@@ -2,7 +2,7 @@ import { calculateUnitCommission } from "./commission";
 import { roundMoney } from "./money";
 
 /** Envío gratis a partir de este subtotal a pagar; si no, cuesta $5000 (retiro en persona siempre es gratis). */
-export const FREE_SHIPPING_THRESHOLD = 120000;
+export const FREE_SHIPPING_THRESHOLD = 160000;
 export const SHIPPING_COST = 5000;
 
 export type PaymentMethod = "transferencia" | "mercadopago";

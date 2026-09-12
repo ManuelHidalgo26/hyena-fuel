@@ -14,7 +14,7 @@ export default function ShippingBanner() {
   const hasItems = cartItems.length > 0;
   const isFree = hasItems && missing === 0;
 
-  let mainMessage = "🚚 Envío gratis a Córdoba Capital en compras superiores a $120.000";
+  let mainMessage = "🚚 Envío gratis a Córdoba Capital en compras superiores a $160.000";
   if (hasItems && missing > 0) {
     mainMessage = `🚚 Te faltan $${missing.toLocaleString("es-AR")} para envío gratis`;
   } else if (isFree) {

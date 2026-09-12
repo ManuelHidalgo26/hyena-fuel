@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 import { getProductSitemapEntries } from "../lib/api/products.api";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://hyenafuel.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.hyenafuel.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let products: { slug: string; updatedAt: string }[] = [];
