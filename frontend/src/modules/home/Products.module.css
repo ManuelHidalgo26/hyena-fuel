@@ -253,6 +253,12 @@
   margin: 0 auto var(--hyena-space-4) auto;
   border: 0;
   padding: 0;
+  /* QA fix: los navegadores dan a <fieldset> un min-width:min-content por
+     default, que no respeta el ancho del contenedor y anula el
+     overflow-x:auto de .chipsRow (los chips empujan el body entero a
+     scrollear horizontal en mobile). min-width:0 deja que el fieldset se
+     achique al ancho real y que el scroll quede contenido en .chipsRow. */
+  min-width: 0;
 }
 
 .filterLabel {
@@ -302,6 +308,15 @@
 .chipActive {
   background: var(--hyena-orange);
   border-color: var(--hyena-orange);
+  color: var(--hyena-orange-contrast);
+}
+
+/* QA fix: `.chip:hover` (0,0,2,0) le gana en especificidad a `.chipActive`
+   sola (0,0,1,0) sin importar el orden de la hoja — al pasar el mouse
+   sobre un chip ya seleccionado, el texto volvía a --hyena-text (blanco)
+   sobre fondo naranja: contraste real medido 2.36:1 (falla WCAG AA). Esta
+   regla iguala la especificidad y queda después en el cascade. */
+.chipActive:hover {
   color: var(--hyena-orange-contrast);
 }
 
