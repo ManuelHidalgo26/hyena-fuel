@@ -1,11 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import styles from "./Footer.module.css";
 import Image from "next/image";
 import Link from "next/link";
 import logo from "../../../../public/images/hyena-fuel-logo.png";
-import { FaInstagram, FaWhatsapp } from "react-icons/fa";
+import styles from "./Footer.module.css";
+
+const NAV_LINKS = [
+  { href: "/", label: "Inicio" },
+  { href: "/#products", label: "Productos" },
+  { href: "/como-comprar", label: "Cómo comprar" },
+  { href: "/about", label: "Nosotros" },
+];
+
+const PAYMENT_BADGES = [
+  "💵 Efectivo",
+  "🏦 Transferencia (10% OFF)",
+  "💳 Débito",
+  "💳 Crédito",
+];
 
 function NewsletterForm() {
   const [email, setEmail] = useState("");
@@ -69,66 +82,79 @@ function NewsletterForm() {
 export default function Footer() {
   return (
     <footer className={styles.footer}>
-      <div className={styles.container}>
-
-        {/* Logo + tagline */}
+      <div className={styles.grid}>
         <div className={styles.brand}>
-          <Image src={logo} alt="HYENA Fuel" width={100} height={45} />
-          <p className={styles.tagline}>Combustible para tu entrenamiento.</p>
+          <Image src={logo} alt="HYENA Fuel" width={110} height={45} />
+          <p className={styles.tagline}>
+            Combustible para tu entrenamiento. Suplementos deportivos en Córdoba, con
+            las mejores marcas y atención directa por WhatsApp.
+          </p>
+          <div className={styles.social}>
+            <a href="https://www.instagram.com/hyenafuel/" target="_blank" rel="noopener noreferrer">
+              📸 @hyenafuel
+            </a>
+            <a href="https://wa.me/5493519152450" target="_blank" rel="noopener noreferrer">
+              💬 WhatsApp
+            </a>
+          </div>
         </div>
 
-        {/* Links */}
-        <nav className={styles.links}>
+        <div>
           <span className={styles.colTitle}>Navegación</span>
-          <Link href="/">Inicio</Link>
-          <Link href="/about">Nosotros</Link>
-          <Link href="/#products">Productos</Link>
-        </nav>
-
-        {/* Info */}
-        <div className={styles.info}>
-          <span className={styles.colTitle}>Información</span>
-
-          <div className={styles.shipping}>
-            <span className={styles.shippingIcon}>🚚</span>
-            <span>Envío gratis a Córdoba Capital en compras de +$120.000</span>
-          </div>
-
-          <div className={styles.payment}>
-            <span className={styles.colTitle}>Medios de pago</span>
-            <div className={styles.paymentBadges}>
-              <span className={styles.badge}>💵 Efectivo</span>
-              <span className={styles.badge}>🏦 Transferencia</span>
-              <span className={styles.badge}>💳 Débito</span>
-              <span className={styles.badge}>💳 Crédito</span>
-            </div>
-            <p className={styles.paymentNote}>
-              Pagando con transferencia obtenés un 10% de descuento.
-            </p>
-          </div>
+          <nav className={styles.links}>
+            {NAV_LINKS.map((link) => (
+              <Link key={link.href} href={link.href}>
+                {link.label}
+              </Link>
+            ))}
+          </nav>
         </div>
 
-        {/* Redes + Newsletter */}
-        <div className={styles.social}>
-          <span className={styles.colTitle}>Seguinos</span>
-          <a href="https://www.instagram.com/hyenafuel/" target="_blank" rel="noopener noreferrer" className={styles.instaLink}>
-            <FaInstagram />@hyenafuel
-          </a>
-          <a href="https://wa.me/5493519152450" target="_blank" rel="noopener noreferrer" className={styles.whatsappLink}>
-            <FaWhatsapp />WhatsApp
-          </a>
-
-          <div className={styles.newsletter}>
-            <span className={styles.colTitle}>Novedades y ofertas</span>
-            <NewsletterForm />
-          </div>
+        <div>
+          <span className={styles.colTitle}>Cómo comprar</span>
+          <nav className={styles.links}>
+            <Link href="/como-comprar">Ver el paso a paso</Link>
+          </nav>
+          <p className={styles.note}>📅 Envíos los miércoles a Córdoba</p>
+          <p className={styles.note}>🏪 Retiro en Córdoba (coordinás por WhatsApp)</p>
+          <p className={styles.note}>🔁 Cambios en productos sin abrir</p>
         </div>
 
+        <div>
+          <span className={styles.colTitle}>Contacto</span>
+          <nav className={styles.links}>
+            <a href="https://wa.me/5493519152450" target="_blank" rel="noopener noreferrer">
+              💬 WhatsApp
+            </a>
+            <a href="https://www.instagram.com/hyenafuel/" target="_blank" rel="noopener noreferrer">
+              📸 Instagram @hyenafuel
+            </a>
+          </nav>
+          <p className={styles.note}>Córdoba Capital, Argentina</p>
+        </div>
+
+        <div>
+          <span className={styles.colTitle}>Novedades y ofertas</span>
+          <NewsletterForm />
+        </div>
       </div>
 
-      {/* Bottom bar */}
+      <div className={styles.middle}>
+        <div className={styles.badgeRow} aria-label="Medios de pago aceptados">
+          {PAYMENT_BADGES.map((badge) => (
+            <span key={badge} className={styles.badgePill}>
+              {badge}
+            </span>
+          ))}
+        </div>
+        <p className={styles.trust}>
+          🏆 Trabajamos solo con las mejores marcas · 💬 Atención directa por WhatsApp ·
+          🔁 Cambios en productos sin abrir
+        </p>
+      </div>
+
       <div className={styles.bottomBar}>
-        © {new Date().getFullYear()} HYENA FUEL — All rights reserved.
+        © {new Date().getFullYear()} HYENA FUEL — Todos los derechos reservados.
       </div>
     </footer>
   );

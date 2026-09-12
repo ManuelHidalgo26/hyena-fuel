@@ -1,135 +1,173 @@
 .navbar {
-  width: 100%;
-  position: fixed;
-  background: #0b0b0b;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: sticky;
   top: 0;
   z-index: 50;
+  width: 100%;
+  background: rgba(11, 11, 11, 0.92);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--hyena-border);
 }
 
-.container {
-  max-width: 1300px;
+.inner {
+  max-width: var(--hyena-container-max);
   margin: 0 auto;
-  padding: 1rem 2rem;
+  padding: 0.9rem var(--hyena-container-pad);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
 }
 
-/* Logo */
 .logo {
   display: flex;
   align-items: center;
 }
 
 /* Links desktop */
-.links {
-  display: flex;
+.navLinks {
+  display: none;
   gap: 2rem;
 }
 
-.links a {
-  color: #ffffff;
-  font-weight: 500;
-  transition: color 0.2s;
+.navLinks a {
+  color: var(--hyena-text-muted);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: color var(--hyena-duration-fast) var(--hyena-ease);
 }
 
-.links a:hover {
-  color: #ff8a00;
+.navLinks a:hover,
+.navLinks a:focus-visible {
+  color: var(--hyena-orange);
 }
 
-/* =========================
-    CART BUTTON + BADGE
-========================= */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 
-.cartButton {
+.iconBtn,
+.burger {
   position: relative;
-  background: none;
-  border: none;
-  cursor: pointer;
-
-  width: 40px;
-  height: 40px;
-
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  font-size: 1.6rem;
-  color: #ffffff;
+  background: transparent;
+  border: 1px solid var(--hyena-border-strong);
+  border-radius: var(--hyena-radius-md);
+  color: var(--hyena-text);
+  cursor: pointer;
+  font-size: 1.15rem;
+  transition:
+    border-color var(--hyena-duration-fast) var(--hyena-ease),
+    background var(--hyena-duration-fast) var(--hyena-ease);
 }
 
-/* Badge */
-.cartButton[data-count]:not([data-count=""])::after {
-  content: attr(data-count);
+.iconBtn:hover,
+.burger:hover {
+  border-color: var(--hyena-orange);
+  background: rgba(255, 138, 0, 0.08);
+}
 
+.iconBtn:focus-visible,
+.burger:focus-visible {
+  outline: none;
+  box-shadow: var(--hyena-focus-ring);
+}
+
+.cartCount {
   position: absolute;
   top: -6px;
   right: -6px;
-
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-
-  background: #ff8a00;
-  color: #0b0b0b;
-
-  font-size: 0.7rem;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  background: var(--hyena-orange);
+  color: var(--hyena-orange-contrast);
+  font-size: 0.68rem;
   font-weight: 800;
-  border-radius: 999px;
-
+  border-radius: var(--hyena-radius-pill);
   display: flex;
   align-items: center;
   justify-content: center;
-
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
 /* =========================
-    BURGER (mobile)
+    MOBILE NAV PANEL
 ========================= */
-
-.burger {
+/* z-index por debajo del overlay del carrito (CartDrawer.module.css usa
+   90/100) para que, si ambos llegaran a estar abiertos, el carrito gane. */
+.navPanel {
   display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.navPanelOpen {
+  display: block;
+}
+
+.navPanelSheet {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: min(84vw, 340px);
+  height: 100%;
+  background: var(--hyena-surface);
+  border-left: 1px solid var(--hyena-border);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.navPanelClose {
+  align-self: flex-end;
+  width: 40px;
+  height: 40px;
   background: none;
   border: none;
-  color: #ffffff;
-  font-size: 1.8rem;
+  color: var(--hyena-text);
+  font-size: 1.4rem;
   cursor: pointer;
 }
 
-/* =========================
-    MOBILE MENU
-========================= */
-
-.mobileMenu {
-  display: none;
+.navPanelClose:focus-visible {
+  outline: none;
+  box-shadow: var(--hyena-focus-ring);
 }
 
-/* =========================
-    RESPONSIVE
-========================= */
+.navPanelLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
 
-@media (max-width: 768px) {
-  .links {
-    display: none;
+.navPanelLinks a {
+  text-decoration: none;
+  color: var(--hyena-text);
+}
+
+.navPanelLinks a:hover,
+.navPanelLinks a:focus-visible {
+  color: var(--hyena-orange);
+}
+
+@media (min-width: 768px) {
+  .navLinks {
+    display: flex;
   }
 
   .burger {
-    display: block;
-  }
-
-  .mobileMenu {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem 2rem;
-    background: #0b0b0b;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .mobileMenu a {
-    color: #ffffff;
-    font-size: 1.1rem;
+    display: none;
   }
 }

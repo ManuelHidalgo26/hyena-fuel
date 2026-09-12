@@ -1,34 +1,37 @@
 .banner {
   width: 100%;
-  position: fixed;
-  top: 192px;
-  left: 0;
-  z-index: 49;
-  background: #111111;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 0.45rem 0;
+  background: var(--hyena-surface-raised);
+  border-bottom: 1px solid var(--hyena-border);
+  padding: 0.5rem 0;
   overflow: hidden;
-  white-space: nowrap;
-  transition: background 0.4s ease;
+  transition: background var(--hyena-duration-base) ease;
 }
 
 .banner.success {
-  background: #0d3320;
+  background: var(--hyena-success-bg);
+  border-bottom-color: var(--hyena-success-border);
 }
 
 .track {
   display: inline-flex;
   gap: 4rem;
-  animation: marquee 20s linear infinite;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.75);
-  transform: translateX(-50%);
+  white-space: nowrap;
+  animation: marquee 22s linear infinite;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--hyena-text-muted);
 }
 
 .banner.success .track {
-  color: #2ecc71;
+  color: var(--hyena-success);
   font-weight: 700;
+}
+
+/* Pausa al pasar el mouse o llegar por teclado — antes corría siempre,
+   sin forma de leer el texto con calma (design-fase-2.md §5). */
+.banner:hover .track,
+.banner:focus-within .track {
+  animation-play-state: paused;
 }
 
 .track span {
@@ -36,21 +39,10 @@
 }
 
 @keyframes marquee {
-  0% {
+  from {
+    transform: translateX(0);
+  }
+  to {
     transform: translateX(-50%);
-  }
-  100% {
-    transform: translateX(0%);
-  }
-}
-
-@media (max-width: 768px) {
-  .banner {
-    top: 192px;
-  }
-
-  .track {
-    font-size: 0.78rem;
-    animation-duration: 16s;
   }
 }

@@ -3,36 +3,36 @@
 import { useCart } from "../../context/CartContext";
 import styles from "./ShippingBanner.module.css";
 
+const STATIC_MESSAGES = [
+  "📅 Envíos los miércoles — coordinás por WhatsApp",
+  "🏦 10% OFF pagando por transferencia",
+];
+
 export default function ShippingBanner() {
   const { getMissingForFreeShipping, cartItems } = useCart();
-  const missing = getMissingForFreeShipping("mercadopago");
+  const missing = getMissingForFreeShipping("transferencia");
   const hasItems = cartItems.length > 0;
+  const isFree = hasItems && missing === 0;
 
-  let message = "";
-
-  if (!hasItems) {
-    message = "🚚 Envío gratis a Córdoba Capital en compras superiores a $120.000";
-  } else if (missing > 0) {
-    message = `🚚 Te faltan $${missing.toLocaleString("es-AR")} para envío gratis`;
-  } else {
-    message = "🎉 ¡Tenés envío gratis aplicado!";
+  let mainMessage = "🚚 Envío gratis a Córdoba Capital en compras superiores a $120.000";
+  if (hasItems && missing > 0) {
+    mainMessage = `🚚 Te faltan $${missing.toLocaleString("es-AR")} para envío gratis`;
+  } else if (isFree) {
+    mainMessage = "🎉 ¡Tenés envío gratis aplicado!";
   }
 
+  const messages = [mainMessage, ...STATIC_MESSAGES];
+
   return (
-    <div className={`${styles.banner} ${missing === 0 && hasItems ? styles.success : ""}`}>
+    <div className={`${styles.banner} ${isFree ? styles.success : ""}`} aria-live="off">
       <div className={styles.track}>
-  <span>{message}</span>
-  <span>{message}</span>
-  <span>{message}</span>
-  <span>{message}</span>
-  <span>{message}</span>
-  <span>{message}</span>
-  <span>{message}</span>
-  <span>{message}</span>
-  <span>{message}</span>
-  <span>{message}</span>
-  <span>{message}</span>
-</div>
+        {messages.map((text, index) => (
+          <span key={`msg-${index}`}>{text}</span>
+        ))}
+        {messages.map((text, index) => (
+          <span key={`dup-${index}`} aria-hidden="true">{text}</span>
+        ))}
+      </div>
     </div>
   );
 }

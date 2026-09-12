@@ -2,10 +2,12 @@
   width: 100%;
   padding: 0.75rem;
   background: var(--color-orange);
-  color: #ebdfdf;
+  /* Fase 2 §12 hallazgo #1: texto casi blanco sobre naranja daba ~2.1:1
+     (no cumple WCAG AA). Negro fijo sobre naranja = ~8.5:1 (AAA). */
+  color: var(--hyena-orange-contrast);
   border: 1px solid rgba(179, 68, 68, 0.25);
   border-radius: 8px;
-  font-weight: 800px;
+  font-weight: 800;
   font-size: 0.9rem;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s;
@@ -41,6 +43,6 @@
   transition: border-color 0.2s, color 0.2s;
 }
 .pedidoBtn:hover {
-  border-color: #ff6a00;
-  color: #ff6a00;
+  border-color: var(--hyena-orange);
+  color: var(--hyena-orange);
 }

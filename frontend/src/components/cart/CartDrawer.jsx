@@ -104,10 +104,10 @@ export default function CartDrawer() {
           <p>
             {paymentMethod === "mercadopago"
               ? deliveryMethod === "retiro"
-                ? <>¡Pedido registrado! Retirá en <strong>Junín 5393, Córdoba</strong> — lunes a viernes de 8 a 12 hs o de 16 a 20 hs. Coordinamos el horario y el pago con tarjeta (débito o crédito) por WhatsApp o Instagram.</>
+                ? <>¡Pedido registrado! Retirá en <strong>Córdoba</strong> — coordinamos el lugar, el horario y el pago con tarjeta (débito o crédito) por WhatsApp o Instagram.</>
                 : "Recibimos tu pedido. Coordinamos el pago con tarjeta (débito o crédito) y la entrega por WhatsApp."
               : deliveryMethod === "retiro"
-                ? <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>{TRANSFER_ALIAS}</strong> (o coordinás el pago en efectivo) y enviános el comprobante. Retirá en <strong>Junín 5393, Córdoba</strong> — lunes a viernes de 8 a 12 hs o de 16 a 20 hs.</>
+                ? <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>{TRANSFER_ALIAS}</strong> (o coordinás el pago en efectivo) y enviános el comprobante. Retirá en <strong>Córdoba</strong>, coordinamos el lugar y el horario por WhatsApp.</>
                 : <>Transferí <strong>${orderTotal.toLocaleString("es-AR")}</strong> al alias <strong>{TRANSFER_ALIAS}</strong> (o coordinás el pago en efectivo) y enviános el comprobante por WhatsApp o Instagram para confirmar tu pedido.</>
             }
           </p>

@@ -58,8 +58,8 @@ const steps = [
         <ul>
           <li>🚚 <strong>Envío a domicilio</strong> — ingresá tu dirección</li>
           <li>
-            🏪 <strong>Retiro en persona</strong> — gratis en{" "}
-            <strong>Junín 5393, Córdoba</strong> (L–V 8–12 hs / 16–20 hs)
+            🏪 <strong>Retiro en persona</strong> — gratis en Córdoba,
+            coordinás por WhatsApp
           </li>
         </ul>
       </>
@@ -75,8 +75,8 @@ const steps = [
         Tenés dos opciones:
         <ul>
           <li>
-            💳 <strong>MercadoPago</strong> — débito o crédito, te redirigimos a
-            la plataforma segura
+            💳 <strong>Débito / Crédito</strong> — coordinamos el pago por
+            WhatsApp o Instagram
           </li>
           <li>
             🏦 <strong>Transferencia bancaria</strong> — al alias{" "}
@@ -97,12 +97,12 @@ const steps = [
         Una vez confirmado el pedido:
         <ul>
           <li>
-            Si pagás por <strong>transferencia</strong>, envianos el comprobante
+            Si pagás por <strong>transferencia</strong>, enviános el comprobante
             por WhatsApp o Instagram al alias <strong>{TRANSFER_ALIAS}</strong>
           </li>
           <li>
-            Si pagás por <strong>MercadoPago</strong>, completás el pago en la
-            plataforma y coordinamos el envío
+            Si pagás con <strong>tarjeta (débito o crédito)</strong>, coordinamos
+            el pago y el envío por WhatsApp
           </li>
         </ul>
         Coordinamos la entrega o el retiro en el horario que mejor te quede.

@@ -3,6 +3,7 @@ import CartDrawer from "../../components/cart/CartDrawer";
 import Footer from "../../components/layout/Footer/Footer";
 import Navbar from "../../components/layout/Navbar/Navbar";
 import ShippingBanner from "../../components/layout/ShippingBanner";
+import WhatsAppFloat from "../../components/layout/WhatsAppFloat/WhatsAppFloat";
 import { CartProvider } from "../../context/CartContext";
 
 /**
@@ -20,6 +21,7 @@ export default function StoreLayout({ children }: { children: ReactNode }) {
       <CartDrawer />
       <main className="main-content">{children}</main>
       <Footer />
+      <WhatsAppFloat />
     </CartProvider>
   );
 }

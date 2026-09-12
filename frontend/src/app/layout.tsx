@@ -1,6 +1,25 @@
 import type { ReactNode } from "react";
+import { Anton, Plus_Jakarta_Sans } from "next/font/google";
 import Script from "next/script";
 import "../styles/globals.css";
+
+// Sistema tipográfico de marca (design-fase-2.md §2): Anton para titulares,
+// Plus Jakarta Sans para cuerpo/UI. Las variables alimentan los alias
+// `--hyena-font-display`/`--hyena-font-body` de globals.css — ningún
+// componente hardcodea el nombre de la fuente.
+const anton = Anton({
+  weight: "400",
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+const jakarta = Plus_Jakarta_Sans({
+  weight: ["400", "500", "600", "700", "800"],
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-body",
+  display: "swap",
+});
 
 export const metadata = {
   metadataBase: new URL("https://www.hyenafuel.com"),
@@ -37,7 +56,7 @@ export default function RootLayout({
   children: ReactNode;
 }) {
   return (
-    <html lang="es">
+    <html lang="es" className={`${anton.variable} ${jakarta.variable}`}>
       <body className="layout-body">
         {/* Google Analytics 4 */}
         <Script

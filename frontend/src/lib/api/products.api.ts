@@ -1,6 +1,16 @@
 import { createClient } from "../supabase/server";
 import { isUuid } from "../uuid";
 
+/** Specs de ficha de la PDP (ADR 0005 §2). Todas opcionales; la UI renderiza solo lo presente. */
+export type ProductAttributes = {
+  servingSize?: string;
+  servingsPerContainer?: number;
+  proteinPerServing?: string;
+  netWeight?: string;
+  flavors?: string[];
+  highlights?: string[];
+};
+
 export type Product = {
   _id: string;
   name: string;
@@ -11,6 +21,8 @@ export type Product = {
   stock: number;
   images: string[];
   brand: string | null;
+  category: string | null;
+  attributes: ProductAttributes;
 };
 
 type ProductRow = {
@@ -23,10 +35,14 @@ type ProductRow = {
   stock: number;
   images: string[] | null;
   brand: string | null;
+  category: string | null;
+  attributes: ProductAttributes | null;
 };
 
+// Datos públicos del producto. NO incluye `cost` ni overrides de comisión (nunca al público).
+// `category`/`attributes` (ADR 0005) sí son públicos: facet de filtro + specs de ficha.
 const PRODUCT_COLUMNS =
-  "id, name, slug, description, price, transfer_price, stock, images, brand";
+  "id, name, slug, description, price, transfer_price, stock, images, brand, category, attributes";
 
 function mapProduct(row: ProductRow): Product {
   return {
@@ -39,6 +55,8 @@ function mapProduct(row: ProductRow): Product {
     stock: row.stock,
     images: row.images ?? [],
     brand: row.brand,
+    category: row.category,
+    attributes: row.attributes ?? {},
   };
 }
 
