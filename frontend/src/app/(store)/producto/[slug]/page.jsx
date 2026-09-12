@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import ReactMarkdown from "react-markdown";
 import { getProductBySlug } from "../../../../lib/api/products.api";
 import styles from "./ProductDetail.module.css";
 import AddToCart from "./AddToCart";
@@ -82,7 +83,9 @@ export default async function ProductDetail({ params }) {
         )}
 
         {product.description && (
-          <p className={styles.description}>{product.description}</p>
+          <div className={styles.description}>
+            <ReactMarkdown>{product.description}</ReactMarkdown>
+          </div>
         )}
 
         {/* PRECIOS */}

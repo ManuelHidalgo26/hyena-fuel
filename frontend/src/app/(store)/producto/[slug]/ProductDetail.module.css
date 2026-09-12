@@ -44,16 +44,73 @@
   min-height: 64px; /* 🔑 mismo espacio */
 }
 
-/* SLOT 2 — DESCRIPTION */
+/* SLOT 2 — DESCRIPTION (markdown del cliente: ## subtítulos, viñetas, etc.) */
 .description {
   font-size: 1rem;
-  color: #cfcfcf;
+  color: var(--hyena-text-muted);
   line-height: 1.6;
   margin-bottom: 1.2rem;
+}
 
-  min-height: 96px; /* 🔑 reserva espacio */
-  max-height: 96px;
-  overflow: hidden;
+.description > :first-child {
+  margin-top: 0;
+}
+
+.description > :last-child {
+  margin-bottom: 0;
+}
+
+.description h2,
+.description h3 {
+  color: var(--hyena-text);
+  font-weight: 800;
+  margin: 1.4rem 0 0.5rem;
+}
+
+.description h2 {
+  font-size: 1.25rem;
+}
+
+.description h3 {
+  font-size: 1.1rem;
+}
+
+.description p {
+  margin: 0 0 0.9rem;
+}
+
+/* Tailwind preflight resetea list-style/margin/padding de ul/ol — hay que
+   rehabilitarlos acá para que las viñetas del cliente se vean. */
+.description ul,
+.description ol {
+  margin: 0 0 0.9rem;
+  padding-left: 1.4rem;
+}
+
+.description ul {
+  list-style: disc;
+}
+
+.description ol {
+  list-style: decimal;
+}
+
+.description li {
+  margin-bottom: 0.35rem;
+}
+
+.description strong {
+  color: var(--hyena-text);
+  font-weight: 800;
+}
+
+.description a {
+  color: var(--hyena-orange);
+  text-decoration: none;
+}
+
+.description a:hover {
+  text-decoration: underline;
 }
 
 /* SLOT 3 — PRICE */
