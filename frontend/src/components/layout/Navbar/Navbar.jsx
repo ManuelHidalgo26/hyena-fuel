@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { FaShoppingCart } from "react-icons/fa";
@@ -50,6 +51,46 @@ export default function Navbar() {
   }, [open]);
 
   const cartCount = mounted ? getTotalItems() : 0;
+
+  // El panel mobile se porta a document.body: `.navbar` tiene
+  // `backdrop-filter` (Navbar.module.css), y un ancestro con
+  // filter/backdrop-filter/transform se vuelve el containing block de sus
+  // descendientes `position:fixed` — el panel (fixed; inset:0) quedaba
+  // acotado a la caja del header (~74px) en vez del viewport completo.
+  // El portal lo saca de esa cadena de ancestros, así el overlay/sheet
+  // siempre cubren la pantalla entera sin importar los estilos del header.
+  const navPanel = (
+    <div
+      id="navPanel"
+      className={`${styles.navPanel} ${open ? styles.navPanelOpen : ""}`}
+      onClick={closeMenu}
+    >
+      <div
+        className={styles.navPanelSheet}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menú de navegación"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          ref={closeButtonRef}
+          type="button"
+          className={styles.navPanelClose}
+          onClick={closeMenu}
+          aria-label="Cerrar menú"
+        >
+          ✕
+        </button>
+        <nav className={styles.navPanelLinks}>
+          {NAV_LINKS.map((link) => (
+            <Link key={link.href} href={link.href} onClick={closeMenu}>
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
+    </div>
+  );
 
   return (
     <header className={styles.navbar}>
@@ -102,36 +143,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      <div
-        id="navPanel"
-        className={`${styles.navPanel} ${open ? styles.navPanelOpen : ""}`}
-        onClick={closeMenu}
-      >
-        <div
-          className={styles.navPanelSheet}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Menú de navegación"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <button
-            ref={closeButtonRef}
-            type="button"
-            className={styles.navPanelClose}
-            onClick={closeMenu}
-            aria-label="Cerrar menú"
-          >
-            ✕
-          </button>
-          <nav className={styles.navPanelLinks}>
-            {NAV_LINKS.map((link) => (
-              <Link key={link.href} href={link.href} onClick={closeMenu}>
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </div>
+      {mounted && createPortal(navPanel, document.body)}
     </header>
   );
 }

@@ -17,6 +17,10 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   images: {
+    // avif primero: suele pesar 20-30% menos que webp en fotos (perf-audit
+    // §3 fix #7). Next intenta avif y cae a webp si el navegador no lo
+    // soporta (Accept header), sin romper nada.
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
         protocol: "https",

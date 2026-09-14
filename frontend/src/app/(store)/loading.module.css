@@ -1,0 +1,83 @@
+.wrapper {
+  max-width: var(--hyena-container-max);
+  margin: 0 auto;
+  padding: var(--hyena-space-6) var(--hyena-container-pad);
+}
+
+.hero {
+  height: 160px;
+  border-radius: var(--hyena-radius-lg);
+  margin-bottom: var(--hyena-space-7);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--hyena-space-4);
+}
+
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hyena-space-2);
+}
+
+.cardImage {
+  height: 190px;
+  border-radius: var(--hyena-radius-md);
+}
+
+.cardLine {
+  height: 12px;
+  border-radius: 4px;
+}
+
+.cardLineShort {
+  width: 60%;
+}
+
+/* Mismo patrón de shimmer que AdminTableSkeleton (admin.module.css
+   .skeletonBar), con tokens --hyena-* en vez de --admin-*. */
+.hero,
+.cardImage,
+.cardLine {
+  background: var(--hyena-surface-raised);
+  background-image: linear-gradient(
+    90deg,
+    var(--hyena-surface-raised) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    var(--hyena-surface-raised) 100%
+  );
+  background-size: 200% 100%;
+  animation: storeSkeletonPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes storeSkeletonPulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero,
+  .cardImage,
+  .cardLine {
+    animation: none;
+    background: var(--hyena-surface-raised);
+  }
+}
