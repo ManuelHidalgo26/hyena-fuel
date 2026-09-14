@@ -210,7 +210,13 @@
 html,
 body {
   scroll-behavior: smooth;
-  height: 100%;
+  /* min-height (no height fijo): con `height:100%` el body queda acotado a
+     1 viewport de alto y se vuelve el containing block de cualquier
+     `position:sticky` descendiente — el sticky deja de funcionar pasado ese
+     punto (rompía el navbar en toda la web y la imagen de la PDP). Con
+     min-height el body sigue cubriendo como mínimo el viewport (fondo sin
+     huecos) pero puede crecer con el contenido real. */
+  min-height: 100%;
   margin: 0;
   background: var(--hyena-black);
 }

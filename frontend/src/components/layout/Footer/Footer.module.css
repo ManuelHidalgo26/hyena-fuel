@@ -19,7 +19,9 @@
 }
 
 .tagline {
-  color: var(--hyena-text-faint);
+  /* --hyena-text-muted (no --hyena-text-faint): esta bajada es copy real de
+     marca, no texto decorativo — necesita contraste AA holgado (QA-14). */
+  color: var(--hyena-text-muted);
   font-size: 0.85rem;
   margin: 0.6rem 0 0;
 }
@@ -85,7 +87,9 @@
 }
 
 .note {
-  color: var(--hyena-text-faint);
+  /* --hyena-text-muted (no --hyena-text-faint): copy real de envíos/retiro/
+     cambios que el cliente quiere que se lea bien (QA-14). */
+  color: var(--hyena-text-muted);
   font-size: 0.82rem;
   margin: 0.55rem 0 0;
   line-height: 1.4;
@@ -155,7 +159,9 @@
 
 .newsletterNote {
   font-size: 0.78rem;
-  color: var(--hyena-text-faint);
+  /* --hyena-text-muted (no --hyena-text-faint): mensajes de error/duplicado
+     reales, no texto decorativo (QA-14). */
+  color: var(--hyena-text-muted);
   margin: 0;
 }
 

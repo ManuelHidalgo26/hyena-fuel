@@ -82,12 +82,6 @@ export default async function ProductDetail({ params }) {
           </div>
         )}
 
-        {product.description && (
-          <div className={styles.description}>
-            <ReactMarkdown>{product.description}</ReactMarkdown>
-          </div>
-        )}
-
         {/* PRECIOS */}
         <div className={styles.prices}>
           {typeof product.transferPrice === "number" &&
@@ -126,6 +120,17 @@ export default async function ProductDetail({ params }) {
             Seguinos en Instagram
           </a>
         </div>
+
+        {/* DESCRIPCIÓN — al final: el precio y el CTA quedan visibles arriba
+            sin depender de cuán larga sea la descripción del cliente. */}
+        {product.description && (
+          <div className={styles.descriptionSection}>
+            <h2 className={styles.descriptionHeading}>Descripción</h2>
+            <div className={styles.description}>
+              <ReactMarkdown>{product.description}</ReactMarkdown>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

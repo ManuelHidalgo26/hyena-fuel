@@ -10,6 +10,11 @@ const STATIC_MESSAGES = [
 
 export default function ShippingBanner() {
   const { getMissingForFreeShipping, cartItems } = useCart();
+  // "transferencia" replica el método preseleccionado por defecto en
+  // CartDrawer.jsx (useState inicial), para que el "faltan $X" del banner
+  // coincida con lo que el carrito ya muestra al abrirse. No hay una
+  // constante compartida hoy (QA-16); si se agrega una fuente única del
+  // método por defecto, reemplazar este literal por esa constante.
   const missing = getMissingForFreeShipping("transferencia");
   const hasItems = cartItems.length > 0;
   const isFree = hasItems && missing === 0;

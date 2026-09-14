@@ -31,3 +31,9 @@
     box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45), 0 0 0 10px rgba(37, 211, 102, 0);
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .fab {
+    animation: none;
+  }
+}

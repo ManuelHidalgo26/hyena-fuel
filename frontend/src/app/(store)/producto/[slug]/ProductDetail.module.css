@@ -21,8 +21,23 @@
   min-height: 420px;
 }
 
+/* La descripción ahora va al final de .info y puede ser larga (markdown) —
+   en desktop la imagen queda pegada al scroll para que siga acompañando al
+   precio/CTA mientras se lee, en vez de quedar arriba con un hueco vacío
+   debajo. 88px = altura del navbar sticky (~73px) + aire. */
+@media (min-width: 901px) {
+  .imageWrapper {
+    /* Sin esto el grid estira .imageWrapper a la altura de .info (que ahora
+       puede ser muy alta por la descripción), y la imagen queda centrada
+       en medio de ese alto en vez de pegada arriba junto al sticky. */
+    align-self: start;
+    position: sticky;
+    top: 88px;
+  }
+}
+
 /* =========================
-   INFO (SLOTS)
+   INFO
 ========================= */
 
 .info {
@@ -33,7 +48,7 @@
   height: 100%; /* 🔑 */
 }
 
-/* SLOT 1 — TITLE */
+/* TITLE */
 .info h1 {
   /* Sin esto heredaba --foreground (#111, pensado para fondo claro) del
      body: contra el fondo #0b0b0b de la tienda daba ~1:1 (ilegible). */
@@ -41,10 +56,25 @@
   font-size: 2.2rem;
   font-weight: 800;
   margin-bottom: 0.8rem;
-  min-height: 64px; /* 🔑 mismo espacio */
 }
 
-/* SLOT 2 — DESCRIPTION (markdown del cliente: ## subtítulos, viñetas, etc.) */
+/* DESCRIPCIÓN — al final de .info, separada del bloque de compra */
+.descriptionSection {
+  margin-top: 2.5rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--hyena-border);
+}
+
+.descriptionHeading {
+  color: var(--hyena-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.9rem;
+}
+
+/* Contenido markdown del cliente: ## subtítulos, viñetas, etc. */
 .description {
   font-size: 1rem;
   color: var(--hyena-text-muted);
@@ -113,16 +143,7 @@
   text-decoration: underline;
 }
 
-/* SLOT 3 — PRICE */
-.price {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: var(--color-orange);
-  margin-bottom: 1.5rem;
-  min-height: 36px;
-}
-
-/* SLOT 4 — CTA GROUP */
+/* CTA GROUP */
 .ctaGroup {
   margin-top: 2rem;
   display: flex;
