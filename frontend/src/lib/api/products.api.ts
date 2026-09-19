@@ -11,6 +11,13 @@ export type ProductAttributes = {
   highlights?: string[];
 };
 
+/** Shape público de un sabor (ADR 0008): nada sensible, sin `cost`. */
+export type ProductVariant = {
+  name: string;
+  image: string | null;
+  stock: number;
+};
+
 export type Product = {
   _id: string;
   name: string;
@@ -23,6 +30,14 @@ export type Product = {
   brand: string | null;
   category: string | null;
   attributes: ProductAttributes;
+  /** Sabores activos (ADR 0008). Vacío = producto sin sabores, se comporta como hoy. */
+  variants: ProductVariant[];
+};
+
+type ProductVariantRow = {
+  name: string;
+  image: string | null;
+  stock: number;
 };
 
 type ProductRow = {
@@ -37,12 +52,15 @@ type ProductRow = {
   brand: string | null;
   category: string | null;
   attributes: ProductAttributes | null;
+  product_variants: ProductVariantRow[] | null;
 };
 
 // Datos públicos del producto. NO incluye `cost` ni overrides de comisión (nunca al público).
 // `category`/`attributes` (ADR 0005) sí son públicos: facet de filtro + specs de ficha.
+// `product_variants` (ADR 0008) embebe solo `name/image/stock`; RLS ya filtra a variantes
+// `active` de productos `active` (mismo patrón que `products_public_read`).
 const PRODUCT_COLUMNS =
-  "id, name, slug, description, price, transfer_price, stock, images, brand, category, attributes";
+  "id, name, slug, description, price, transfer_price, stock, images, brand, category, attributes, product_variants(name, image, stock)";
 
 function mapProduct(row: ProductRow): Product {
   return {
@@ -57,6 +75,11 @@ function mapProduct(row: ProductRow): Product {
     brand: row.brand,
     category: row.category,
     attributes: row.attributes ?? {},
+    variants: (row.product_variants ?? []).map((variant) => ({
+      name: variant.name,
+      image: variant.image,
+      stock: variant.stock,
+    })),
   };
 }
 
@@ -69,6 +92,7 @@ export async function getProducts(): Promise<Product[]> {
     .select(PRODUCT_COLUMNS)
     .eq("active", true)
     .order("created_at", { ascending: false })
+    .order("position", { foreignTable: "product_variants", ascending: true })
     .returns<ProductRow[]>();
 
   if (error) {
@@ -87,6 +111,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     .select(PRODUCT_COLUMNS)
     .eq("slug", slug)
     .eq("active", true)
+    .order("position", { foreignTable: "product_variants", ascending: true })
     .maybeSingle()
     .returns<ProductRow | null>();
 
@@ -106,6 +131,7 @@ export async function getProductById(id: string): Promise<Product | null> {
     .select(PRODUCT_COLUMNS)
     .eq("id", id)
     .eq("active", true)
+    .order("position", { foreignTable: "product_variants", ascending: true })
     .maybeSingle()
     .returns<ProductRow | null>();
 

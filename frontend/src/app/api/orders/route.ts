@@ -19,6 +19,7 @@ type AdminClient = ReturnType<typeof createAdminClient>;
 /** Cotas anti-abuso (QA-3): un carrito legítimo nunca necesita más que esto. */
 const MAX_QUANTITY_PER_ITEM = 100;
 const MAX_ITEMS_PER_ORDER = 50;
+const MAX_FLAVOR_LENGTH = 100;
 
 /** SQLSTATE que usa la RPC `create_order` para el único error de negocio que debe volver 400. */
 const INSUFFICIENT_STOCK_ERROR_CODE = "HY001";
@@ -30,6 +31,14 @@ const orderItemSchema = z.object({
     .int("La cantidad debe ser un número entero")
     .positive("La cantidad debe ser mayor a 0")
     .max(MAX_QUANTITY_PER_ITEM, `La cantidad máxima por producto es ${MAX_QUANTITY_PER_ITEM}`),
+  // Nombre del sabor elegido (ADR 0008). Requerido/prohibido según variantes del producto
+  // se valida contra la DB en `validateStockAndActive` (Zod no conoce el catálogo).
+  flavor: z
+    .string()
+    .trim()
+    .min(1, "El sabor no puede estar vacío")
+    .max(MAX_FLAVOR_LENGTH, `El sabor admite hasta ${MAX_FLAVOR_LENGTH} caracteres`)
+    .optional(),
 });
 
 const createOrderSchema = z
@@ -79,6 +88,14 @@ type ProductRow = {
 
 type ValidatedProduct = OrderProductInput & { stock: number; active: boolean };
 
+/** Fila de `product_variants` (ADR 0008). Se trae activa e inactiva para dar mensajes de error precisos. */
+type ProductVariantRow = {
+  product_id: string;
+  name: string;
+  stock: number;
+  active: boolean;
+};
+
 type SellerRow = {
   id: string;
   default_commission_pct: number | string;
@@ -115,8 +132,12 @@ export async function POST(request: NextRequest) {
 }
 
 /** Columnas de `orders` + `order_items` embebidos, para el listado admin (todos los campos de negocio). */
+// QA (ADR 0008, gate estático): sumado `flavor` al embed de `order_items` — ya se persiste
+// (ver `persistOrder`/RPC) pero no se exponía en el listado admin. Sin `flavor` acá, quien
+// prepara el pedido no sabe qué sabor despachar. Fix trivial y seguro (solo lectura, sin
+// tocar dinero/RPC): agregar la columna ya existente al select + al mapeo de respuesta.
 const ADMIN_ORDER_COLUMNS =
-  "id, customer_name, customer_email, customer_phone, customer_address, payment_method, delivery_method, status, subtotal, discount, shipping_cost, total_final, seller_id, attribution_source, commission_total, created_at, order_items(id, product_id, name, quantity, unit_price, unit_cost, unit_commission)";
+  "id, customer_name, customer_email, customer_phone, customer_address, payment_method, delivery_method, status, subtotal, discount, shipping_cost, total_final, seller_id, attribution_source, commission_total, created_at, order_items(id, product_id, name, quantity, unit_price, unit_cost, unit_commission, flavor)";
 
 type AdminOrderItemRow = {
   id: string;
@@ -126,6 +147,7 @@ type AdminOrderItemRow = {
   unit_price: number | string;
   unit_cost: number | string;
   unit_commission: number | string;
+  flavor: string | null;
 };
 
 type AdminOrderRow = {
@@ -193,6 +215,7 @@ function mapAdminOrder(order: AdminOrderRow) {
       unitPrice: Number(item.unit_price),
       unitCost: Number(item.unit_cost),
       unitCommission: Number(item.unit_commission),
+      flavor: item.flavor,
     })),
   };
 }
@@ -203,7 +226,9 @@ async function createOrder(input: CreateOrderInput): Promise<NextResponse> {
   const mergedItems = mergeLineItemsByProduct(items);
 
   const productsById = await fetchProducts(supabase, mergedItems);
-  const validationError = validateStockAndActive(mergedItems, productsById);
+  const productIds = Array.from(new Set(mergedItems.map((item) => item.productId)));
+  const variantsByProduct = await fetchVariantsByProduct(supabase, productIds);
+  const validationError = validateStockAndActive(mergedItems, productsById, variantsByProduct);
   if (validationError) return validationError;
 
   const seller = sellerCode ? await findActiveSeller(supabase, sellerCode) : null;
@@ -284,9 +309,41 @@ async function fetchProducts(
   return productsById;
 }
 
+/** Trae TODAS las variantes (activas e inactivas) de los productos pedidos, agrupadas por producto. */
+async function fetchVariantsByProduct(
+  supabase: AdminClient,
+  productIds: string[]
+): Promise<Map<string, ProductVariantRow[]>> {
+  const { data, error } = await supabase
+    .from("product_variants")
+    .select("product_id, name, stock, active")
+    .in("product_id", productIds)
+    .returns<ProductVariantRow[]>();
+
+  if (error) {
+    throw new Error(`Error al obtener sabores: ${error.message}`);
+  }
+
+  const variantsByProduct = new Map<string, ProductVariantRow[]>();
+  for (const row of data ?? []) {
+    const variants = variantsByProduct.get(row.product_id) ?? [];
+    variants.push(row);
+    variantsByProduct.set(row.product_id, variants);
+  }
+
+  return variantsByProduct;
+}
+
+/**
+ * Valida producto activo/existente y disponibilidad, con la regla de sabores del ADR 0008:
+ * producto CON ≥1 variante activa exige `flavor`; producto SIN variantes activas lo prohíbe.
+ * El stock se lee de la variante elegida (si hay sabor) o del producto (si no lo hay) — el
+ * chequeo real y atómico lo hace igual la RPC `create_order`, esto solo da un 400 legible.
+ */
 function validateStockAndActive(
   items: OrderLineItem[],
-  productsById: Map<string, ValidatedProduct>
+  productsById: Map<string, ValidatedProduct>,
+  variantsByProduct: Map<string, ProductVariantRow[]>
 ): NextResponse | null {
   for (const item of items) {
     const product = productsById.get(item.productId);
@@ -303,7 +360,42 @@ function validateStockAndActive(
         { status: 400 }
       );
     }
-    if (product.stock < item.quantity) {
+
+    const activeVariants = (variantsByProduct.get(item.productId) ?? []).filter(
+      (variant) => variant.active
+    );
+
+    if (activeVariants.length > 0 && !item.flavor) {
+      return NextResponse.json(
+        { error: `Elegí un sabor para "${product.name}"` },
+        { status: 400 }
+      );
+    }
+    if (activeVariants.length === 0 && item.flavor) {
+      return NextResponse.json(
+        { error: `"${product.name}" no tiene sabores` },
+        { status: 400 }
+      );
+    }
+
+    if (item.flavor) {
+      const flavor = item.flavor;
+      const variant = activeVariants.find(
+        (candidate) => candidate.name.toLowerCase() === flavor.toLowerCase()
+      );
+      if (!variant) {
+        return NextResponse.json(
+          { error: `El sabor "${item.flavor}" no existe para "${product.name}"` },
+          { status: 400 }
+        );
+      }
+      if (variant.stock < item.quantity) {
+        return NextResponse.json(
+          { error: `Stock insuficiente de "${product.name}" — ${item.flavor}` },
+          { status: 400 }
+        );
+      }
+    } else if (product.stock < item.quantity) {
       return NextResponse.json(
         { error: `Stock insuficiente de "${product.name}"` },
         { status: 400 }
@@ -352,6 +444,7 @@ type RpcOrderItem = {
   unit_price: number;
   unit_cost: number;
   unit_commission: number;
+  flavor: string | null;
 };
 
 type PersistOrderResult =
@@ -378,6 +471,7 @@ async function persistOrder(
     unit_price: item.unitPrice,
     unit_cost: item.unitCost,
     unit_commission: item.unitCommission,
+    flavor: item.flavor ?? null,
   }));
 
   const { data, error } = await supabase
@@ -442,6 +536,7 @@ function mapOrderResponse(order: OrderRow, items: FrozenOrderItem[]) {
       name: item.name,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
+      flavor: item.flavor ?? null,
     })),
   };
 }

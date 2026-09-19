@@ -21,6 +21,8 @@ export const CANCELLED_ORDER_STATUS = "cancelled";
 export type OrderLineItem = {
   productId: string;
   quantity: number;
+  /** Nombre del sabor elegido (ADR 0008). `undefined`/vacío = producto sin sabores. */
+  flavor?: string;
 };
 
 /** Datos del producto necesarios para congelar un ítem y calcular totales. */
@@ -46,6 +48,8 @@ export type FrozenOrderItem = {
   unitPrice: number;
   unitCost: number;
   unitCommission: number;
+  /** Sabor congelado en la línea (ADR 0008). `undefined` = producto sin sabores. */
+  flavor?: string;
 };
 
 export type OrderTotals = {
@@ -56,18 +60,25 @@ export type OrderTotals = {
   commissionTotal: number;
 };
 
-/** Suma cantidades repetidas del mismo producto (protege ante payloads manuales con líneas duplicadas). */
+/**
+ * Suma cantidades repetidas de la misma línea (protege ante payloads manuales con líneas
+ * duplicadas). La clave de la línea es `productId + flavor` (ADR 0008): dos sabores del
+ * mismo producto son líneas distintas, pero el mismo sabor repetido se funde en una sola.
+ */
 export function mergeLineItemsByProduct(items: OrderLineItem[]): OrderLineItem[] {
-  const quantityByProduct = new Map<string, number>();
+  const mergedByKey = new Map<string, OrderLineItem>();
 
   for (const item of items) {
-    quantityByProduct.set(
-      item.productId,
-      (quantityByProduct.get(item.productId) ?? 0) + item.quantity
-    );
+    const key = `${item.productId}::${item.flavor ?? ""}`;
+    const existing = mergedByKey.get(key);
+    mergedByKey.set(key, {
+      productId: item.productId,
+      flavor: item.flavor,
+      quantity: (existing?.quantity ?? 0) + item.quantity,
+    });
   }
 
-  return Array.from(quantityByProduct, ([productId, quantity]) => ({ productId, quantity }));
+  return Array.from(mergedByKey.values());
 }
 
 /**
@@ -79,7 +90,7 @@ export function freezeOrderItems(
   productsById: Map<string, OrderProductInput>,
   seller: OrderSellerInput | null
 ): FrozenOrderItem[] {
-  return items.map(({ productId, quantity }) => {
+  return items.map(({ productId, quantity, flavor }) => {
     const product = productsById.get(productId);
     if (!product) {
       throw new Error(`Producto ${productId} no encontrado al congelar el ítem`);
@@ -102,6 +113,7 @@ export function freezeOrderItems(
       unitPrice,
       unitCost: roundMoney(product.cost),
       unitCommission,
+      flavor,
     };
   });
 }
