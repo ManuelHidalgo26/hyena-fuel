@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAdmin } from "../../../lib/auth/guards";
 import { createAdminClient } from "../../../lib/supabase/admin";
 import { ADMIN_PRODUCT_COLUMNS, mapAdminProduct, type AdminProductRow } from "../../../lib/products";
+import { replaceProductVariants, variantsInputSchema } from "../../../lib/productVariants";
 
 /**
  * La lectura pública de productos hoy es directa desde Server Components
@@ -32,6 +33,7 @@ const createProductSchema = z
     active: z.boolean().optional(),
     commissionOverridePct: z.number().min(0).nullable().optional(),
     commissionOverrideAmount: z.number().min(0).nullable().optional(),
+    variants: variantsInputSchema,
   })
   .refine((data) => data.commissionOverridePct == null || data.commissionOverrideAmount == null, {
     message: "No se puede combinar override de comisión por porcentaje y por monto fijo",
@@ -88,5 +90,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No se pudo crear el producto" }, { status: 500 });
   }
 
-  return NextResponse.json(mapAdminProduct(data), { status: 201 });
+  if (!input.variants || input.variants.length === 0) {
+    return NextResponse.json(mapAdminProduct(data), { status: 201 });
+  }
+
+  const variantsResult = await replaceProductVariants(supabase, data.id, input.variants);
+  if (variantsResult.error) {
+    // Sin transacción real entre `products` y `product_variants` (mismo límite ya
+    // aceptado para orders/order_items, QA-7): rollback manual del producto recién
+    // creado para no dejar un producto sin los sabores que el admin pidió.
+    await supabase.from("products").delete().eq("id", data.id);
+    return NextResponse.json({ error: variantsResult.error }, { status: 400 });
+  }
+
+  const { data: withVariants, error: refetchError } = await supabase
+    .from("products")
+    .select(ADMIN_PRODUCT_COLUMNS)
+    .eq("id", data.id)
+    .single()
+    .returns<AdminProductRow>();
+
+  if (refetchError) {
+    console.error("[POST /api/products] refetch tras sabores", refetchError);
+    return NextResponse.json(mapAdminProduct(data), { status: 201 });
+  }
+
+  return NextResponse.json(mapAdminProduct(withVariants), { status: 201 });
 }

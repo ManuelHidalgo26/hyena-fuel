@@ -687,6 +687,50 @@
 }
 
 /* ---------------------------------------------------------------------
+   9b. Editor de sabores (ProductosClient — ADR 0008, sección "Sabores"
+   del form de producto). Reusa .field/.fieldWide/.label/.hint/.checkboxRow/
+   .checkbox/.stockStepper/.stockStepButton/.stockInput ya existentes.
+   --------------------------------------------------------------------- */
+
+.variantRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface-raised);
+  margin-bottom: 0.75rem;
+}
+
+.variantRowImage {
+  flex: 0 0 200px;
+  max-width: 200px;
+}
+
+.variantRowFields {
+  flex: 1 1 220px;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.variantRowActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+@media (max-width: 640px) {
+  .variantRowImage {
+    flex-basis: 100%;
+    max-width: 100%;
+  }
+}
+
+/* ---------------------------------------------------------------------
    10. Modal de confirmación (AdminModal)
    --------------------------------------------------------------------- */
 
@@ -867,6 +911,13 @@
   color: var(--admin-success-text);
   background: var(--admin-success-bg);
   border: 1px solid var(--admin-success-border);
+}
+
+/* Aviso no bloqueante (ej. stock de producto ya no autoritativo con sabores, ADR 0008 §3.7). */
+.bannerWarning {
+  color: var(--admin-warning-text);
+  background: var(--admin-warning-bg);
+  border: 1px solid var(--admin-warning-border);
 }
 
 /* ---------------------------------------------------------------------

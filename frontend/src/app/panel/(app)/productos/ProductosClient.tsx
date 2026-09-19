@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState, type FormEvent } from "react";
+import { Fragment, useState, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   AdminPageHeader,
@@ -14,6 +14,7 @@ import {
 } from "../../../../components/admin";
 import styles from "../../../../components/admin/admin.module.css";
 import type { AdminProduct } from "../../../../lib/products";
+import type { AdminProductVariant } from "../../../../lib/productVariants";
 import { readErrorMessage } from "../../../../lib/admin/http";
 import { uploadProductImage } from "../../../../lib/storage/productImages";
 
@@ -27,12 +28,27 @@ type ProductFormFields = {
   description: string;
   images: string[];
   brand: string;
+  variants: VariantFormRow[];
 };
 
-/** Campos de texto/número del form (todo salvo `images`, que maneja el `ImageUploader` por su cuenta). */
-type ProductTextField = Exclude<keyof ProductFormFields, "images">;
+/** Campos de texto/número del form (todo salvo `images`/`variants`, que manejan su propio editor). */
+type ProductTextField = Exclude<keyof ProductFormFields, "images" | "variants">;
 
 type CreateFormState = ProductFormFields & { active: boolean };
+
+/**
+ * Fila de sabor en el form (ADR 0008, Decisión 6). `id: null` = fila nueva,
+ * todavía no persistida (sin stepper de stock posible, §3.4.1). `stock` es de
+ * solo lectura acá (referencia + total): se edita aparte, por el stepper que
+ * pega a `PATCH /api/products/[id]/variants/[variantId]`.
+ */
+type VariantFormRow = {
+  id: string | null;
+  name: string;
+  image: string | null;
+  active: boolean;
+  stock: number;
+};
 
 const EMPTY_CREATE_FORM: CreateFormState = {
   name: "",
@@ -44,8 +60,22 @@ const EMPTY_CREATE_FORM: CreateFormState = {
   description: "",
   images: [],
   brand: "",
+  variants: [],
   active: true,
 };
+
+function toVariantFormRows(variants: AdminProductVariant[]): VariantFormRow[] {
+  return variants
+    .slice()
+    .sort((a, b) => a.position - b.position)
+    .map((variant) => ({
+      id: variant.id,
+      name: variant.name,
+      image: variant.image,
+      active: variant.active,
+      stock: variant.stock,
+    }));
+}
 
 function toEditForm(product: AdminProduct): ProductFormFields {
   return {
@@ -58,6 +88,7 @@ function toEditForm(product: AdminProduct): ProductFormFields {
     description: product.description ?? "",
     images: product.images,
     brand: product.brand ?? "",
+    variants: toVariantFormRows(product.variants),
   };
 }
 
@@ -89,6 +120,14 @@ function slugify(text: string): string {
     .replace(/[^a-z0-9-]/g, "");
 }
 
+type VariantPayload = {
+  id?: string;
+  name: string;
+  image: string | null;
+  active: boolean;
+  position: number;
+};
+
 type ProductPayload = {
   name: string;
   slug: string;
@@ -99,9 +138,14 @@ type ProductPayload = {
   description: string | null;
   images: string[];
   brand: string | null;
+  variants: VariantPayload[];
 };
 
-type ValidationResult = { payload: ProductPayload | null; errors: Record<string, string> };
+type ValidationResult = {
+  payload: ProductPayload | null;
+  errors: Record<string, string>;
+  variantErrors: Record<number, string>;
+};
 
 /** Validación mínima del lado del cliente antes de pegarle al server (que valida todo con Zod igual). */
 function validateProductForm(form: ProductFormFields): ValidationResult {
@@ -139,8 +183,24 @@ function validateProductForm(form: ProductFormFields): ValidationResult {
     errors.transferPrice = "Precio de transferencia inválido";
   }
 
-  if (Object.keys(errors).length > 0) {
-    return { payload: null, errors };
+  const variantErrors: Record<number, string> = {};
+  const seenVariantNames = new Set<string>();
+  form.variants.forEach((variant, index) => {
+    const variantName = variant.name.trim();
+    if (!variantName) {
+      variantErrors[index] = "Falta el nombre del sabor";
+      return;
+    }
+    const key = variantName.toLowerCase();
+    if (seenVariantNames.has(key)) {
+      variantErrors[index] = "Hay otro sabor con este nombre";
+      return;
+    }
+    seenVariantNames.add(key);
+  });
+
+  if (Object.keys(errors).length > 0 || Object.keys(variantErrors).length > 0) {
+    return { payload: null, errors, variantErrors };
   }
 
   return {
@@ -154,8 +214,16 @@ function validateProductForm(form: ProductFormFields): ValidationResult {
       description: form.description.trim() === "" ? null : form.description.trim(),
       images: form.images,
       brand: form.brand.trim() === "" ? null : form.brand.trim(),
+      variants: form.variants.map((variant, index) => ({
+        ...(variant.id ? { id: variant.id } : {}),
+        name: variant.name.trim(),
+        image: variant.image,
+        active: variant.active,
+        position: index,
+      })),
     },
     errors: {},
+    variantErrors: {},
   };
 }
 
@@ -165,6 +233,8 @@ type ProductFormFieldsGridProps = {
   onChange: (field: ProductTextField, value: string) => void;
   onImagesChange: (images: string[]) => void;
   idPrefix: string;
+  /** Solo el form de edición lo prende (spec §3.7): el aviso de que el stock de acá arriba dejó de ser autoritativo. */
+  showVariantsStockBanner?: boolean;
 };
 
 /**
@@ -172,7 +242,14 @@ type ProductFormFieldsGridProps = {
  * (mismo set de campos, spec Admin UI §1.1/§4): name, slug, brand, price,
  * transferPrice, cost, stock, description, images.
  */
-function ProductFormFieldsGrid({ values, errors, onChange, onImagesChange, idPrefix }: ProductFormFieldsGridProps) {
+function ProductFormFieldsGrid({
+  values,
+  errors,
+  onChange,
+  onImagesChange,
+  idPrefix,
+  showVariantsStockBanner,
+}: ProductFormFieldsGridProps) {
   const nameId = `${idPrefix}-name`;
   const slugId = `${idPrefix}-slug`;
   const priceId = `${idPrefix}-price`;
@@ -253,6 +330,16 @@ function ProductFormFieldsGrid({ values, errors, onChange, onImagesChange, idPre
         />
       </AdminField>
 
+      {showVariantsStockBanner && values.variants.length > 0 && (
+        <div className={`${styles.field} ${styles.fieldWide}`}>
+          <div className={`${styles.banner} ${styles.bannerWarning}`}>
+            Este producto tiene sabores: el stock de acá arriba ya no es el que se
+            descuenta en una venta. Cargá y editá el stock real en la sección
+            Sabores, más abajo.
+          </div>
+        </div>
+      )}
+
       <AdminField htmlFor={`${idPrefix}-stock`} label="Stock" required error={errors.stock}>
         <input
           id={`${idPrefix}-stock`}
@@ -283,6 +370,137 @@ function ProductFormFieldsGrid({ values, errors, onChange, onImagesChange, idPre
   );
 }
 
+type VariantsEditorProps = {
+  idPrefix: string;
+  variants: VariantFormRow[];
+  variantErrors: Record<number, string>;
+  onChange: (next: VariantFormRow[]) => void;
+  onRequestRemove: (index: number) => void;
+  /** Solo el form de edición lo pasa (§3.4.1): el stepper de stock necesita el id del producto ya persistido. */
+  renderStockControl?: (variant: VariantFormRow) => ReactNode;
+};
+
+/**
+ * Sección "Sabores" del form de producto (ADR 0008, Decisión 6 + design-sabores-variantes.md §3):
+ * lista repetible de filas frías (nombre/imagen/activo/orden), con el stock
+ * caliente resuelto aparte por `renderStockControl` cuando corresponde.
+ */
+function VariantsEditor({ idPrefix, variants, variantErrors, onChange, onRequestRemove, renderStockControl }: VariantsEditorProps) {
+  function updateVariant(index: number, patch: Partial<VariantFormRow>) {
+    onChange(variants.map((variant, i) => (i === index ? { ...variant, ...patch } : variant)));
+  }
+
+  function moveVariant(index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (target < 0 || target >= variants.length) return;
+    const next = [...variants];
+    const swap = next[index];
+    next[index] = next[target];
+    next[target] = swap;
+    onChange(next);
+  }
+
+  function addVariant() {
+    onChange([...variants, { id: null, name: "", image: null, active: true, stock: 0 }]);
+  }
+
+  return (
+    <div className={`${styles.field} ${styles.fieldWide}`}>
+      <span className={styles.label}>Sabores (opcional)</span>
+
+      {variants.length === 0 && (
+        <p className={styles.hint}>
+          Este producto no tiene sabores. Si agregás uno, vas a poder controlar el
+          stock de cada sabor por separado.
+        </p>
+      )}
+
+      {variants.map((variant, index) => {
+        const rowId = `${idPrefix}-variant-${index}`;
+        return (
+          <div className={styles.variantRow} key={variant.id ?? `${idPrefix}-new-${index}`}>
+            <div className={styles.variantRowImage}>
+              <span className={styles.label}>Imagen del sabor</span>
+              <ImageUploader
+                maxImages={1}
+                value={variant.image ? [variant.image] : []}
+                onChange={(images) => updateVariant(index, { image: images[0] ?? null })}
+                onUpload={uploadProductImage}
+              />
+            </div>
+
+            <div className={styles.variantRowFields}>
+              <AdminField htmlFor={`${rowId}-name`} label="Nombre del sabor" required error={variantErrors[index]}>
+                <input
+                  id={`${rowId}-name`}
+                  className={styles.input}
+                  value={variant.name}
+                  onChange={(event) => updateVariant(index, { name: event.target.value })}
+                  aria-invalid={Boolean(variantErrors[index])}
+                  aria-describedby={variantErrors[index] ? `${rowId}-name-error` : undefined}
+                />
+              </AdminField>
+
+              <label className={styles.checkboxRow} htmlFor={`${rowId}-active`}>
+                <input
+                  id={`${rowId}-active`}
+                  type="checkbox"
+                  className={styles.checkbox}
+                  checked={variant.active}
+                  onChange={(event) => updateVariant(index, { active: event.target.checked })}
+                />
+                Activo (visible en la tienda)
+              </label>
+
+              {variant.id ? (
+                renderStockControl?.(variant)
+              ) : (
+                <p className={styles.hint}>Guardá el producto para poder cargarle stock a este sabor.</p>
+              )}
+            </div>
+
+            <div className={styles.variantRowActions}>
+              <AdminButton
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => moveVariant(index, -1)}
+                disabled={index === 0}
+                aria-label={`Subir ${variant.name || "sabor"} en el orden`}
+              >
+                ↑
+              </AdminButton>
+              <AdminButton
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => moveVariant(index, 1)}
+                disabled={index === variants.length - 1}
+                aria-label={`Bajar ${variant.name || "sabor"} en el orden`}
+              >
+                ↓
+              </AdminButton>
+              <AdminButton type="button" size="sm" variant="danger" onClick={() => onRequestRemove(index)}>
+                Quitar
+              </AdminButton>
+            </div>
+          </div>
+        );
+      })}
+
+      <AdminButton type="button" variant="secondary" size="sm" onClick={addVariant}>
+        + Agregar sabor
+      </AdminButton>
+
+      {variants.length > 0 && (
+        <p className={styles.hint}>
+          Stock total (todos los sabores): {variants.reduce((sum, variant) => sum + variant.stock, 0)} unidades
+        </p>
+      )}
+    </div>
+  );
+}
+
 const PRODUCT_TABLE_COLUMN_COUNT = 9;
 
 type ProductosClientProps = {
@@ -291,8 +509,9 @@ type ProductosClientProps = {
 
 /**
  * Mutaciones de Productos (spec Admin UI §1.1/§4): crear, editar parcial,
- * stock rápido, activar/desactivar (destructivo, con confirmación). Toda
- * mutación exitosa dispara `router.refresh()`.
+ * stock rápido, activar/desactivar (destructivo, con confirmación), sabores
+ * (ADR 0008: alta/edición/orden/baja lógica junto con el form + stock por
+ * sabor aislado). Toda mutación exitosa dispara `router.refresh()`.
  */
 export default function ProductosClient({ initialProducts }: ProductosClientProps) {
   const router = useRouter();
@@ -301,15 +520,21 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createForm, setCreateForm] = useState<CreateFormState>(EMPTY_CREATE_FORM);
   const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
+  const [createVariantErrors, setCreateVariantErrors] = useState<Record<number, string>>({});
   const [creating, setCreating] = useState(false);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<ProductFormFields | null>(null);
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  const [editVariantErrors, setEditVariantErrors] = useState<Record<number, string>>({});
   const [savingEdit, setSavingEdit] = useState(false);
 
   const [stockDrafts, setStockDrafts] = useState<Record<string, string>>({});
   const [savingStockId, setSavingStockId] = useState<string | null>(null);
+
+  const [variantStockDrafts, setVariantStockDrafts] = useState<Record<string, string>>({});
+  const [savingVariantStockId, setSavingVariantStockId] = useState<string | null>(null);
+  const [removeVariantIndex, setRemoveVariantIndex] = useState<number | null>(null);
 
   const [deactivateTarget, setDeactivateTarget] = useState<AdminProduct | null>(null);
   const [deactivating, setDeactivating] = useState(false);
@@ -318,6 +543,7 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
   function openCreateForm() {
     setCreateForm(EMPTY_CREATE_FORM);
     setCreateErrors({});
+    setCreateVariantErrors({});
     setShowCreateForm(true);
   }
 
@@ -339,6 +565,15 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
     setCreateForm((prev) => ({ ...prev, images }));
   }
 
+  function handleCreateVariantsChange(variants: VariantFormRow[]) {
+    setCreateForm((prev) => ({ ...prev, variants }));
+  }
+
+  function requestRemoveCreateVariant(index: number) {
+    // Un producto nuevo nunca tiene sabores persistidos: se quita sin confirmar (§3.4.2).
+    setCreateForm((prev) => ({ ...prev, variants: prev.variants.filter((_, i) => i !== index) }));
+  }
+
   function handleEditFieldChange(field: ProductTextField, value: string) {
     setEditForm((prev) => (prev ? { ...prev, [field]: value } : prev));
   }
@@ -347,15 +582,40 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
     setEditForm((prev) => (prev ? { ...prev, images } : prev));
   }
 
+  function handleEditVariantsChange(variants: VariantFormRow[]) {
+    setEditForm((prev) => (prev ? { ...prev, variants } : prev));
+  }
+
+  function requestRemoveEditVariant(index: number) {
+    const variant = editForm?.variants[index];
+    if (!variant) return;
+    if (!variant.id) {
+      // Fila agregada en esta misma sesión de edición, sin persistir: se quita sin confirmar (§3.4.2).
+      setEditForm((prev) => (prev ? { ...prev, variants: prev.variants.filter((_, i) => i !== index) } : prev));
+      return;
+    }
+    setRemoveVariantIndex(index);
+  }
+
+  function confirmRemoveEditVariant() {
+    if (removeVariantIndex === null) return;
+    setEditForm((prev) =>
+      prev ? { ...prev, variants: prev.variants.filter((_, i) => i !== removeVariantIndex) } : prev
+    );
+    setRemoveVariantIndex(null);
+  }
+
   async function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const { payload, errors } = validateProductForm(createForm);
+    const { payload, errors, variantErrors } = validateProductForm(createForm);
     if (!payload) {
       setCreateErrors(errors);
+      setCreateVariantErrors(variantErrors);
       return;
     }
 
     setCreateErrors({});
+    setCreateVariantErrors({});
     setCreating(true);
     setMutationError(null);
     try {
@@ -380,25 +640,32 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
     setEditingId(product._id);
     setEditForm(toEditForm(product));
     setEditErrors({});
+    setEditVariantErrors({});
+    setRemoveVariantIndex(null);
   }
 
   function cancelEdit() {
     setEditingId(null);
     setEditForm(null);
     setEditErrors({});
+    setEditVariantErrors({});
+    setRemoveVariantIndex(null);
+    setVariantStockDrafts({});
   }
 
   async function handleEditSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editingId || !editForm) return;
 
-    const { payload, errors } = validateProductForm(editForm);
+    const { payload, errors, variantErrors } = validateProductForm(editForm);
     if (!payload) {
       setEditErrors(errors);
+      setEditVariantErrors(variantErrors);
       return;
     }
 
     setEditErrors({});
+    setEditVariantErrors({});
     setSavingEdit(true);
     setMutationError(null);
     try {
@@ -447,6 +714,48 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
       router.refresh();
     } finally {
       setSavingStockId(null);
+    }
+  }
+
+  function handleVariantStockDraftChange(variantId: string, value: string) {
+    setVariantStockDrafts((prev) => ({ ...prev, [variantId]: value }));
+  }
+
+  async function handleVariantStockSave(productId: string, variant: VariantFormRow) {
+    if (!variant.id) return;
+    const variantId = variant.id;
+    const raw = variantStockDrafts[variantId];
+    const value = Number(raw);
+    if (raw === undefined || !Number.isInteger(value) || value < 0) return;
+
+    setSavingVariantStockId(variantId);
+    setMutationError(null);
+    try {
+      const response = await fetch(`/api/products/${productId}/variants/${variantId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stock: value }),
+      });
+      if (!response.ok) {
+        setMutationError(await readErrorMessage(response, "No se pudo actualizar el stock del sabor"));
+        return;
+      }
+      setVariantStockDrafts((prev) => {
+        const next = { ...prev };
+        delete next[variantId];
+        return next;
+      });
+      // El form de edición es estado local propio (no se resincroniza solo con
+      // `initialProducts` tras el refresh): reflejamos el nuevo stock a mano
+      // para que el total de referencia (§3.5) no quede desactualizado.
+      setEditForm((prev) =>
+        prev
+          ? { ...prev, variants: prev.variants.map((v) => (v.id === variantId ? { ...v, stock: value } : v)) }
+          : prev
+      );
+      router.refresh();
+    } finally {
+      setSavingVariantStockId(null);
     }
   }
 
@@ -520,6 +829,14 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
               idPrefix="create"
             />
 
+            <VariantsEditor
+              idPrefix="create"
+              variants={createForm.variants}
+              variantErrors={createVariantErrors}
+              onChange={handleCreateVariantsChange}
+              onRequestRemove={requestRemoveCreateVariant}
+            />
+
             <label className={styles.checkboxRow} htmlFor="create-active">
               <input
                 id="create-active"
@@ -568,6 +885,8 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
               const stockDraftValue = stockDraft !== undefined ? Number(stockDraft) : product.stock;
               const currentStockValue = Number.isFinite(stockDraftValue) ? stockDraftValue : product.stock;
               const margin = computeMargin(product.price, product.cost);
+              const activeVariants = product.variants.filter((variant) => variant.active);
+              const hasActiveVariants = activeVariants.length > 0;
 
               const editCost = isEditing && editForm ? Number(editForm.cost) : null;
               const editListMargin = editCost !== null ? computeMargin(Number(editForm?.price), editCost) : null;
@@ -587,7 +906,12 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
                           <img src={product.images[0]} alt={product.name} className={styles.rowThumb} />
                         )}
                         <div>
-                          <p className={styles.rowTitle}>{product.name}</p>
+                          <p className={styles.rowTitle}>
+                            {product.name}{" "}
+                            {hasActiveVariants && (
+                              <AdminBadge tone="neutral">{activeVariants.length} sabores</AdminBadge>
+                            )}
+                          </p>
                           <p className={styles.rowSubtitle}>{product.slug}</p>
                         </div>
                       </div>
@@ -602,40 +926,46 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
                       {formatMargin(margin)}
                     </td>
                     <td className={styles.cellNumeric}>
-                      <div className={styles.stockStepper}>
-                        <AdminButton
-                          size="sm"
-                          variant="secondary"
-                          className={styles.stockStepButton}
-                          aria-label={`Restar stock de ${product.name}`}
-                          onClick={() => handleStockDraftChange(product._id, String(Math.max(0, currentStockValue - 1)))}
-                        >
-                          −
-                        </AdminButton>
-                        <input
-                          type="number"
-                          min={0}
-                          step="1"
-                          className={`${styles.input} ${styles.stockInput}`}
-                          value={stockDraft ?? String(product.stock)}
-                          onChange={(event) => handleStockDraftChange(product._id, event.target.value)}
-                          aria-label={`Stock de ${product.name}`}
-                        />
-                        <AdminButton
-                          size="sm"
-                          variant="secondary"
-                          className={styles.stockStepButton}
-                          aria-label={`Sumar stock de ${product.name}`}
-                          onClick={() => handleStockDraftChange(product._id, String(currentStockValue + 1))}
-                        >
-                          +
-                        </AdminButton>
-                        {stockChanged && (
-                          <AdminButton size="sm" loading={savingStockId === product._id} onClick={() => handleStockSave(product)}>
-                            Guardar
+                      {hasActiveVariants ? (
+                        <span className={styles.cellMuted}>
+                          {activeVariants.reduce((sum, variant) => sum + variant.stock, 0)} ({activeVariants.length} sabores)
+                        </span>
+                      ) : (
+                        <div className={styles.stockStepper}>
+                          <AdminButton
+                            size="sm"
+                            variant="secondary"
+                            className={styles.stockStepButton}
+                            aria-label={`Restar stock de ${product.name}`}
+                            onClick={() => handleStockDraftChange(product._id, String(Math.max(0, currentStockValue - 1)))}
+                          >
+                            −
                           </AdminButton>
-                        )}
-                      </div>
+                          <input
+                            type="number"
+                            min={0}
+                            step="1"
+                            className={`${styles.input} ${styles.stockInput}`}
+                            value={stockDraft ?? String(product.stock)}
+                            onChange={(event) => handleStockDraftChange(product._id, event.target.value)}
+                            aria-label={`Stock de ${product.name}`}
+                          />
+                          <AdminButton
+                            size="sm"
+                            variant="secondary"
+                            className={styles.stockStepButton}
+                            aria-label={`Sumar stock de ${product.name}`}
+                            onClick={() => handleStockDraftChange(product._id, String(currentStockValue + 1))}
+                          >
+                            +
+                          </AdminButton>
+                          {stockChanged && (
+                            <AdminButton size="sm" loading={savingStockId === product._id} onClick={() => handleStockSave(product)}>
+                              Guardar
+                            </AdminButton>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td>
                       <AdminBadge tone={product.active ? "success" : "neutral"}>
@@ -670,7 +1000,71 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
                             onChange={handleEditFieldChange}
                             onImagesChange={handleEditImagesChange}
                             idPrefix={`edit-${product._id}`}
+                            showVariantsStockBanner
                           />
+
+                          <VariantsEditor
+                            idPrefix={`edit-${product._id}`}
+                            variants={editForm.variants}
+                            variantErrors={editVariantErrors}
+                            onChange={handleEditVariantsChange}
+                            onRequestRemove={requestRemoveEditVariant}
+                            renderStockControl={(variant) => {
+                              const variantId = variant.id as string;
+                              const variantStockDraft = variantStockDrafts[variantId];
+                              const variantStockChanged =
+                                variantStockDraft !== undefined && variantStockDraft !== String(variant.stock);
+                              const variantStockDraftValue =
+                                variantStockDraft !== undefined ? Number(variantStockDraft) : variant.stock;
+                              const currentVariantStock = Number.isFinite(variantStockDraftValue)
+                                ? variantStockDraftValue
+                                : variant.stock;
+
+                              return (
+                                <div className={styles.stockStepper}>
+                                  <AdminButton
+                                    size="sm"
+                                    variant="secondary"
+                                    className={styles.stockStepButton}
+                                    aria-label={`Restar stock de ${variant.name}`}
+                                    onClick={() =>
+                                      handleVariantStockDraftChange(variantId, String(Math.max(0, currentVariantStock - 1)))
+                                    }
+                                  >
+                                    −
+                                  </AdminButton>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    step="1"
+                                    className={`${styles.input} ${styles.stockInput}`}
+                                    value={variantStockDraft ?? String(variant.stock)}
+                                    onChange={(event) => handleVariantStockDraftChange(variantId, event.target.value)}
+                                    aria-label={`Stock de ${variant.name}`}
+                                  />
+                                  <AdminButton
+                                    size="sm"
+                                    variant="secondary"
+                                    className={styles.stockStepButton}
+                                    aria-label={`Sumar stock de ${variant.name}`}
+                                    onClick={() => handleVariantStockDraftChange(variantId, String(currentVariantStock + 1))}
+                                  >
+                                    +
+                                  </AdminButton>
+                                  {variantStockChanged && (
+                                    <AdminButton
+                                      size="sm"
+                                      loading={savingVariantStockId === variantId}
+                                      onClick={() => handleVariantStockSave(product._id, variant)}
+                                    >
+                                      Guardar
+                                    </AdminButton>
+                                  )}
+                                </div>
+                              );
+                            }}
+                          />
+
                           <p className={styles.hint}>
                             {editListMargin === null
                               ? "Cargá el costo para ver el margen"
@@ -706,6 +1100,16 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
         confirmLoading={deactivating}
         onClose={() => setDeactivateTarget(null)}
         onConfirm={handleDeactivateConfirm}
+      />
+
+      <AdminModal
+        open={removeVariantIndex !== null}
+        title="¿Quitar este sabor?"
+        description="Deja de verse en la tienda. No se borra: se puede reactivar después."
+        tone="danger"
+        confirmLabel="Quitar"
+        onClose={() => setRemoveVariantIndex(null)}
+        onConfirm={confirmRemoveEditVariant}
       />
     </>
   );

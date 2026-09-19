@@ -1,3 +1,5 @@
+import type { AdminProductVariant } from "./productVariants";
+
 /** Fila cruda de `products` con todas las columnas de negocio (solo admin, nunca al público). */
 export type AdminProductRow = {
   id: string;
@@ -14,6 +16,8 @@ export type AdminProductRow = {
   commission_override_pct: number | string | null;
   commission_override_amount: number | string | null;
   created_at: string;
+  /** Sabores del producto (ADR 0008), activos e inactivos: el admin edita ambos estados. */
+  product_variants: AdminProductVariant[] | null;
 };
 
 /** Shape de producto para el panel admin: incluye `cost`, `active` y overrides de comisión. */
@@ -32,10 +36,12 @@ export type AdminProduct = {
   commissionOverridePct: number | null;
   commissionOverrideAmount: number | null;
   createdAt: string;
+  /** Sabores del producto (ADR 0008, Decisión 6), activos e inactivos, ordenados por `position`. */
+  variants: AdminProductVariant[];
 };
 
 export const ADMIN_PRODUCT_COLUMNS =
-  "id, name, slug, description, price, transfer_price, cost, stock, images, brand, active, commission_override_pct, commission_override_amount, created_at";
+  "id, name, slug, description, price, transfer_price, cost, stock, images, brand, active, commission_override_pct, commission_override_amount, created_at, product_variants(id, name, image, stock, position, active)";
 
 export function mapAdminProduct(row: AdminProductRow): AdminProduct {
   return {
@@ -55,5 +61,6 @@ export function mapAdminProduct(row: AdminProductRow): AdminProduct {
     commissionOverrideAmount:
       row.commission_override_amount === null ? null : Number(row.commission_override_amount),
     createdAt: row.created_at,
+    variants: [...(row.product_variants ?? [])].sort((a, b) => a.position - b.position),
   };
 }

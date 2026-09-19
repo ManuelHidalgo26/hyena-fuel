@@ -27,6 +27,7 @@ export default async function ProductosPage() {
     .from("products")
     .select(ADMIN_PRODUCT_COLUMNS)
     .order("created_at", { ascending: false })
+    .order("position", { foreignTable: "product_variants", ascending: true })
     .returns<AdminProductRow[]>();
 
   if (error) {

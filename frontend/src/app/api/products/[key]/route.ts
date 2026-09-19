@@ -4,6 +4,7 @@ import { requireAdmin } from "../../../../lib/auth/guards";
 import { createAdminClient } from "../../../../lib/supabase/admin";
 import { getProductByKey } from "../../../../lib/api/products.api";
 import { ADMIN_PRODUCT_COLUMNS, mapAdminProduct, type AdminProductRow } from "../../../../lib/products";
+import { replaceProductVariants, variantsInputSchema } from "../../../../lib/productVariants";
 import { isUuid } from "../../../../lib/uuid";
 
 /** Código Postgres de violación de constraint único (`products.slug`). */
@@ -30,6 +31,7 @@ const updateProductSchema = z
     active: z.boolean().optional(),
     commissionOverridePct: z.number().min(0).nullable().optional(),
     commissionOverrideAmount: z.number().min(0).nullable().optional(),
+    variants: variantsInputSchema,
   })
   .refine((data) => Object.keys(data).length > 0, { message: "No hay campos para actualizar" })
   .refine((data) => data.commissionOverridePct == null || data.commissionOverrideAmount == null, {
@@ -51,7 +53,14 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
   return NextResponse.json(product);
 }
 
-/** Edita un producto por id (admin). Acepta `cost`, `brand` y overrides de comisión. */
+/**
+ * Edita un producto por id (admin). Acepta `cost`, `brand` y overrides de comisión.
+ *
+ * `variants` (ADR 0008, Decisión 6) es un campo aparte del resto: si el body no lo
+ * incluye, los sabores del producto no se tocan (permite los PATCH acotados que ya
+ * existían — stock rápido, activar/desactivar — sin pisar la lista de sabores). Si
+ * viene presente, reemplaza el set completo (alta/update/baja lógica de los quitados).
+ */
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   const guard = await requireAdmin();
   if (!guard.authorized) return guard.response;
@@ -76,10 +85,11 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     );
   }
 
+  const { variants, ...productFields } = parsed.data;
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("products")
-    .update(buildProductUpdate(parsed.data))
+    .update(buildProductUpdate(productFields))
     .eq("id", key)
     .select(ADMIN_PRODUCT_COLUMNS)
     .maybeSingle()
@@ -97,7 +107,31 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
   }
 
-  return NextResponse.json(mapAdminProduct(data));
+  if (variants === undefined) {
+    return NextResponse.json(mapAdminProduct(data));
+  }
+
+  const variantsResult = await replaceProductVariants(supabase, key, variants);
+  if (variantsResult.error) {
+    return NextResponse.json({ error: variantsResult.error }, { status: 400 });
+  }
+
+  const { data: refreshed, error: refreshError } = await supabase
+    .from("products")
+    .select(ADMIN_PRODUCT_COLUMNS)
+    .eq("id", key)
+    .maybeSingle()
+    .returns<AdminProductRow | null>();
+
+  if (refreshError || !refreshed) {
+    console.error("[PATCH /api/products/[key]] refetch tras sabores", refreshError);
+    return NextResponse.json(
+      { error: "Los sabores se guardaron, pero no se pudo confirmar el estado final del producto" },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json(mapAdminProduct(refreshed));
 }
 
 /**
@@ -135,7 +169,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteContext) {
 }
 
 /** Mapea el input camelCase ya validado a las columnas snake_case a actualizar (solo las presentes). */
-function buildProductUpdate(input: UpdateProductInput): Record<string, unknown> {
+function buildProductUpdate(input: Omit<UpdateProductInput, "variants">): Record<string, unknown> {
   const update: Record<string, unknown> = {};
 
   if (input.name !== undefined) update.name = input.name;
