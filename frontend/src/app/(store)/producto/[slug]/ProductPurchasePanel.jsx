@@ -39,7 +39,7 @@ function FlavorSelector({ variants, selectedFlavor, onSelect }) {
           const isVariantOutOfStock = variant.stock === 0;
           const isSelected = selectedFlavor?.name === variant.name;
           const chipClassName = isVariantOutOfStock
-            ? styles.flavorChipDisabled
+            ? `${styles.flavorChip} ${styles.flavorChipDisabled}`
             : isSelected
               ? `${styles.flavorChip} ${styles.flavorChipSelected}`
               : styles.flavorChip;
