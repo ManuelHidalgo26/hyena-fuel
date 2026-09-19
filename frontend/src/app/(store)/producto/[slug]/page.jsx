@@ -1,10 +1,8 @@
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { getProductBySlug } from "../../../../lib/api/products.api";
 import styles from "./ProductDetail.module.css";
-import AddToCart from "./AddToCart";
-import TrackViewItem from "./TrackViewItem";
+import ProductPurchasePanel from "./ProductPurchasePanel";
 
 const SITE_URL = "https://www.hyenafuel.com";
 
@@ -43,86 +41,14 @@ export default async function ProductDetail({ params }) {
     notFound();
   }
 
-  const isLowStock = product.stock > 0 && product.stock <= 5;
-  const isMediumStock = product.stock > 5 && product.stock <= 10;
-  const isOutOfStock = product.stock === 0;
-
   return (
     <section className={styles.container}>
-      <div className={styles.imageWrapper}>
-        {product.images?.[0] && (
-          <Image
-            src={product.images[0]}
-            alt={product.name}
-            width={400}
-            height={400}
-            priority
-          />
-        )}
-      </div>
-
-      <div className={styles.info}>
-        <TrackViewItem product={product} />
-        <h1>{product.name}</h1>
-
-        {/* STOCK BADGE */}
-        {isOutOfStock && (
-          <div className={styles.stockBadge + " " + styles.outOfStock}>
-            ✕ Sin stock
-          </div>
-        )}
-        {isLowStock && (
-          <div className={styles.stockBadge + " " + styles.lowStock}>
-            🔥 ¡Últimas {product.stock} unidades!
-          </div>
-        )}
-        {isMediumStock && (
-          <div className={styles.stockBadge + " " + styles.mediumStock}>
-            ⚠️ Pocas unidades disponibles
-          </div>
-        )}
-
-        {/* PRECIOS */}
-        <div className={styles.prices}>
-          {typeof product.transferPrice === "number" &&
-          product.transferPrice < product.price ? (
-            <>
-              <div className={styles.transferPrice}>
-                ${product.transferPrice.toLocaleString("es-AR")}
-              </div>
-
-              <div className={styles.saving}>
-                Ahorrás $
-                {(product.price - product.transferPrice).toLocaleString("es-AR")} pagando
-                por transferencia
-              </div>
-
-              <div className={styles.listPrice}>
-                ${product.price.toLocaleString("es-AR")}
-              </div>
-            </>
-          ) : (
-            <div className={styles.transferPrice}>
-              ${product.price.toLocaleString("es-AR")}
-            </div>
-          )}
-        </div>
-
-        <div className={styles.ctaGroup}>
-          <AddToCart product={product} disabled={isOutOfStock} />
-
-          <a
-            className={styles.instagram}
-            href="https://www.instagram.com/hyenafuel"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Seguinos en Instagram
-          </a>
-        </div>
-
-        {/* DESCRIPCIÓN — al final: el precio y el CTA quedan visibles arriba
-            sin depender de cuán larga sea la descripción del cliente. */}
+      {/* ProductPurchasePanel (Client Component) es dueño del estado de sabor/imagen
+          (ADR 0008) — imagen, nombre, badge de stock, precios, selector y CTA viven
+          ahí. La descripción se sigue resolviendo acá (Server Component) con
+          `ReactMarkdown` server-side y se pasa como `children` para no bundlear
+          markdown ni perder SSR del contenido más pesado de la página. */}
+      <ProductPurchasePanel product={product}>
         {product.description && (
           <div className={styles.descriptionSection}>
             <h2 className={styles.descriptionHeading}>Descripción</h2>
@@ -131,7 +57,7 @@ export default async function ProductDetail({ params }) {
             </div>
           </div>
         )}
-      </div>
+      </ProductPurchasePanel>
     </section>
   );
 }

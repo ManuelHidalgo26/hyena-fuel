@@ -4,10 +4,16 @@ import { FaCartPlus } from "react-icons/fa";
 import { useCart } from "../../../../context/CartContext";
 import styles from "./ProductDetail.module.css";
 
-export default function AddToCart({ product, disabled = false }) {
+export default function AddToCart({
+    product,
+    flavor = null,
+    disabled = false,
+    outOfStock = false,
+    ariaDescribedBy,
+}) {
     const { addItem, openCart } = useCart();
 
-    if (disabled) {
+    if (outOfStock) {
         return (
             <a
                 href="https://www.instagram.com/hyenafuel/"
@@ -23,7 +29,9 @@ export default function AddToCart({ product, disabled = false }) {
     return (
         <button
             className={styles.addToCart}
-            onClick={() => { addItem(product); openCart(); }}
+            onClick={() => { addItem(product, flavor); openCart(); }}
+            disabled={disabled}
+            aria-describedby={ariaDescribedBy}
         >
             <FaCartPlus /> Agregar al carrito
         </button>

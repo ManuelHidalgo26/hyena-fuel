@@ -116,6 +116,20 @@
   color: #777;
 }
 
+/* Sub-label de sabor (ADR 0008) bajo el nombre del producto. Reusa el mismo
+   tono ya usado en este archivo para metadata secundaria (.price) — el
+   drawer sigue en tema claro, no migrado a Fase 2 (ver design-sabores-
+   variantes.md §2.1); un token --hyena-* de fondo oscuro quedaría invisible
+   acá. */
+.itemFlavor {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #777;
+  margin: 0.1rem 0 0.15rem;
+}
+
 /* =========================
     Quantity controls
 ========================= */

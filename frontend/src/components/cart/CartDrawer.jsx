@@ -234,7 +234,10 @@ export default function CartDrawer() {
                   : item.price;
 
               return (
-                <li key={item._id} className={styles.item}>
+                <li
+                  key={`${item._id}-${item.flavor ?? "sin-sabor"}`}
+                  className={styles.item}
+                >
                   {item.image && (
                     <NextImage
                       src={item.image}
@@ -247,15 +250,18 @@ export default function CartDrawer() {
 
                   <div className={styles.info}>
                     <p className={styles.name}>{item.name}</p>
+                    {item.flavor && (
+                      <p className={styles.itemFlavor}>{item.flavor}</p>
+                    )}
 
                     <p className={styles.price}>
                       ${unitPrice.toLocaleString("es-AR")}
                     </p>
 
                     <div className={styles.quantity}>
-                      <button onClick={() => decrease(item._id)}>-</button>
+                      <button onClick={() => decrease(item._id, item.flavor)}>-</button>
                       <span>{item.quantity}</span>
-                      <button onClick={() => increase(item._id)}>+</button>
+                      <button onClick={() => increase(item._id, item.flavor)}>+</button>
                     </div>
                   </div>
                 </li>

@@ -195,6 +195,20 @@
   box-shadow: 0 0 14px rgba(255, 138, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
+/* Deshabilitado por falta de elección de sabor (ADR 0008) — sigue siendo un
+   botón real (no un link de "a pedido"), solo bloqueado hasta elegir. */
+.addToCart:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  animation: none;
+  box-shadow: none;
+}
+
+.addToCart:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 /* A pedido */
 .pedidoBtn {
   width: 100%;
@@ -290,6 +304,125 @@
   border: 1px solid rgba(255, 200, 0, 0.3);
 }
 
+/* Prompt neutro antes de elegir sabor (ADR 0008) — mismo patrón visual que
+   los otros badges de stock, tono neutro (no alarma). */
+.stockPrompt {
+  background: var(--hyena-surface-sunken);
+  color: var(--hyena-text-muted);
+  border: 1px solid var(--hyena-border);
+}
+
+/* =========================
+   SELECTOR DE SABOR (ADR 0008 — design-sabores-variantes.md §1)
+========================= */
+
+.flavorFieldset {
+  border: 0;
+  padding: 0;
+  margin: 1.4rem 0;
+  min-width: 0; /* mismo fix que .filterGroup: evita overflow horizontal en mobile */
+}
+
+.flavorLegend {
+  padding: 0;
+  margin-bottom: 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hyena-text-muted);
+}
+
+.flavorList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hyena-space-2);
+}
+
+/* Estado DEFAULT (con stock, no elegido) */
+.flavorChip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px; /* target táctil — elección obligatoria que bloquea la compra */
+  padding: 0 var(--hyena-space-4);
+  border-radius: var(--hyena-radius-pill);
+  border: 1px solid var(--hyena-border);
+  background: var(--hyena-surface-raised);
+  color: var(--hyena-text-muted);
+  font-size: var(--hyena-text-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--hyena-duration-fast) var(--hyena-ease),
+    background var(--hyena-duration-fast) var(--hyena-ease),
+    color var(--hyena-duration-fast) var(--hyena-ease);
+}
+
+.flavorChip:hover {
+  border-color: var(--hyena-border-strong);
+  color: var(--hyena-text);
+}
+
+/* El foco cae en el input oculto dentro del label */
+.flavorChip:focus-within {
+  box-shadow: var(--hyena-focus-ring);
+}
+
+.flavorChipSelected {
+  background: var(--hyena-orange);
+  border-color: var(--hyena-orange);
+  color: var(--hyena-orange-contrast);
+}
+
+/* `.flavorChip:hover` (0,0,2,0) le gana en especificidad a `.flavorChipSelected`
+   sola (0,0,1,0) sin importar el orden — sin esto, hover sobre un chip YA
+   seleccionado vuelve el texto a --hyena-text sobre fondo naranja (falla AA). */
+.flavorChipSelected:hover {
+  color: var(--hyena-orange-contrast);
+}
+
+/* AGOTADO (stock === 0) */
+.flavorChipDisabled {
+  background: var(--hyena-surface-sunken);
+  border-color: var(--hyena-border);
+  color: var(--hyena-text-faint);
+  cursor: not-allowed;
+}
+
+.flavorChipDisabled:hover {
+  border-color: var(--hyena-border);
+  color: var(--hyena-text-faint);
+}
+
+.flavorChipTag {
+  font-size: var(--hyena-text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--hyena-text-muted);
+}
+
+/* Input real, oculto visualmente pero accesible — clip-rect, NUNCA display:none
+   (rompería teclado/lector de pantalla). */
+.flavorChipInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Hint accesible cuando el CTA está deshabilitado por falta de elección
+   (nunca un botón muerto sin explicación). */
+.flavorRequiredHint {
+  margin-top: 0.5rem;
+  font-size: var(--hyena-text-small);
+  color: var(--hyena-text-muted);
+}
 
 /* =========================
    RESPONSIVE

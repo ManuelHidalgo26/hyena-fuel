@@ -13,6 +13,12 @@ const CartContext = createContext(null);
 const FREE_SHIPPING_THRESHOLD = 160000;
 const SHIPPING_COST = 5000;
 
+/**
+ * Clave compuesta del ítem de carrito (ADR 0008): `_id + flavor`. Dos sabores
+ * del mismo producto son líneas distintas; un producto sin sabores usa `null`.
+ */
+const getCartLineKey = (id, flavor = null) => `${id}::${flavor ?? ""}`;
+
 export function CartProvider({ children }) {
     /* =========================
         State
@@ -40,11 +46,12 @@ export function CartProvider({ children }) {
     /* =========================
         Cart logic
     ========================= */
-    const addItem = (product) => {
+    const addItem = (product, flavor = null) => {
     showToast("Producto agregado al carrito");
 
     setCartItems((prev) => {
-        const existing = prev.find((item) => item._id === product._id);
+        const key = getCartLineKey(product._id, flavor);
+        const existing = prev.find((item) => getCartLineKey(item._id, item.flavor) === key);
 
         // GA4
         trackEvent(GA_EVENTS.ADD_TO_CART, {
@@ -64,11 +71,15 @@ export function CartProvider({ children }) {
 
         if (existing) {
         return prev.map((item) =>
-            item._id === product._id
+            getCartLineKey(item._id, item.flavor) === key
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
         }
+
+        // Imagen del sabor elegido (ADR 0008); sin sabor o sin imagen propia,
+        // cae a la principal del producto (mismo fallback que el swap de la PDP).
+        const variant = flavor ? product.variants?.find((v) => v.name === flavor) : null;
 
         return [
         ...prev,
@@ -77,28 +88,31 @@ export function CartProvider({ children }) {
             name: product.name,
           price: product.price, // precio lista
           transferPrice: product.transferPrice ?? null, // 👈 CLAVE
-            image: product.images?.[0] || null,
+            image: variant?.image ?? product.images?.[0] ?? null,
+            flavor: flavor ?? null,
             quantity: 1,
         },
         ];
     });
     };
 
-    const increase = (_id) => {
+    const increase = (_id, flavor = null) => {
+    const key = getCartLineKey(_id, flavor);
     setCartItems((prev) =>
         prev.map((item) =>
-        item._id === _id
+        getCartLineKey(item._id, item.flavor) === key
             ? { ...item, quantity: item.quantity + 1 }
             : item
         )
     );
     };
 
-    const decrease = (_id) => {
+    const decrease = (_id, flavor = null) => {
+    const key = getCartLineKey(_id, flavor);
     setCartItems((prev) =>
         prev
         .map((item) =>
-            item._id === _id
+            getCartLineKey(item._id, item.flavor) === key
             ? { ...item, quantity: item.quantity - 1 }
             : item
         )
@@ -106,8 +120,9 @@ export function CartProvider({ children }) {
     );
     };
 
-    const removeItem = (_id) => {
-    setCartItems((prev) => prev.filter((item) => item._id !== _id));
+    const removeItem = (_id, flavor = null) => {
+    const key = getCartLineKey(_id, flavor);
+    setCartItems((prev) => prev.filter((item) => getCartLineKey(item._id, item.flavor) !== key));
     };
 
     const clearCart = () => setCartItems([]);
@@ -175,6 +190,9 @@ export function CartProvider({ children }) {
         items: cartItems.map((item) => ({
         productId: item._id,
         quantity: item.quantity,
+        // El schema del checkout usa `flavor` opcional (string), nunca `null` —
+        // se omite la clave cuando el ítem no tiene sabor.
+        ...(item.flavor ? { flavor: item.flavor } : {}),
         })),
         customerName: name,
         customerEmail: email,
