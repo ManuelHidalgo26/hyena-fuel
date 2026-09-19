@@ -91,6 +91,14 @@ export async function getProducts(): Promise<Product[]> {
     .from("products")
     .select(PRODUCT_COLUMNS)
     .eq("active", true)
+    // QA (ADR 0008, gate runtime): filtro explícito de la relación embebida. Para
+    // anon/authenticated no-admin la RLS ya alcanza (product_variants_public_read
+    // exige active=true), pero un admin autenticado navegando la tienda pública cae
+    // bajo product_variants_admin_all (is_admin() -> ALL sin filtro) y ese embed
+    // devolvería también variantes inactivas. Verificado en runtime: con service_role
+    // (mismo alcance efectivo que admin) el embed sin este filtro traía la variante
+    // inactiva de prueba; con el filtro, no. Filtra la fila hija, no excluye el padre.
+    .eq("product_variants.active", true)
     .order("created_at", { ascending: false })
     .order("position", { foreignTable: "product_variants", ascending: true })
     .returns<ProductRow[]>();
@@ -111,6 +119,10 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     .select(PRODUCT_COLUMNS)
     .eq("slug", slug)
     .eq("active", true)
+    // QA (ADR 0008, gate runtime): ver nota en `getProducts` — filtra la variante
+    // embebida a `active=true` explícito, para no depender solo de RLS ante un
+    // admin autenticado navegando la PDP pública.
+    .eq("product_variants.active", true)
     .order("position", { foreignTable: "product_variants", ascending: true })
     .maybeSingle()
     .returns<ProductRow | null>();
@@ -131,6 +143,10 @@ export async function getProductById(id: string): Promise<Product | null> {
     .select(PRODUCT_COLUMNS)
     .eq("id", id)
     .eq("active", true)
+    // QA (ADR 0008, gate runtime): ver nota en `getProducts` — filtra la variante
+    // embebida a `active=true` explícito, para no depender solo de RLS ante un
+    // admin autenticado navegando la PDP pública.
+    .eq("product_variants.active", true)
     .order("position", { foreignTable: "product_variants", ascending: true })
     .maybeSingle()
     .returns<ProductRow | null>();
