@@ -8,31 +8,186 @@
 }
 
 /* =========================
-   IMAGE
+   GALERÍA (C1 — design-pdp-gallery.md)
 ========================= */
 
-.imageWrapper {
+.gallery {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #0f0f0f;
-  border-radius: 12px;
-  padding: 2rem;
-  min-height: 420px;
+  flex-direction: column;
+  gap: var(--hyena-space-3);
 }
 
 /* La descripción ahora va al final de .info y puede ser larga (markdown) —
-   en desktop la imagen queda pegada al scroll para que siga acompañando al
+   en desktop la galería queda pegada al scroll para que siga acompañando al
    precio/CTA mientras se lee, en vez de quedar arriba con un hueco vacío
    debajo. 88px = altura del navbar sticky (~73px) + aire. */
 @media (min-width: 901px) {
-  .imageWrapper {
-    /* Sin esto el grid estira .imageWrapper a la altura de .info (que ahora
-       puede ser muy alta por la descripción), y la imagen queda centrada
+  .gallery {
+    /* Sin esto el grid estira .gallery a la altura de .info (que ahora
+       puede ser muy alta por la descripción), y la galería queda centrada
        en medio de ese alto en vez de pegada arriba junto al sticky. */
     align-self: start;
     position: sticky;
     top: 88px;
+  }
+}
+
+.galleryMain {
+  position: relative;
+}
+
+.galleryFrame {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: var(--hyena-radius-lg);
+  background: var(--hyena-surface-raised);
+  padding: var(--hyena-space-5);
+}
+
+.galleryImage {
+  object-fit: contain; /* nunca recortar la foto de producto */
+  transition: transform var(--hyena-duration-slow) var(--hyena-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .galleryFrame:hover .galleryImage {
+    transform: scale(1.08);
+  }
+}
+
+.galleryPlaceholder {
+  width: 100%;
+  height: 100%;
+  background: var(--hyena-surface-sunken);
+}
+
+/* Flechas prev/next */
+.galleryArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--hyena-radius-pill);
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--hyena-border-strong);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  color: var(--hyena-text);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--hyena-duration-fast) var(--hyena-ease);
+}
+
+.galleryArrowPrev {
+  left: var(--hyena-space-3);
+}
+
+.galleryArrowNext {
+  right: var(--hyena-space-3);
+}
+
+.galleryArrow:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.galleryArrow:focus-visible {
+  box-shadow: var(--hyena-focus-ring);
+}
+
+/* Tira de miniaturas */
+.galleryThumbs {
+  display: flex;
+  gap: var(--hyena-space-2);
+  overflow-x: auto;
+  flex-wrap: nowrap;
+}
+
+@media (min-width: 901px) {
+  .galleryThumbs {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
+
+.galleryThumb {
+  position: relative;
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--hyena-radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--hyena-border);
+  cursor: pointer;
+  transition: border-color var(--hyena-duration-fast) var(--hyena-ease);
+}
+
+.galleryThumb:hover {
+  border-color: var(--hyena-border-strong);
+}
+
+.galleryThumb:focus-within {
+  box-shadow: var(--hyena-focus-ring);
+}
+
+.galleryThumbActive {
+  border-width: 2px;
+  border-color: var(--hyena-orange);
+  box-shadow: 0 0 0 1px var(--hyena-orange) inset;
+}
+
+/* Gotcha ya conocido (mismo que .flavorChipSelected:hover): el hover de
+   .galleryThumb solo, sin esta regla, podría pisar el borde activo por
+   especificidad/orden. Replicarla siempre. */
+.galleryThumbActive:hover {
+  border-color: var(--hyena-orange);
+}
+
+.galleryThumbImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--hyena-duration-fast) var(--hyena-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .galleryThumb:hover .galleryThumbImage {
+    transform: scale(1.04);
+  }
+}
+
+/* Input real, oculto visualmente pero accesible — clip-rect, NUNCA display:none */
+.galleryThumbInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .galleryImage,
+  .galleryThumbImage {
+    transition: none;
+  }
+  .galleryFrame:hover .galleryImage,
+  .galleryThumb:hover .galleryThumbImage {
+    transform: none;
+  }
+}
+
+/* Mobile (mismo breakpoint que ya usa este archivo) */
+@media (max-width: 900px) {
+  .gallery {
+    position: static;
   }
 }
 
@@ -798,10 +953,6 @@
   .container {
     grid-template-columns: 1fr;
     gap: 2.5rem;
-  }
-
-  .imageWrapper {
-    min-height: 320px;
   }
 
   .info {

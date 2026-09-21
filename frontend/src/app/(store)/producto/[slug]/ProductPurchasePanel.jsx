@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import AddToCart from "./AddToCart";
+import ProductGallery from "./ProductGallery";
 import TrackViewItem from "./TrackViewItem";
 import styles from "./ProductDetail.module.css";
 
@@ -75,22 +75,30 @@ const FLAVOR_HINT_ID = "flavor-required-hint";
  * `ReactMarkdown` server-side, pasada acá como `children`).
  *
  * Contrato de imagen (Decisión 5 del ADR): `displayedImage = variantImageOverride
- * ?? gallerySelectedImage`. Hoy no existe una galería (`ProductGallery`/C1 no está
- * construida), así que `gallerySelectedImage` es simplemente `images[0]` — la
- * fórmula queda lista para cuando la galería exista, sin tener que tocar este
- * componente de nuevo.
+ * ?? gallerySelectedImage`. `ProductGallery` (C1) es quien pinta esa imagen y
+ * las miniaturas — es controlada/presentacional pura, sin estado propio de
+ * "cuál está activa"; este panel sigue siendo el único dueño de ese estado.
  */
 export default function ProductPurchasePanel({ product, children }) {
   const hasVariants = product.variants.length > 0;
   const [selectedFlavor, setSelectedFlavor] = useState(null);
   const [variantImageOverride, setVariantImageOverride] = useState(null);
+  const [gallerySelectedImage, setGallerySelectedImage] = useState(product.images?.[0] ?? null);
 
-  const gallerySelectedImage = product.images?.[0] ?? null;
   const displayedImage = variantImageOverride ?? gallerySelectedImage;
 
   const handleSelectFlavor = (variant) => {
     setSelectedFlavor(variant);
     setVariantImageOverride(variant.image ?? product.images?.[0] ?? null);
+  };
+
+  // Navegar la galería (miniatura/flecha) es una interacción más reciente que
+  // cualquier elección de sabor previa: limpia el override para que la foto
+  // grande vuelva a seguir la galería de catálogo (última interacción gana,
+  // ADR 0008 Decisión 5).
+  const handleGallerySelect = (image) => {
+    setGallerySelectedImage(image);
+    setVariantImageOverride(null);
   };
 
   const allVariantsOutOfStock = hasVariants && product.variants.every((variant) => variant.stock === 0);
@@ -108,11 +116,12 @@ export default function ProductPurchasePanel({ product, children }) {
 
   return (
     <>
-      <div className={styles.imageWrapper}>
-        {displayedImage && (
-          <Image src={displayedImage} alt={product.name} width={400} height={400} priority />
-        )}
-      </div>
+      <ProductGallery
+        images={product.images ?? []}
+        selectedImage={displayedImage}
+        productName={product.name}
+        onSelect={handleGallerySelect}
+      />
 
       <div className={styles.info}>
         <TrackViewItem product={product} />
