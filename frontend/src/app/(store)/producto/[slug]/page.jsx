@@ -4,6 +4,9 @@ import ReactMarkdown from "react-markdown";
 import { getProductBySlug } from "../../../../lib/api/products.api";
 import styles from "./ProductDetail.module.css";
 import ProductPurchasePanel from "./ProductPurchasePanel";
+import ProductSpecs from "./ProductSpecs";
+import FlavorList from "./FlavorList";
+import ProductReviews from "./ProductReviews";
 
 const SITE_URL = "https://www.hyenafuel.com";
 
@@ -87,10 +90,13 @@ export default async function ProductDetail({ params }) {
       <section className={styles.container}>
         {/* ProductPurchasePanel (Client Component) es dueño del estado de sabor/imagen
             (ADR 0008) — imagen, nombre, badge de stock, precios, selector y CTA viven
-            ahí. La descripción se sigue resolviendo acá (Server Component) con
-            `ReactMarkdown` server-side y se pasa como `children` para no bundlear
-            markdown ni perder SSR del contenido más pesado de la página. */}
+            ahí. La descripción, la ficha de specs y la lista de sabores legado se
+            siguen resolviendo acá (Server Components) y se pasan como `children` para
+            no bundlear markdown/render estático ni perder SSR del contenido. */}
         <ProductPurchasePanel product={product}>
+          <ProductSpecs attributes={product.attributes} />
+          <FlavorList flavors={product.attributes.flavors} hasVariants={product.variants.length > 0} />
+
           {product.description && (
             <div className={styles.descriptionSection}>
               <h2 className={styles.descriptionHeading}>Descripción</h2>
@@ -100,6 +106,11 @@ export default async function ProductDetail({ params }) {
             </div>
           )}
         </ProductPurchasePanel>
+
+        {/* Sibling full-width (spec-pdp-c1c3.md C3): `.container` es grid de 2
+            columnas (imagen+info); `.reviewsSection` usa grid-column:1/-1 para
+            ocupar todo el ancho debajo. */}
+        <ProductReviews productId={product._id} />
       </section>
     </>
   );

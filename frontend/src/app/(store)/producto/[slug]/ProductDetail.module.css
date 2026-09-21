@@ -143,6 +143,107 @@
   text-decoration: underline;
 }
 
+/* =========================
+   FICHA TÉCNICA (ADR 0005 §2, C2) — solo campos presentes en `attributes`
+========================= */
+
+.specsSection {
+  margin-top: 2.5rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--hyena-border);
+}
+
+.specsHeading {
+  color: var(--hyena-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.9rem;
+}
+
+.specsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+}
+
+.specsRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--hyena-border);
+  font-size: 0.92rem;
+}
+
+.specsRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.specsLabel {
+  color: var(--hyena-text-muted);
+  font-weight: 600;
+}
+
+.specsValue {
+  color: var(--hyena-text);
+  font-weight: 700;
+  text-align: right;
+}
+
+.specsHighlights {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+  padding-left: 1.2rem;
+  list-style: disc;
+  color: var(--hyena-text-muted);
+  font-size: 0.92rem;
+}
+
+/* =========================
+   SABORES DISPLAY-ONLY (ADR 0005 §3, C2)
+   Suprimido por completo si el producto tiene variantes (ver FlavorList.jsx).
+========================= */
+
+.flavorListSection {
+  margin-top: 2.5rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--hyena-border);
+}
+
+.flavorListHeading {
+  color: var(--hyena-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.9rem;
+}
+
+.flavorListDisplay {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hyena-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flavorListDisplayItem {
+  padding: 0.4rem var(--hyena-space-4);
+  border-radius: var(--hyena-radius-pill);
+  border: 1px solid var(--hyena-border);
+  background: var(--hyena-surface-raised);
+  color: var(--hyena-text-muted);
+  font-size: var(--hyena-text-small);
+  font-weight: 600;
+}
+
 /* CTA GROUP */
 .ctaGroup {
   margin-top: 2rem;
@@ -422,6 +523,271 @@
   margin-top: 0.5rem;
   font-size: var(--hyena-text-small);
   color: var(--hyena-text-muted);
+}
+
+/* =========================
+   RESEÑAS (ADR 0005 §4, C3) — sibling full-width debajo de imagen+info
+========================= */
+
+.reviewsSection {
+  grid-column: 1 / -1;
+  margin-top: 3rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--hyena-border);
+}
+
+.reviewsHeading {
+  color: var(--hyena-text);
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.reviewsSummary {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+}
+
+.reviewsSummaryText {
+  color: var(--hyena-text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.reviewsEmpty {
+  color: var(--hyena-text-muted);
+  font-size: 0.92rem;
+  margin-bottom: 1.5rem;
+}
+
+.reviewsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.2rem;
+  list-style: none;
+  margin: 0 0 2.5rem;
+  padding: 0;
+  max-width: 900px;
+}
+
+.reviewCard {
+  background: var(--hyena-surface-raised);
+  border: 1px solid var(--hyena-border);
+  border-radius: var(--hyena-radius-md);
+  padding: 1.4rem;
+  transition: border-color var(--hyena-duration-base) var(--hyena-ease);
+}
+
+.reviewCard:hover {
+  border-color: var(--hyena-border-strong);
+}
+
+.reviewStars {
+  color: var(--hyena-orange);
+  font-size: 1rem;
+  letter-spacing: 2px;
+  margin-bottom: 0.7rem;
+}
+
+.reviewStarFilled {
+  color: var(--hyena-orange);
+}
+
+.reviewStarEmpty {
+  color: var(--hyena-border-strong);
+}
+
+.reviewText {
+  font-size: 0.92rem;
+  color: var(--hyena-text-muted);
+  line-height: 1.6;
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+.reviewMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+}
+
+.reviewAuthor {
+  color: var(--hyena-text);
+  font-weight: 700;
+}
+
+.reviewDate {
+  color: var(--hyena-text-faint);
+}
+
+/* Form de alta (moderado, sin agregado optimista) */
+.reviewFormWrapper {
+  max-width: 460px;
+}
+
+.reviewForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  background: var(--hyena-surface-raised);
+  border: 1px solid var(--hyena-border);
+  border-radius: var(--hyena-radius-lg);
+  padding: 1.6rem;
+}
+
+.reviewFormTitle {
+  color: var(--hyena-text);
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.reviewRatingField {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.reviewRatingLegend {
+  padding: 0;
+  margin-bottom: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hyena-text-muted);
+}
+
+.reviewRatingOptions {
+  display: flex;
+  gap: 0.2rem;
+}
+
+/* Target táctil 44×44 (mismo criterio que .flavorChip) — input real oculto,
+   label estilada, `:focus-within` con el ring de foco de marca. */
+.reviewRatingOption {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  font-size: 1.5rem;
+  color: var(--hyena-border-strong);
+  cursor: pointer;
+  border-radius: var(--hyena-radius-sm);
+  transition: color var(--hyena-duration-fast) var(--hyena-ease);
+}
+
+.reviewRatingOptionFilled {
+  color: var(--hyena-orange);
+}
+
+.reviewRatingOption:focus-within {
+  box-shadow: var(--hyena-focus-ring);
+}
+
+/* Input real, oculto visualmente pero accesible — clip-rect, NUNCA display:none. */
+.reviewRatingInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.reviewFormLabel {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--hyena-text-muted);
+}
+
+.reviewInput,
+.reviewTextarea {
+  background: var(--hyena-surface-sunken);
+  border: 1px solid var(--hyena-border);
+  border-radius: var(--hyena-radius-sm);
+  color: var(--hyena-text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  padding: 0.65rem 0.85rem;
+  resize: vertical;
+  transition: border-color var(--hyena-duration-fast) var(--hyena-ease);
+}
+
+.reviewInput:focus,
+.reviewTextarea:focus {
+  border-color: var(--hyena-orange);
+  outline: none;
+}
+
+.reviewFormError {
+  color: var(--hyena-ember);
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.reviewFormSuccess {
+  color: var(--hyena-success);
+  background: var(--hyena-success-bg);
+  border: 1px solid var(--hyena-success-border);
+  border-radius: var(--hyena-radius-md);
+  padding: 1.1rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  max-width: 460px;
+}
+
+.reviewSubmitBtn {
+  background: var(--hyena-orange);
+  color: var(--hyena-orange-contrast);
+  border: none;
+  border-radius: var(--hyena-radius-sm);
+  font-weight: 800;
+  font-size: 0.92rem;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: opacity var(--hyena-duration-fast) var(--hyena-ease);
+}
+
+.reviewSubmitBtn:hover {
+  opacity: 0.88;
+}
+
+.reviewSubmitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reviewCard {
+    transition: none;
+  }
+
+  .reviewRatingOption {
+    transition: none;
+  }
+}
+
+/* Texto solo para lectores de pantalla (mismo patrón que components/admin). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* =========================
