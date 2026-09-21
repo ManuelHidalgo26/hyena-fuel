@@ -4,8 +4,15 @@
   padding: var(--hyena-space-6) var(--hyena-container-pad);
 }
 
+/* Alto aproximado del Hero real (Hero.jsx + Hero.module.css): eyebrow +
+   título (2 líneas, wrappea a 3+ en mobile por el ancho fijo de 620px) +
+   subtítulo (hasta 4 líneas en mobile) + CTAs + trust strip 2x2, más el
+   padding vertical var(--hyena-space-8) x2. En mobile el texto wrappea más
+   y el hero mide ~400px+; en pantallas más anchas hay menos wrap relativo.
+   No es exacto (el Hero real es fluido, clamp()-based) pero acerca la
+   geometría del skeleton para minimizar el CLS al hidratar. */
 .hero {
-  height: 160px;
+  min-height: 440px;
   border-radius: var(--hyena-radius-lg);
   margin-bottom: var(--hyena-space-7);
 }
@@ -17,12 +24,20 @@
 }
 
 @media (min-width: 768px) {
+  .hero {
+    min-height: 400px;
+  }
+
   .grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (min-width: 1280px) {
+  .hero {
+    min-height: 380px;
+  }
+
   .grid {
     grid-template-columns: repeat(4, 1fr);
   }
@@ -34,8 +49,10 @@
   gap: var(--hyena-space-2);
 }
 
+/* Mismo aspect-ratio que .imageWrapper en Products.module.css (real),
+   en vez de un height fijo que no matchea el cuadrado real de la imagen. */
 .cardImage {
-  height: 190px;
+  aspect-ratio: 1 / 1;
   border-radius: var(--hyena-radius-md);
 }
 
