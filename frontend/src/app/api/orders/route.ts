@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "../../../lib/auth/guards";
 import { createAdminClient } from "../../../lib/supabase/admin";
+import { resolveDiscountCode } from "../../../lib/discountCodes";
+import { roundMoney } from "../../../lib/money";
 import {
   calculateOrderTotals,
   freezeOrderItems,
   mergeLineItemsByProduct,
+  orderItemSchema,
+  MAX_ITEMS_PER_ORDER,
   type DeliveryMethod,
   type FrozenOrderItem,
+  type OrderCouponInput,
   type OrderLineItem,
   type OrderProductInput,
   type OrderSellerInput,
@@ -16,30 +21,13 @@ import {
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
-/** Cotas anti-abuso (QA-3): un carrito legítimo nunca necesita más que esto. */
-const MAX_QUANTITY_PER_ITEM = 100;
-const MAX_ITEMS_PER_ORDER = 50;
-const MAX_FLAVOR_LENGTH = 100;
-
-/** SQLSTATE que usa la RPC `create_order` para el único error de negocio que debe volver 400. */
+/** SQLSTATE que usa la RPC `create_order` para el único error de stock que debe volver 400. */
 const INSUFFICIENT_STOCK_ERROR_CODE = "HY001";
+/** SQLSTATE que usa la RPC `create_order` cuando el cupón perdió la carrera por el canje (ADR 0010). */
+const COUPON_UNAVAILABLE_ERROR_CODE = "HY002";
 
-const orderItemSchema = z.object({
-  productId: z.uuid("productId inválido"),
-  quantity: z
-    .number()
-    .int("La cantidad debe ser un número entero")
-    .positive("La cantidad debe ser mayor a 0")
-    .max(MAX_QUANTITY_PER_ITEM, `La cantidad máxima por producto es ${MAX_QUANTITY_PER_ITEM}`),
-  // Nombre del sabor elegido (ADR 0008). Requerido/prohibido según variantes del producto
-  // se valida contra la DB en `validateStockAndActive` (Zod no conoce el catálogo).
-  flavor: z
-    .string()
-    .trim()
-    .min(1, "El sabor no puede estar vacío")
-    .max(MAX_FLAVOR_LENGTH, `El sabor admite hasta ${MAX_FLAVOR_LENGTH} caracteres`)
-    .optional(),
-});
+/** Tope del código de descuento tal como lo manda el cliente (ADR 0010 §5.2); el formato exacto se valida contra la DB. */
+const MAX_DISCOUNT_CODE_LENGTH = 32;
 
 const createOrderSchema = z
   .object({
@@ -54,6 +42,7 @@ const createOrderSchema = z
     paymentMethod: z.enum(["transferencia", "mercadopago"]),
     deliveryMethod: z.enum(["envio", "retiro"]).default("envio"),
     sellerCode: z.string().trim().min(1).optional(),
+    discountCode: z.string().trim().min(1).max(MAX_DISCOUNT_CODE_LENGTH).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.deliveryMethod === "envio" && !data.customerAddress) {
@@ -116,6 +105,8 @@ type OrderRow = {
   total_final: number | string;
   seller_id: string | null;
   commission_total: number | string;
+  discount_code: string | null;
+  discount_code_amount: number | string;
   created_at: string;
 };
 
@@ -137,7 +128,7 @@ export async function POST(request: NextRequest) {
 // prepara el pedido no sabe qué sabor despachar. Fix trivial y seguro (solo lectura, sin
 // tocar dinero/RPC): agregar la columna ya existente al select + al mapeo de respuesta.
 const ADMIN_ORDER_COLUMNS =
-  "id, customer_name, customer_email, customer_phone, customer_address, payment_method, delivery_method, status, subtotal, discount, shipping_cost, total_final, seller_id, attribution_source, commission_total, created_at, order_items(id, product_id, name, quantity, unit_price, unit_cost, unit_commission, flavor)";
+  "id, customer_name, customer_email, customer_phone, customer_address, payment_method, delivery_method, status, subtotal, discount, shipping_cost, total_final, seller_id, attribution_source, commission_total, discount_code, discount_code_amount, created_at, order_items(id, product_id, name, quantity, unit_price, unit_cost, unit_commission, flavor)";
 
 type AdminOrderItemRow = {
   id: string;
@@ -166,6 +157,8 @@ type AdminOrderRow = {
   seller_id: string | null;
   attribution_source: string | null;
   commission_total: number | string;
+  discount_code: string | null;
+  discount_code_amount: number | string;
   created_at: string;
   order_items: AdminOrderItemRow[];
 };
@@ -207,6 +200,8 @@ function mapAdminOrder(order: AdminOrderRow) {
     sellerId: order.seller_id,
     attributionSource: order.attribution_source,
     commissionTotal: Number(order.commission_total),
+    discountCode: order.discount_code,
+    discountCodeAmount: Number(order.discount_code_amount),
     createdAt: order.created_at,
     items: order.order_items.map((item) => ({
       productId: item.product_id,
@@ -222,7 +217,7 @@ function mapAdminOrder(order: AdminOrderRow) {
 
 async function createOrder(input: CreateOrderInput): Promise<NextResponse> {
   const supabase = createAdminClient();
-  const { items, sellerCode, paymentMethod, deliveryMethod, ...customer } = input;
+  const { items, sellerCode, paymentMethod, deliveryMethod, discountCode, ...customer } = input;
   const mergedItems = mergeLineItemsByProduct(items);
 
   const productsById = await fetchProducts(supabase, mergedItems);
@@ -233,16 +228,55 @@ async function createOrder(input: CreateOrderInput): Promise<NextResponse> {
 
   const seller = sellerCode ? await findActiveSeller(supabase, sellerCode) : null;
   const frozenItems = freezeOrderItems(mergedItems, productsById, seller);
-  const totals = calculateOrderTotals(frozenItems, productsById, paymentMethod, deliveryMethod);
+
+  const couponResult = await resolveCoupon(supabase, discountCode, frozenItems);
+  if (!couponResult.ok) return couponResult.response;
+
+  const totals = calculateOrderTotals(
+    frozenItems,
+    productsById,
+    paymentMethod,
+    deliveryMethod,
+    couponResult.coupon
+  );
 
   const persisted = await persistOrder(
     supabase,
-    { customer, paymentMethod, deliveryMethod, seller, totals },
+    { customer, paymentMethod, deliveryMethod, seller, coupon: couponResult.coupon, totals },
     frozenItems
   );
   if (!persisted.ok) return persisted.response;
 
   return NextResponse.json(mapOrderResponse(persisted.order, frozenItems), { status: 201 });
+}
+
+type CouponResolutionResult =
+  | { ok: true; coupon: OrderCouponInput | null }
+  | { ok: false; response: NextResponse };
+
+/**
+ * Resuelve el `discountCode` del payload contra la DB (ADR 0010 §4.3): si no vino, no hay
+ * cupón. Si vino pero no es válido (no existe/vencido/agotado/no alcanza `min_purchase`)
+ * responde 409 con un mensaje legible — el cliente puede reintentar sin el código. La
+ * autoridad final de concurrencia sigue siendo el guard atómico de la RPC (HY002).
+ */
+async function resolveCoupon(
+  supabase: AdminClient,
+  discountCode: string | undefined,
+  frozenItems: FrozenOrderItem[]
+): Promise<CouponResolutionResult> {
+  if (!discountCode) return { ok: true, coupon: null };
+
+  const listSubtotal = roundMoney(
+    frozenItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
+  );
+
+  const resolution = await resolveDiscountCode(supabase, discountCode, listSubtotal);
+  if (!resolution.ok) {
+    return { ok: false, response: NextResponse.json({ error: resolution.reason }, { status: 409 }) };
+  }
+
+  return { ok: true, coupon: resolution.coupon };
 }
 
 type ParsedBody =
@@ -433,6 +467,7 @@ type InsertOrderArgs = {
   paymentMethod: PaymentMethod;
   deliveryMethod: DeliveryMethod;
   seller: OrderSellerInput | null;
+  coupon: OrderCouponInput | null;
   totals: ReturnType<typeof calculateOrderTotals>;
 };
 
@@ -462,7 +497,7 @@ async function persistOrder(
   args: InsertOrderArgs,
   items: FrozenOrderItem[]
 ): Promise<PersistOrderResult> {
-  const { customer, paymentMethod, deliveryMethod, seller, totals } = args;
+  const { customer, paymentMethod, deliveryMethod, seller, coupon, totals } = args;
 
   const rpcItems: RpcOrderItem[] = items.map((item) => ({
     product_id: item.productId,
@@ -490,6 +525,9 @@ async function persistOrder(
       p_attribution_source: seller ? "manual" : null,
       p_commission_total: totals.commissionTotal,
       p_items: rpcItems,
+      p_discount_code_id: coupon?.id ?? null,
+      p_discount_code: totals.discountCode,
+      p_discount_code_amount: totals.couponDiscount,
     })
     .single()
     .returns<OrderRow>();
@@ -497,6 +535,9 @@ async function persistOrder(
   if (error) {
     if (error.code === INSUFFICIENT_STOCK_ERROR_CODE) {
       return { ok: false, response: NextResponse.json({ error: error.message }, { status: 400 }) };
+    }
+    if (error.code === COUPON_UNAVAILABLE_ERROR_CODE) {
+      return { ok: false, response: NextResponse.json({ error: error.message }, { status: 409 }) };
     }
     console.error("[POST /api/orders] rpc create_order", error);
     return {
@@ -530,6 +571,8 @@ function mapOrderResponse(order: OrderRow, items: FrozenOrderItem[]) {
     discount: Number(order.discount),
     shippingCost: Number(order.shipping_cost),
     totalFinal: Number(order.total_final),
+    discountCode: order.discount_code,
+    discountCodeAmount: Number(order.discount_code_amount),
     createdAt: order.created_at,
     items: items.map((item) => ({
       productId: item.productId,
