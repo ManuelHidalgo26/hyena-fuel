@@ -98,3 +98,27 @@ export function DeliveryMethodBadge({ method }: { method: DeliveryMethod }) {
     </AdminBadge>
   );
 }
+
+/** Enum exacto de `deriveDiscountCodeStatus` (lib/discountCodes.ts, ADR 0010 §7.1). No re-litigar acá. */
+export type DiscountCodeStatus = "desactivado" | "vencido" | "agotado" | "programado" | "activo";
+
+const DISCOUNT_CODE_STATUS_LABEL: Record<DiscountCodeStatus, string> = {
+  activo: "Activo",
+  programado: "Programado",
+  agotado: "Agotado",
+  vencido: "Vencido",
+  desactivado: "Desactivado",
+};
+
+const DISCOUNT_CODE_STATUS_TONE: Record<DiscountCodeStatus, AdminBadgeTone> = {
+  activo: "success",
+  programado: "info",
+  agotado: "warning",
+  vencido: "neutral",
+  desactivado: "danger",
+};
+
+/** Badge de estado derivado de un código de descuento. Mismo tono en toda la app: no recolorear a mano. */
+export function DiscountCodeStatusBadge({ status }: { status: DiscountCodeStatus }) {
+  return <AdminBadge tone={DISCOUNT_CODE_STATUS_TONE[status]}>{DISCOUNT_CODE_STATUS_LABEL[status]}</AdminBadge>;
+}

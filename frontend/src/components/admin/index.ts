@@ -23,6 +23,7 @@ export {
   OrderStatusBadge,
   PaymentMethodBadge,
   DeliveryMethodBadge,
+  DiscountCodeStatusBadge,
 } from "./AdminBadge";
 export type {
   AdminBadgeProps,
@@ -31,6 +32,7 @@ export type {
   OrderStatus,
   PaymentMethod,
   DeliveryMethod,
+  DiscountCodeStatus,
 } from "./AdminBadge";
 
 export { default as AdminFilterTabs } from "./AdminFilterTabs";

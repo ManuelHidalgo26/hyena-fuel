@@ -19,6 +19,20 @@ const SHIPPING_COST = 5000;
  */
 const getCartLineKey = (id, flavor = null) => `${id}::${flavor ?? ""}`;
 
+/**
+ * Ítems del carrito en el shape que esperan los endpoints del server
+ * (`POST /api/orders`, `POST /api/discount-codes/validate`): `flavor` se
+ * omite cuando el ítem no tiene sabor (el schema Zod lo espera opcional,
+ * nunca `null`). Compartido para no duplicar el mapeo en `CartDrawer`.
+ */
+export function toOrderItemsPayload(cartItems) {
+  return cartItems.map((item) => ({
+    productId: item._id,
+    quantity: item.quantity,
+    ...(item.flavor ? { flavor: item.flavor } : {}),
+  }));
+}
+
 export function CartProvider({ children }) {
     /* =========================
         State
@@ -181,25 +195,30 @@ export function CartProvider({ children }) {
     /* =========================
         Checkout
     ========================= */
-    const checkout = async ({ name, email, phone, address, paymentMethod, deliveryMethod = "envio" }) => {
+    const checkout = async ({
+        name,
+        email,
+        phone,
+        address,
+        paymentMethod,
+        deliveryMethod = "envio",
+        // Código de descuento aplicado en el carrito (ADR 0010, CD5). Se omite del
+        // payload si viene vacío — la validación real la hace el server (§5.2).
+        discountCode,
+    }) => {
     if (cartItems.length === 0) {
         throw new Error("El carrito está vacío");
     }
 
     const payload = {
-        items: cartItems.map((item) => ({
-        productId: item._id,
-        quantity: item.quantity,
-        // El schema del checkout usa `flavor` opcional (string), nunca `null` —
-        // se omite la clave cuando el ítem no tiene sabor.
-        ...(item.flavor ? { flavor: item.flavor } : {}),
-        })),
+        items: toOrderItemsPayload(cartItems),
         customerName: name,
         customerEmail: email,
         customerPhone: phone,
         customerAddress: address,
         paymentMethod,
         deliveryMethod,
+        ...(discountCode && discountCode.trim() !== "" ? { discountCode: discountCode.trim() } : {}),
     };
 
     const response = await fetch("/api/orders", {
@@ -211,7 +230,11 @@ export function CartProvider({ children }) {
     const data = await response.json();
 
     if (!response.ok) {
-        throw new Error(data.error || "Error al crear el pedido");
+        // La carrera perdida del cupón (HY002) y otros 409 los distingue el
+        // caller por status, no por el string (CartDrawer, ADR 0010 §B.6).
+        const error = new Error(data.error || "Error al crear el pedido");
+        error.status = response.status;
+        throw error;
     }
 
     return data;

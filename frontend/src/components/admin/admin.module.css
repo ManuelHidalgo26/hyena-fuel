@@ -1429,3 +1429,59 @@
     flex-direction: column;
   }
 }
+
+/* ---------------------------------------------------------------------
+   19. Grupo de radios (Tipo de código — CD4, Códigos de descuento ADR 0010)
+   Mismo idioma visual que .field/.label/.checkboxRow/.checkbox ya
+   existentes; no había un patrón de fieldset+radios en el admin todavía.
+   --------------------------------------------------------------------- */
+
+.radioFieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.legend {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--admin-text-muted);
+  padding: 0;
+}
+
+.radioGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  min-height: 40px;
+  align-items: center;
+}
+
+.radioOption {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 40px;
+  font-size: 0.88rem;
+  color: var(--admin-text);
+  cursor: pointer;
+}
+
+.radio {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--admin-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.radio:focus-visible {
+  outline: none;
+  box-shadow: var(--admin-focus-ring);
+}

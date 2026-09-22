@@ -519,6 +519,162 @@
   opacity: 0.7;
 }
 
+/* =========================
+    Código de descuento (ADR 0010, CD5)
+    Usa var(--hyena-orange) (#ff8a00, token de marca) en vez de repetir el
+    #ff6a00 hardcodeado legado de este archivo (deuda preexistente, no se
+    toca acá — ver docs/TASKS.md).
+========================= */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.couponBox {
+  margin-top: 1.4rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid #eee;
+}
+
+.couponBox h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: #111;
+}
+
+.couponRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.couponInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0.65rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  color: #111;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.couponInput:focus-visible {
+  border-color: var(--hyena-orange);
+  box-shadow: 0 0 0 3px rgba(255, 138, 0, 0.25);
+}
+
+.couponInput:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.couponApplyBtn {
+  flex-shrink: 0;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 1.1rem;
+  background: var(--hyena-orange);
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s ease;
+}
+
+.couponApplyBtn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.couponApplyBtn:disabled {
+  background: #888;
+  color: #fff;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.couponApplyBtn:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 2px;
+}
+
+.couponError {
+  margin: 0.55rem 0 0;
+  font-size: 0.83rem;
+  font-weight: 600;
+  /* Rojo con ~6.6:1 sobre blanco (AA) — no reusar --admin-danger-text
+     (#fca5a5, pensado para fondo oscuro, falla AA sobre blanco). */
+  color: #b42318;
+  line-height: 1.4;
+}
+
+.couponChipRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.couponChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.5rem 0.8rem;
+  background: rgba(255, 138, 0, 0.1);
+  border: 1.5px solid var(--hyena-orange);
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.couponChipCode {
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #111;
+}
+
+.couponChipAmount {
+  font-weight: 700;
+  /* Mismo verde ya usado en .copyAliasBtnCopied de este archivo (~5:1 AA). */
+  color: #15803d;
+}
+
+.couponRemoveBtn {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 0.9rem;
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+  color: #414141;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.couponRemoveBtn:hover {
+  background: #f5f5f5;
+  border-color: #999;
+  color: #000;
+}
+
+.couponRemoveBtn:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 2px;
+}
 
 /* =========================
     Animation
