@@ -115,6 +115,15 @@ function computeMargin(price: number, cost: number): Margin {
   return { amount: price - cost, pct: ((price - cost) / price) * 100 };
 }
 
+/**
+ * Precio que efectivamente se cobra por transferencia: mismo fallback que usa
+ * el checkout (`sumTransferDiscount` en `lib/orders.ts`) — si el producto no
+ * tiene `transferPrice` propio, se cobra el precio de lista.
+ */
+function resolveTransferPrice(product: AdminProduct): number {
+  return product.transferPrice ?? product.price;
+}
+
 function formatMargin(margin: Margin): string {
   if (margin === null) return "—";
   return `$${margin.amount.toLocaleString("es-AR")} (${Math.round(margin.pct)}%)`;
@@ -978,7 +987,9 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
               <th className={styles.cellNumeric}>Precio</th>
               <th className={styles.cellNumeric}>Transferencia</th>
               <th className={styles.cellNumeric}>Costo</th>
-              <th className={styles.cellNumeric}>Margen</th>
+              <th className={styles.cellNumeric} title="Margen calculado sobre el precio de transferencia">
+                Margen (transf.)
+              </th>
               <th className={styles.cellNumeric}>Stock</th>
               <th>Estado</th>
               <th className={styles.cellActions}>Acciones</th>
@@ -991,17 +1002,17 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
               const stockChanged = stockDraft !== undefined && stockDraft !== String(product.stock);
               const stockDraftValue = stockDraft !== undefined ? Number(stockDraft) : product.stock;
               const currentStockValue = Number.isFinite(stockDraftValue) ? stockDraftValue : product.stock;
-              const margin = computeMargin(product.price, product.cost);
+              const margin = computeMargin(resolveTransferPrice(product), product.cost);
               const activeVariants = product.variants.filter((variant) => variant.active);
               const hasActiveVariants = activeVariants.length > 0;
 
               const editCost = isEditing && editForm ? Number(editForm.cost) : null;
-              const editListMargin = editCost !== null ? computeMargin(Number(editForm?.price), editCost) : null;
+              const editListPrice = editForm ? Number(editForm.price) : NaN;
+              const editListMargin = editCost !== null ? computeMargin(editListPrice, editCost) : null;
               const editTransferPriceRaw = editForm?.transferPrice.trim() ?? "";
-              const editTransferMargin =
-                editCost !== null && editTransferPriceRaw !== ""
-                  ? computeMargin(Number(editTransferPriceRaw), editCost)
-                  : null;
+              // Mismo fallback que el cobro real: sin precio de transferencia propio, se cobra el de lista.
+              const editTransferPrice = editTransferPriceRaw !== "" ? Number(editTransferPriceRaw) : editListPrice;
+              const editTransferMargin = editCost !== null ? computeMargin(editTransferPrice, editCost) : null;
 
               return (
                 <Fragment key={product._id}>
@@ -1119,11 +1130,15 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
                             onRequestRemove={requestRemoveEditVariant}
                           />
 
-                          <p className={styles.hint}>
-                            {editListMargin === null
+                          <p
+                            className={`${styles.hint} ${
+                              editTransferMargin && editTransferMargin.amount < 0 ? styles.marginNegative : ""
+                            }`}
+                          >
+                            {editTransferMargin === null
                               ? "Cargá el costo para ver el margen"
-                              : `Margen sobre lista: ${formatMargin(editListMargin)}${
-                                  editTransferMargin ? ` · Margen sobre transferencia: ${formatMargin(editTransferMargin)}` : ""
+                              : `Margen sobre transferencia: ${formatMargin(editTransferMargin)}${
+                                  editListMargin ? ` · sobre lista: ${formatMargin(editListMargin)}` : ""
                                 }`}
                           </p>
                           <div className={styles.modalActions}>
