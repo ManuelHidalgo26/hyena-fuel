@@ -6,6 +6,7 @@ import { getProductByKey } from "../../../../lib/api/products.api";
 import { ADMIN_PRODUCT_COLUMNS, mapAdminProduct, type AdminProductRow } from "../../../../lib/products";
 import { replaceProductVariants, variantsInputSchema } from "../../../../lib/productVariants";
 import { isUuid } from "../../../../lib/uuid";
+import { revalidateStorefront } from "../../../../lib/revalidate";
 
 /** Código Postgres de violación de constraint único (`products.slug`). */
 const UNIQUE_VIOLATION_CODE = "23505";
@@ -108,11 +109,15 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 
   if (variants === undefined) {
+    revalidateStorefront("product-update");
     return NextResponse.json(mapAdminProduct(data));
   }
 
   const variantsResult = await replaceProductVariants(supabase, key, variants);
   if (variantsResult.error) {
+    // El producto ya cambió (el `update` de arriba corrió), aunque los sabores
+    // hayan fallado: se invalida igual (ADR 0009 D4, tabla de handlers admin #2).
+    revalidateStorefront("product-update-variants-error");
     return NextResponse.json({ error: variantsResult.error }, { status: 400 });
   }
 
@@ -125,12 +130,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
   if (refreshError || !refreshed) {
     console.error("[PATCH /api/products/[key]] refetch tras sabores", refreshError);
+    revalidateStorefront("product-update-refetch-error");
     return NextResponse.json(
       { error: "Los sabores se guardaron, pero no se pudo confirmar el estado final del producto" },
       { status: 500 }
     );
   }
 
+  revalidateStorefront("product-update");
   return NextResponse.json(mapAdminProduct(refreshed));
 }
 
@@ -165,6 +172,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
   }
 
+  revalidateStorefront("product-delete");
   return NextResponse.json(mapAdminProduct(data));
 }
 

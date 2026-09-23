@@ -4,6 +4,7 @@ import { requireAdmin } from "../../../lib/auth/guards";
 import { createAdminClient } from "../../../lib/supabase/admin";
 import { ADMIN_PRODUCT_COLUMNS, mapAdminProduct, type AdminProductRow } from "../../../lib/products";
 import { replaceProductVariants, variantsInputSchema } from "../../../lib/productVariants";
+import { revalidateStorefront } from "../../../lib/revalidate";
 
 /**
  * La lectura pública de productos hoy es directa desde Server Components
@@ -91,6 +92,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!input.variants || input.variants.length === 0) {
+    revalidateStorefront("product-create");
     return NextResponse.json(mapAdminProduct(data), { status: 201 });
   }
 
@@ -98,8 +100,11 @@ export async function POST(request: NextRequest) {
   if (variantsResult.error) {
     // Sin transacción real entre `products` y `product_variants` (mismo límite ya
     // aceptado para orders/order_items, QA-7): rollback manual del producto recién
-    // creado para no dejar un producto sin los sabores que el admin pidió.
+    // creado para no dejar un producto sin los sabores que el admin pidió. El
+    // producto igual llegó a existir en la DB (aunque sea por un instante), así
+    // que se invalida: es inocuo (ADR 0009 D4, tabla de handlers admin #1).
     await supabase.from("products").delete().eq("id", data.id);
+    revalidateStorefront("product-create-rollback");
     return NextResponse.json({ error: variantsResult.error }, { status: 400 });
   }
 
@@ -112,8 +117,10 @@ export async function POST(request: NextRequest) {
 
   if (refetchError) {
     console.error("[POST /api/products] refetch tras sabores", refetchError);
+    revalidateStorefront("product-create");
     return NextResponse.json(mapAdminProduct(data), { status: 201 });
   }
 
+  revalidateStorefront("product-create");
   return NextResponse.json(mapAdminProduct(withVariants), { status: 201 });
 }

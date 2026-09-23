@@ -4,6 +4,7 @@ import { requireAdmin } from "../../../../../../lib/auth/guards";
 import { createAdminClient } from "../../../../../../lib/supabase/admin";
 import { isUuid } from "../../../../../../lib/uuid";
 import type { AdminProductVariant } from "../../../../../../lib/productVariants";
+import { revalidateStorefront } from "../../../../../../lib/revalidate";
 
 /**
  * Segmento dinámico nombrado `key` (no `id`) a propósito: Next.js exige que
@@ -66,5 +67,6 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Sabor no encontrado" }, { status: 404 });
   }
 
+  revalidateStorefront("variant-stock-update");
   return NextResponse.json(data);
 }
