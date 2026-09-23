@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "../../../lib/auth/guards";
 import { createAdminClient } from "../../../lib/supabase/admin";
+import { ADMIN_ORDER_COLUMNS, mapAdminOrder, type AdminOrderRow } from "../../../lib/admin/orders";
 import { resolveDiscountCode } from "../../../lib/discountCodes";
 import { roundMoney } from "../../../lib/money";
 import {
@@ -34,10 +35,11 @@ const MAX_PHONE_LENGTH = 30;
 const MAX_NOTE_LENGTH = 500;
 
 /** Cadena vacía tras `trim` se trata como ausente (no como email inválido) — el contacto real es el teléfono. */
-const optionalEmailSchema = z.preprocess(
-  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
-  z.email("Email inválido").optional()
-);
+const optionalEmailSchema = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  return trimmed === "" ? undefined : trimmed;
+}, z.email("Email inválido").optional());
 
 const createOrderSchema = z
   .object({
@@ -130,47 +132,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/** Columnas de `orders` + `order_items` embebidos, para el listado admin (todos los campos de negocio). */
-// QA (ADR 0008, gate estático): sumado `flavor` al embed de `order_items` — ya se persiste
-// (ver `persistOrder`/RPC) pero no se exponía en el listado admin. Sin `flavor` acá, quien
-// prepara el pedido no sabe qué sabor despachar. Fix trivial y seguro (solo lectura, sin
-// tocar dinero/RPC): agregar la columna ya existente al select + al mapeo de respuesta.
-const ADMIN_ORDER_COLUMNS =
-  "id, customer_name, customer_email, customer_phone, customer_address, payment_method, delivery_method, status, subtotal, discount, shipping_cost, total_final, seller_id, attribution_source, commission_total, discount_code, discount_code_amount, created_at, order_items(id, product_id, name, quantity, unit_price, unit_cost, unit_commission, flavor)";
-
-type AdminOrderItemRow = {
-  id: string;
-  product_id: string | null;
-  name: string;
-  quantity: number;
-  unit_price: number | string;
-  unit_cost: number | string;
-  unit_commission: number | string;
-  flavor: string | null;
-};
-
-type AdminOrderRow = {
-  id: string;
-  customer_name: string;
-  customer_email: string | null;
-  customer_phone: string | null;
-  customer_address: string | null;
-  payment_method: string;
-  delivery_method: string;
-  status: string;
-  subtotal: number | string;
-  discount: number | string;
-  shipping_cost: number | string;
-  total_final: number | string;
-  seller_id: string | null;
-  attribution_source: string | null;
-  commission_total: number | string;
-  discount_code: string | null;
-  discount_code_amount: number | string;
-  created_at: string;
-  order_items: AdminOrderItemRow[];
-};
-
 /** Listado completo de órdenes para el panel admin, con totales, comisión y vendedor. */
 export async function GET() {
   const guard = await requireAdmin();
@@ -189,38 +150,6 @@ export async function GET() {
   }
 
   return NextResponse.json((data ?? []).map(mapAdminOrder));
-}
-
-function mapAdminOrder(order: AdminOrderRow) {
-  return {
-    _id: order.id,
-    customerName: order.customer_name,
-    customerEmail: order.customer_email,
-    customerPhone: order.customer_phone,
-    customerAddress: order.customer_address,
-    paymentMethod: order.payment_method,
-    deliveryMethod: order.delivery_method,
-    status: order.status,
-    subtotal: Number(order.subtotal),
-    discount: Number(order.discount),
-    shippingCost: Number(order.shipping_cost),
-    totalFinal: Number(order.total_final),
-    sellerId: order.seller_id,
-    attributionSource: order.attribution_source,
-    commissionTotal: Number(order.commission_total),
-    discountCode: order.discount_code,
-    discountCodeAmount: Number(order.discount_code_amount),
-    createdAt: order.created_at,
-    items: order.order_items.map((item) => ({
-      productId: item.product_id,
-      name: item.name,
-      quantity: item.quantity,
-      unitPrice: Number(item.unit_price),
-      unitCost: Number(item.unit_cost),
-      unitCommission: Number(item.unit_commission),
-      flavor: item.flavor,
-    })),
-  };
 }
 
 async function createOrder(input: CreateOrderInput): Promise<NextResponse> {
