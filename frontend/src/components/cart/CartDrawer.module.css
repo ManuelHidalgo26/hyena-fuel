@@ -305,6 +305,29 @@
   border-color: #ff6a00;
 }
 
+.noteLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.noteTextarea {
+  padding: 0.65rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  color: #111;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.noteTextarea:focus {
+  border-color: #ff6a00;
+}
+
 .radioLabel {
   display: flex;
   align-items: center;

@@ -205,6 +205,8 @@ export function CartProvider({ children }) {
         // Código de descuento aplicado en el carrito (ADR 0010, CD5). Se omite del
         // payload si viene vacío — la validación real la hace el server (§5.2).
         discountCode,
+        // Nota libre del pedido (ADR 0006). Opcional — se omite del payload si viene vacía.
+        note,
     }) => {
     if (cartItems.length === 0) {
         throw new Error("El carrito está vacío");
@@ -213,12 +215,14 @@ export function CartProvider({ children }) {
     const payload = {
         items: toOrderItemsPayload(cartItems),
         customerName: name,
-        customerEmail: email,
         customerPhone: phone,
         customerAddress: address,
         paymentMethod,
         deliveryMethod,
+        // Email es opcional (ADR "contacto"): nunca mandamos "" al backend.
+        ...(email && email.trim() !== "" ? { customerEmail: email.trim() } : {}),
         ...(discountCode && discountCode.trim() !== "" ? { discountCode: discountCode.trim() } : {}),
+        ...(note && note.trim() !== "" ? { note: note.trim() } : {}),
     };
 
     const response = await fetch("/api/orders", {
