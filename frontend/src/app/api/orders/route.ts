@@ -5,6 +5,7 @@ import { createAdminClient } from "../../../lib/supabase/admin";
 import { ADMIN_ORDER_COLUMNS, mapAdminOrder, type AdminOrderRow } from "../../../lib/admin/orders";
 import { resolveDiscountCode } from "../../../lib/discountCodes";
 import { roundMoney } from "../../../lib/money";
+import { revalidateStorefront } from "../../../lib/revalidate";
 import {
   calculateOrderTotals,
   freezeOrderItems,
@@ -183,6 +184,12 @@ async function createOrder(input: CreateOrderInput): Promise<NextResponse> {
     frozenItems
   );
   if (!persisted.ok) return persisted.response;
+
+  // El pedido ya está persistido (stock descontado): la vitrina queda
+  // consistente con la última venta en vez de esperar hasta 5 min (ADR 0009
+  // D5). El helper nunca tira errores, así que no puede convertir este 201
+  // en un 500 que invite a reintentar y duplicar el pedido.
+  revalidateStorefront("order");
 
   return NextResponse.json(mapOrderResponse(persisted.order, frozenItems), { status: 201 });
 }
