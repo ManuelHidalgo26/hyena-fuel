@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import Hero from "../../modules/home/Hero";
 import Products from "../../modules/home/Products";
+import HomeGridSkeleton from "../../modules/home/HomeGridSkeleton";
 import Testimonials from "../../modules/home/Testimonials";
 
 // ISR (ADR 0009 D1/D2): home sin cookies vía `createPublicClient`, cacheada
@@ -36,7 +38,9 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
       />
       <Hero />
-      <Products />
+      <Suspense fallback={<HomeGridSkeleton />}>
+        <Products />
+      </Suspense>
       <Testimonials />
     </>
   );
