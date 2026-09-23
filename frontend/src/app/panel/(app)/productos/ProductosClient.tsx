@@ -1007,12 +1007,13 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
               const hasActiveVariants = activeVariants.length > 0;
 
               const editCost = isEditing && editForm ? Number(editForm.cost) : null;
+              const editCostIsValid = editCost !== null && Number.isFinite(editCost) && editCost > 0;
               const editListPrice = editForm ? Number(editForm.price) : NaN;
-              const editListMargin = editCost !== null ? computeMargin(editListPrice, editCost) : null;
+              const editListMargin = editCostIsValid ? computeMargin(editListPrice, editCost) : null;
               const editTransferPriceRaw = editForm?.transferPrice.trim() ?? "";
               // Mismo fallback que el cobro real: sin precio de transferencia propio, se cobra el de lista.
               const editTransferPrice = editTransferPriceRaw !== "" ? Number(editTransferPriceRaw) : editListPrice;
-              const editTransferMargin = editCost !== null ? computeMargin(editTransferPrice, editCost) : null;
+              const editTransferMargin = editCostIsValid ? computeMargin(editTransferPrice, editCost) : null;
 
               return (
                 <Fragment key={product._id}>
@@ -1135,11 +1136,15 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
                               editTransferMargin && editTransferMargin.amount < 0 ? styles.marginNegative : ""
                             }`}
                           >
-                            {editTransferMargin === null
+                            {!editCostIsValid
                               ? "Cargá el costo para ver el margen"
-                              : `Margen sobre transferencia: ${formatMargin(editTransferMargin)}${
-                                  editListMargin ? ` · sobre lista: ${formatMargin(editListMargin)}` : ""
-                                }`}
+                              : editTransferMargin === null
+                                ? `Revisá el precio de transferencia${
+                                    editListMargin ? ` · Margen sobre lista: ${formatMargin(editListMargin)}` : ""
+                                  }`
+                                : `Margen sobre transferencia: ${formatMargin(editTransferMargin)}${
+                                    editListMargin ? ` · sobre lista: ${formatMargin(editListMargin)}` : ""
+                                  }`}
                           </p>
                           <div className={styles.modalActions}>
                             <AdminButton type="button" variant="secondary" onClick={cancelEdit}>
