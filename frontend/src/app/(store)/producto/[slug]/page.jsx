@@ -1,14 +1,28 @@
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
-import { getProductBySlug } from "../../../../lib/api/products.api";
+import { getProductBySlug, getProductSitemapEntries } from "../../../../lib/api/products.api";
 import styles from "./ProductDetail.module.css";
 import ProductPurchasePanel from "./ProductPurchasePanel";
 import ProductSpecs from "./ProductSpecs";
 import FlavorList from "./FlavorList";
 import ProductReviews from "./ProductReviews";
 
+// ISR (ADR 0009 D1/D2): PDP sin cookies vía `createPublicClient`, cacheada
+// 5 min y regenerada al toque por `revalidateStorefront()`. Los slugs nuevos
+// (no pre-generados) se resuelven on-demand en el primer hit y quedan
+// cacheados (`dynamicParams` explícito).
+export const revalidate = 300;
+export const dynamicParams = true;
+
 const SITE_URL = "https://www.hyenafuel.com";
+
+/** Pre-genera todos los slugs activos en build (sin try/catch: si Supabase
+ *  falla acá, el build falla y Vercel mantiene el deploy anterior — ADR 0009). */
+export async function generateStaticParams() {
+  const entries = await getProductSitemapEntries();
+  return entries.map(({ slug }) => ({ slug }));
+}
 
 // Dedupe: `generateMetadata` y `ProductDetail` leen el mismo slug en el mismo
 // request. `cache()` de React memoiza la promesa para que solo pegue a la DB
@@ -23,9 +37,9 @@ export async function generateMetadata({ params }) {
   const { slug } = await params;
   const product = await loadProduct(slug);
 
-  // `generateMetadata` resuelve antes de que Next flushee el <head>/shell de
-  // `loading.tsx`, así que este `notFound()` compromete el status 404 real
-  // aunque la PDP sea dinámica y esté envuelta en el Suspense de `(store)`.
+  // Con ISR (ADR 0009 D7) la PDP se renderiza buffereada (`isSSG = true`), así
+  // que este `notFound()` fija un 404 real cacheado para cualquier user-agent,
+  // no solo un status parcial antes del shell de `loading.tsx`.
   if (!product) {
     notFound();
   }

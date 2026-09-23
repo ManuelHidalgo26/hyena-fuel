@@ -3,14 +3,13 @@ import { getProductSitemapEntries } from "../lib/api/products.api";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.hyenafuel.com";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  let products: { slug: string; updatedAt: string }[] = [];
+// ISR (ADR 0009 D2): sin `try/catch` alrededor de la lectura — si Supabase
+// falla, que falle la regeneración: ISR sigue sirviendo la última versión
+// buena. Tragarse el error cachearía 5 min un sitemap sin productos.
+export const revalidate = 300;
 
-  try {
-    products = await getProductSitemapEntries();
-  } catch {
-    // no-op — el sitemap sigue incluyendo solo las páginas estáticas
-  }
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const products = await getProductSitemapEntries();
 
   const productUrls = products.map((p) => ({
     url: `${SITE_URL}/producto/${p.slug}`,

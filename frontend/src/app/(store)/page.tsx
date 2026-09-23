@@ -2,6 +2,11 @@ import Hero from "../../modules/home/Hero";
 import Products from "../../modules/home/Products";
 import Testimonials from "../../modules/home/Testimonials";
 
+// ISR (ADR 0009 D1/D2): home sin cookies vía `createPublicClient`, cacheada
+// 5 min y regenerada al toque por `revalidateStorefront()` en las mutaciones
+// de catálogo/checkout.
+export const revalidate = 300;
+
 const SITE_URL = "https://www.hyenafuel.com";
 
 /** Organization + WebSite (JSON-LD, `@graph`) para que Google reconozca la marca en la home. */

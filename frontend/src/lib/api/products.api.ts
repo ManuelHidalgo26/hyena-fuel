@@ -1,4 +1,4 @@
-import { createClient } from "../supabase/server";
+import { createPublicClient } from "../supabase/public";
 import { isUuid } from "../uuid";
 
 /** Specs de ficha de la PDP (ADR 0005 §2). Todas opcionales; la UI renderiza solo lo presente. */
@@ -85,7 +85,7 @@ function mapProduct(row: ProductRow): Product {
 
 /** Lista los productos activos, más nuevos primero. Lectura pública (RLS: active=true). */
 export async function getProducts(): Promise<Product[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data, error } = await supabase
     .from("products")
@@ -112,7 +112,7 @@ export async function getProducts(): Promise<Product[]> {
 
 /** Busca un producto activo por slug. Devuelve null si no existe (no lanza 404). */
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data, error } = await supabase
     .from("products")
@@ -136,7 +136,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
 /** Busca un producto activo por id (uuid). Devuelve null si no existe. */
 export async function getProductById(id: string): Promise<Product | null> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data, error } = await supabase
     .from("products")
@@ -170,7 +170,7 @@ export type ProductSitemapEntry = {
 
 /** Slug + fecha de modificación de los productos activos, para `sitemap.ts`. Lectura pública (RLS: active=true). */
 export async function getProductSitemapEntries(): Promise<ProductSitemapEntry[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data, error } = await supabase
     .from("products")
