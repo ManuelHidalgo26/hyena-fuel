@@ -452,34 +452,70 @@ export default function CartDrawer() {
           <div className={styles.form}>
             <h3>Datos de contacto</h3>
 
-            <input
-              type="text"
-              placeholder="Nombre completo"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+            <div className={styles.field}>
+              <label htmlFor="checkout-name" className={styles.noteLabel}>
+                Nombre completo
+              </label>
+              <input
+                id="checkout-name"
+                type="text"
+                placeholder="Nombre completo"
+                autoComplete="name"
+                required
+                aria-required="true"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
 
-            <input
-              type="tel"
-              placeholder="Teléfono"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
+            <div className={styles.field}>
+              <label htmlFor="checkout-phone" className={styles.noteLabel}>
+                Teléfono
+              </label>
+              <input
+                id="checkout-phone"
+                type="tel"
+                inputMode="tel"
+                placeholder="Teléfono"
+                autoComplete="tel"
+                required
+                aria-required="true"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </div>
 
-            <input
-              type="email"
-              placeholder="Email (opcional)"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+            <div className={styles.field}>
+              <label htmlFor="checkout-email" className={styles.noteLabel}>
+                Email (opcional)
+              </label>
+              <input
+                id="checkout-email"
+                type="email"
+                inputMode="email"
+                placeholder="Email (opcional)"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
 
             {deliveryMethod === "envio" && (
-              <input
-                type="text"
-                placeholder="Dirección de envío (calle, número, ciudad)"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-              />
+              <div className={styles.field}>
+                <label htmlFor="checkout-address" className={styles.noteLabel}>
+                  Dirección de envío
+                </label>
+                <input
+                  id="checkout-address"
+                  type="text"
+                  placeholder="Dirección de envío (calle, número, ciudad)"
+                  autoComplete="street-address"
+                  required
+                  aria-required="true"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                />
+              </div>
             )}
           </div>
 

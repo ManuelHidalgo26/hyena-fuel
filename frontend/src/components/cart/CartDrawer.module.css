@@ -305,6 +305,12 @@
   border-color: #ff6a00;
 }
 
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
 .noteLabel {
   font-size: 0.85rem;
   font-weight: 600;
