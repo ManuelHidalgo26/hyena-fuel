@@ -38,8 +38,6 @@ export type AdminOrder = {
   sellerId: string | null;
   attributionSource: string | null;
   commissionTotal: number;
-  /** Nota libre del comprador (ADR 0006), lectura admin-only — `null` si no dejó nada. */
-  note: string | null;
   createdAt: string;
   items: AdminOrderItem[];
 };
@@ -70,14 +68,13 @@ export type AdminOrderRow = {
   seller_id: string | null;
   attribution_source: string | null;
   commission_total: number | string;
-  note: string | null;
   created_at: string;
   order_items: AdminOrderItemRow[];
 };
 
 /** Columnas de `orders` + `order_items` embebidos (idéntico al listado admin de `api/orders/route.ts`). */
 export const ADMIN_ORDER_COLUMNS =
-  "id, customer_name, customer_email, customer_phone, customer_address, payment_method, delivery_method, status, subtotal, discount, shipping_cost, total_final, seller_id, attribution_source, commission_total, note, created_at, order_items(id, product_id, name, quantity, unit_price, unit_cost, unit_commission)";
+  "id, customer_name, customer_email, customer_phone, customer_address, payment_method, delivery_method, status, subtotal, discount, shipping_cost, total_final, seller_id, attribution_source, commission_total, created_at, order_items(id, product_id, name, quantity, unit_price, unit_cost, unit_commission)";
 
 /** Las columnas de texto vienen validadas por `check` constraints en Postgres (ver 0001_init.sql). */
 function toOrderStatus(value: string): OrderStatus {
@@ -109,7 +106,6 @@ export function mapAdminOrder(row: AdminOrderRow): AdminOrder {
     sellerId: row.seller_id,
     attributionSource: row.attribution_source,
     commissionTotal: Number(row.commission_total),
-    note: row.note,
     createdAt: row.created_at,
     items: row.order_items.map((item) => ({
       productId: item.product_id,

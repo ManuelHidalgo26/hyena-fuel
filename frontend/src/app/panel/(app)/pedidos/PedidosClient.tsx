@@ -204,7 +204,6 @@ export default function PedidosClient({ initialOrders }: PedidosClientProps) {
                     <p className={styles.rowTitle}>{order.customerName}</p>
                     <p className={styles.rowSubtitle}>{order.customerPhone ?? order.customerEmail ?? "—"}</p>
                     {order.customerAddress && <p className={styles.rowSubtitle}>{order.customerAddress}</p>}
-                    {order.note && <p className={styles.rowSubtitle}>📝 {order.note}</p>}
                   </td>
                   <td>
                     {order.items.map((item) => (

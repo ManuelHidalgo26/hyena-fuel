@@ -28,16 +28,6 @@ const COUPON_UNAVAILABLE_ERROR_CODE = "HY002";
 
 /** Tope del código de descuento tal como lo manda el cliente (ADR 0010 §5.2); el formato exacto se valida contra la DB. */
 const MAX_DISCOUNT_CODE_LENGTH = 32;
-/** Tope razonable del teléfono de contacto: cubre formato internacional con espacios/guiones sin abrir la puerta a payloads abusivos. */
-const MAX_PHONE_LENGTH = 30;
-/** Tope de la nota del pedido (ADR 0006 §Reglas de diseño), coherente con las demás cotas anti-abuso de este endpoint. */
-const MAX_NOTE_LENGTH = 500;
-
-/** Cadena vacía tras `trim` se trata como ausente (no como email inválido) — el contacto real es el teléfono. */
-const optionalEmailSchema = z.preprocess(
-  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
-  z.email("Email inválido").optional()
-);
 
 const createOrderSchema = z
   .object({
@@ -46,18 +36,13 @@ const createOrderSchema = z
       .min(1, "El carrito está vacío")
       .max(MAX_ITEMS_PER_ORDER, `El carrito admite hasta ${MAX_ITEMS_PER_ORDER} productos distintos`),
     customerName: z.string().trim().min(1, "Falta el nombre"),
-    customerEmail: optionalEmailSchema,
-    customerPhone: z
-      .string()
-      .trim()
-      .min(1, "Falta el teléfono")
-      .max(MAX_PHONE_LENGTH, `El teléfono admite hasta ${MAX_PHONE_LENGTH} caracteres`),
+    customerEmail: z.email("Email inválido").optional(),
+    customerPhone: z.string().trim().min(1).optional(),
     customerAddress: z.string().trim().min(1).optional(),
     paymentMethod: z.enum(["transferencia", "mercadopago"]),
     deliveryMethod: z.enum(["envio", "retiro"]).default("envio"),
     sellerCode: z.string().trim().min(1).optional(),
     discountCode: z.string().trim().min(1).max(MAX_DISCOUNT_CODE_LENGTH).optional(),
-    note: z.string().trim().max(MAX_NOTE_LENGTH, `La nota admite hasta ${MAX_NOTE_LENGTH} caracteres`).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.deliveryMethod === "envio" && !data.customerAddress) {
@@ -65,6 +50,13 @@ const createOrderSchema = z
         code: "custom",
         path: ["customerAddress"],
         message: "Falta la dirección de envío",
+      });
+    }
+    if (!data.customerEmail && !data.customerPhone) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["customerPhone"],
+        message: "Dejá un email o un teléfono de contacto",
       });
     }
   });
@@ -469,9 +461,8 @@ type InsertOrderArgs = {
   customer: {
     customerName: string;
     customerEmail?: string;
-    customerPhone: string;
+    customerPhone?: string;
     customerAddress?: string;
-    note?: string;
   };
   paymentMethod: PaymentMethod;
   deliveryMethod: DeliveryMethod;
@@ -522,7 +513,7 @@ async function persistOrder(
     .rpc("create_order", {
       p_customer_name: customer.customerName,
       p_customer_email: customer.customerEmail ?? null,
-      p_customer_phone: customer.customerPhone,
+      p_customer_phone: customer.customerPhone ?? null,
       p_customer_address: customer.customerAddress ?? null,
       p_payment_method: paymentMethod,
       p_delivery_method: deliveryMethod,
@@ -537,7 +528,6 @@ async function persistOrder(
       p_discount_code_id: coupon?.id ?? null,
       p_discount_code: totals.discountCode,
       p_discount_code_amount: totals.couponDiscount,
-      p_note: customer.note || null,
     })
     .single()
     .returns<OrderRow>();

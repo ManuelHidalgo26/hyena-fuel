@@ -75,7 +75,6 @@ export default function CartDrawer() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [note, setNote] = useState("");
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderTotal, setOrderTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -283,7 +282,7 @@ export default function CartDrawer() {
   const handleCheckout = async () => {
     if (processingRef.current) return;
 
-    if (!name || !phone || (deliveryMethod === "envio" && !address)) {
+    if (!name || !email || !phone || (deliveryMethod === "envio" && !address)) {
       alert("Completá todos tus datos antes de continuar.");
       return;
     }
@@ -313,7 +312,6 @@ export default function CartDrawer() {
         paymentMethod,
         deliveryMethod,
         discountCode: appliedCoupon?.code,
-        note,
       });
 
       // GA4 purchase
@@ -460,17 +458,17 @@ export default function CartDrawer() {
             />
 
             <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+
+            <input
               type="tel"
               placeholder="Teléfono"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-            />
-
-            <input
-              type="email"
-              placeholder="Email (opcional)"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
             />
 
             {deliveryMethod === "envio" && (
@@ -481,22 +479,6 @@ export default function CartDrawer() {
                 onChange={(e) => setAddress(e.target.value)}
               />
             )}
-          </div>
-
-          {/* NOTA DEL PEDIDO */}
-          <div className={styles.form}>
-            <label htmlFor="order-note" className={styles.noteLabel}>
-              Nota para tu pedido (opcional)
-            </label>
-            <textarea
-              id="order-note"
-              className={styles.noteTextarea}
-              placeholder="Contanos algo más: sabor, horario de entrega, si es un regalo…"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              maxLength={500}
-              rows={3}
-            />
           </div>
 
           {/* MÉTODO DE PAGO */}
