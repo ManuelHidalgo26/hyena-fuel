@@ -102,28 +102,31 @@ export default async function ProductDetail({ params }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
       />
       <section className={styles.container}>
-        {/* ProductPurchasePanel (Client Component) es dueño del estado de sabor/imagen
-            (ADR 0008) — imagen, nombre, badge de stock, precios, selector y CTA viven
-            ahí. La descripción, la ficha de specs y la lista de sabores legado se
-            siguen resolviendo acá (Server Components) y se pasan como `children` para
-            no bundlear markdown/render estático ni perder SSR del contenido. */}
-        <ProductPurchasePanel product={product}>
-          <ProductSpecs attributes={product.attributes} />
-          <FlavorList flavors={product.attributes.flavors} hasVariants={product.variants.length > 0} />
+        {/* `.productRow` (no `.container`) es el grid de 2 columnas imagen+info —
+            así el containing block del `.gallery` sticky (C1) queda acotado a
+            esta fila y no se estira hasta el fondo de `.reviewsSection`, que
+            vive fuera como sibling full-width (fix sticky pisando reseñas). */}
+        <div className={styles.productRow}>
+          {/* ProductPurchasePanel (Client Component) es dueño del estado de sabor/imagen
+              (ADR 0008) — imagen, nombre, badge de stock, precios, selector y CTA viven
+              ahí. La descripción, la ficha de specs y la lista de sabores legado se
+              siguen resolviendo acá (Server Components) y se pasan como `children` para
+              no bundlear markdown/render estático ni perder SSR del contenido. */}
+          <ProductPurchasePanel product={product}>
+            <ProductSpecs attributes={product.attributes} />
+            <FlavorList flavors={product.attributes.flavors} hasVariants={product.variants.length > 0} />
 
-          {product.description && (
-            <div className={styles.descriptionSection}>
-              <h2 className={styles.descriptionHeading}>Descripción</h2>
-              <div className={styles.description}>
-                <ReactMarkdown>{product.description}</ReactMarkdown>
+            {product.description && (
+              <div className={styles.descriptionSection}>
+                <h2 className={styles.descriptionHeading}>Descripción</h2>
+                <div className={styles.description}>
+                  <ReactMarkdown>{product.description}</ReactMarkdown>
+                </div>
               </div>
-            </div>
-          )}
-        </ProductPurchasePanel>
+            )}
+          </ProductPurchasePanel>
+        </div>
 
-        {/* Sibling full-width (spec-pdp-c1c3.md C3): `.container` es grid de 2
-            columnas (imagen+info); `.reviewsSection` usa grid-column:1/-1 para
-            ocupar todo el ancho debajo. */}
         <ProductReviews productId={product._id} />
       </section>
     </>
