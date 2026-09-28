@@ -16,9 +16,13 @@
   gap: 4rem;
   /* Antes este espaciado con `.reviewsSection` salía gratis del `row-gap`
      del grid de `.container` (que incluía la fila de reseñas). Al separar
-     el grid en `.productRow` hay que reponerlo a mano para no correr
-     `.reviewsSection` 4rem hacia arriba. */
-  margin-bottom: 4rem;
+     el grid en `.productRow` hay que reponerlo a mano — `padding-bottom`
+     (no `margin-bottom`) a propósito: `.reviewsSection` ya tiene su propio
+     `margin-top: 3rem`, y un margin-bottom acá colapsaría con ese margin-top
+     (se queda con el mayor de los dos en vez de sumarlos), achicando el
+     espacio real ~16px respecto a como se veía con el `row-gap` del grid
+     viejo (que no colapsaba con nada). */
+  padding-bottom: 4rem;
 }
 
 /* =========================
@@ -966,7 +970,7 @@
   .productRow {
     grid-template-columns: 1fr;
     gap: 2.5rem;
-    margin-bottom: 2.5rem;
+    padding-bottom: 2.5rem;
   }
 
   .info {
