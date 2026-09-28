@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "../../../../lib/auth/guards";
-import { createClient } from "../../../../lib/supabase/server";
+import { createAdminClient } from "../../../../lib/supabase/admin";
 import { ADMIN_ORDER_COLUMNS, mapAdminOrder, type AdminOrderRow } from "../../../../lib/admin/orders";
 import PedidosClient from "./PedidosClient";
 
@@ -11,10 +11,10 @@ export const metadata = {
 };
 
 /**
- * Server Component: lista todos los pedidos leyendo directo de Supabase con
- * el cliente SSR (sesión admin en cookie → RLS `is_admin()` habilita ver
- * todo, spec Admin UI §3.2). Las mutaciones (cambiar estado, limpiar
- * finalizados) van por `PedidosClient` contra los Route Handlers existentes.
+ * Server Component: lista todos los pedidos con service role detrás del
+ * guard admin (SEC-COST-AUTH); la RLS no aplica. Las mutaciones (cambiar
+ * estado, limpiar finalizados) van por `PedidosClient` contra los Route
+ * Handlers existentes.
  */
 export default async function PedidosPage() {
   const user = await getSessionUser();
@@ -22,7 +22,7 @@ export default async function PedidosPage() {
     redirect("/panel/login");
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("orders")
     .select(ADMIN_ORDER_COLUMNS)

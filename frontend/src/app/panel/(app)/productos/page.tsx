@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "../../../../lib/auth/guards";
-import { createClient } from "../../../../lib/supabase/server";
+import { createAdminClient } from "../../../../lib/supabase/admin";
 import { ADMIN_PRODUCT_COLUMNS, mapAdminProduct, type AdminProductRow } from "../../../../lib/products";
 import ProductosClient from "./ProductosClient";
 
@@ -12,9 +12,9 @@ export const metadata = {
 
 /**
  * Server Component: lista todos los productos (incluidos inactivos, con
- * `cost`) leyendo directo de Supabase con el cliente SSR (RLS `is_admin()`
- * habilita ver todo, spec Admin UI §3.2). Las mutaciones (crear, editar,
- * stock rápido, activar/desactivar) van por `ProductosClient`.
+ * `cost`) con service role detrás del guard admin (SEC-COST-AUTH); la RLS
+ * no aplica. Las mutaciones (crear, editar, stock rápido, activar/desactivar)
+ * van por `ProductosClient`.
  */
 export default async function ProductosPage() {
   const user = await getSessionUser();
@@ -22,7 +22,7 @@ export default async function ProductosPage() {
     redirect("/panel/login");
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("products")
     .select(ADMIN_PRODUCT_COLUMNS)

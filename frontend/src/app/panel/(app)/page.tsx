@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "../../../lib/auth/guards";
-import { createClient } from "../../../lib/supabase/server";
+import { createAdminClient } from "../../../lib/supabase/admin";
 import { ADMIN_ORDER_COLUMNS, mapAdminOrder, type AdminOrderRow } from "../../../lib/admin/orders";
 import { ADMIN_PRODUCT_COLUMNS, mapAdminProduct, type AdminProductRow } from "../../../lib/products";
 import { computeDashboardData } from "../../../lib/admin/dashboard";
@@ -14,10 +14,9 @@ export const metadata = {
 
 /**
  * Server Component: dashboard de `/panel` (spec-panel-admin-mejoras.md §3.3).
- * Lee `orders` + `products` directo de Supabase con el cliente SSR (RLS
- * `is_admin()` habilita ver todo, mismo patrón que `/panel/pedidos` y
- * `/panel/productos`) y computa `DashboardData` client-side de dev
- * (`lib/admin/dashboard.ts`); la vista es 100% de ux (`DashboardView`).
+ * Lee `orders` + `products` con service role detrás del guard admin
+ * (SEC-COST-AUTH); la RLS no aplica. Computa `DashboardData` client-side de
+ * dev (`lib/admin/dashboard.ts`); la vista es 100% de ux (`DashboardView`).
  */
 export default async function PanelHomePage() {
   const user = await getSessionUser();
@@ -25,7 +24,7 @@ export default async function PanelHomePage() {
     redirect("/panel/login");
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const [ordersResult, productsResult] = await Promise.all([
     supabase.from("orders").select(ADMIN_ORDER_COLUMNS).order("created_at", { ascending: false }).returns<AdminOrderRow[]>(),

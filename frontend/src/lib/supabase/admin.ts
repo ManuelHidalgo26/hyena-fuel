@@ -15,9 +15,11 @@ function getServiceRoleKey(): string {
 /**
  * Cliente Supabase con la service role key: bypassa RLS por completo.
  *
- * SOLO se debe usar dentro de Route Handlers (`src/app/api/**`), nunca en
- * Server/Client Components. El import de "server-only" hace fallar el build
- * si este módulo termina incluido en un bundle de cliente.
+ * SOLO server-side: Route Handlers (`src/app/api/**`) y Server Components de
+ * `src/app/panel/(app)/**`, siempre después de un guard admin en el mismo
+ * archivo. Nunca en Client Components ni bajo `(store)`. El import de
+ * "server-only" hace fallar el build si este módulo termina incluido en un
+ * bundle de cliente.
  */
 export function createAdminClient() {
   const { url } = getSupabasePublicEnv();
