@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,6 +8,11 @@ import { FaShoppingCart } from "react-icons/fa";
 import logo from "../../../../public/images/hyena-fuel-logo.png";
 import { useCart } from "../../../context/CartContext";
 import styles from "./Navbar.module.css";
+
+// No hay ningún store externo al que suscribirse: solo usamos
+// useSyncExternalStore para distinguir el snapshot de servidor del de
+// cliente, así que el listener nunca se dispara.
+const subscribeNever = () => () => {};
 
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
@@ -21,11 +26,16 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   // Evita el mismatch de hidratación: el badge del carrito depende de
-  // localStorage, que no existe en el render del servidor.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // localStorage, que no existe en el render del servidor. useSyncExternalStore
+  // es el patrón recomendado para esto: no se suscribe a nada (no hay updates
+  // que escuchar), pero React sabe que debe re-renderizar tras hidratar para
+  // reconciliar getServerSnapshot (false) con getClientSnapshot (true), sin
+  // pasar por un setState dentro de un efecto.
+  const mounted = useSyncExternalStore(
+    subscribeNever,
+    () => true,
+    () => false
+  );
 
   const burgerRef = useRef(null);
   const closeButtonRef = useRef(null);
