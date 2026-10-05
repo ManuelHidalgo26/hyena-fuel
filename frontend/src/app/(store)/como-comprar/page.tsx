@@ -145,7 +145,7 @@ export default function ComoComprarPage() {
               <div className={styles.stepContent}>
                 <span className={styles.stepNumber}>{step.number}</span>
                 <h2 className={styles.stepTitle}>{step.title}</h2>
-                <p className={styles.stepDesc}>{step.desc}</p>
+                <div className={styles.stepDesc}>{step.desc}</div>
               </div>
               <div className={styles.screenshotWrap}>
                 <LightboxImage
