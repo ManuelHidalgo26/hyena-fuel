@@ -1,6 +1,7 @@
 "use client";
 
 import { useCart } from "../../context/CartContext";
+import { useHydrated } from "../../context/useHydrated";
 import styles from "./ShippingBanner.module.css";
 
 const STATIC_MESSAGES = [
@@ -10,13 +11,17 @@ const STATIC_MESSAGES = [
 
 export default function ShippingBanner() {
   const { getMissingForFreeShipping, cartItems } = useCart();
+  // Evita el mismatch de hidratación: cartItems depende de localStorage, que
+  // no existe en el render del servidor (ver useHydrated). Hasta hidratar,
+  // mostramos el mensaje por defecto (como si el carrito estuviera vacío).
+  const mounted = useHydrated();
   // "transferencia" replica el método preseleccionado por defecto en
   // CartDrawer.jsx (useState inicial), para que el "faltan $X" del banner
   // coincida con lo que el carrito ya muestra al abrirse. No hay una
   // constante compartida hoy (QA-16); si se agrega una fuente única del
   // método por defecto, reemplazar este literal por esa constante.
   const missing = getMissingForFreeShipping("transferencia");
-  const hasItems = cartItems.length > 0;
+  const hasItems = mounted && cartItems.length > 0;
   const isFree = hasItems && missing === 0;
 
   let mainMessage = "🚚 Envío gratis a Córdoba Capital en compras superiores a $160.000";
