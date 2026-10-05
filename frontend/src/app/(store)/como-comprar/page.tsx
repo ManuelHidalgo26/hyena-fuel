@@ -20,6 +20,8 @@ const steps = [
       </>
     ),
     img: "/images/como-comprar/paso1-productos.png",
+    imgWidth: 1911,
+    imgHeight: 946,
     alt: "Grilla de productos HYENA FUEL",
   },
   {
@@ -33,6 +35,8 @@ const steps = [
       </>
     ),
     img: "/images/como-comprar/paso2-detalle.png",
+    imgWidth: 1913,
+    imgHeight: 951,
     alt: "Página de detalle de producto",
   },
   {
@@ -46,6 +50,8 @@ const steps = [
       </>
     ),
     img: "/images/como-comprar/paso3-carrito.png",
+    imgWidth: 1914,
+    imgHeight: 951,
     alt: "Carrito de compras abierto",
   },
   {
@@ -65,6 +71,8 @@ const steps = [
       </>
     ),
     img: "/images/como-comprar/paso4-entrega.png",
+    imgWidth: 380,
+    imgHeight: 580,
     alt: "Selección de método de entrega",
   },
   {
@@ -87,6 +95,8 @@ const steps = [
       </>
     ),
     img: "/images/como-comprar/paso5-pago.png",
+    imgWidth: 380,
+    imgHeight: 468,
     alt: "Selección de método de pago",
   },
   {
@@ -109,6 +119,8 @@ const steps = [
       </>
     ),
     img: "/images/como-comprar/paso6-confirmacion.png",
+    imgWidth: 1912,
+    imgHeight: 948,
     alt: "Confirmación de pedido",
   },
 ];
@@ -141,6 +153,8 @@ export default function ComoComprarPage() {
                   alt={step.alt}
                   width={480}
                   height={300}
+                  fullWidth={step.imgWidth}
+                  fullHeight={step.imgHeight}
                   className={styles.screenshot}
                 />
                 <span className={styles.zoomHint}>🔍 Clic para ampliar</span>

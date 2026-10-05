@@ -4,7 +4,15 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import styles from "./Lightbox.module.css";
 
-export function LightboxImage({ src, alt, width, height, className }) {
+export function LightboxImage({
+  src,
+  alt,
+  width,
+  height,
+  fullWidth,
+  fullHeight,
+  className,
+}) {
   const [open, setOpen] = useState(false);
 
   const close = useCallback(() => setOpen(false), []);
@@ -31,7 +39,13 @@ export function LightboxImage({ src, alt, width, height, className }) {
         <div className={styles.overlay} onClick={close}>
           <div className={styles.box} onClick={(e) => e.stopPropagation()}>
             <button className={styles.close} onClick={close} aria-label="Cerrar">✕</button>
-            <img src={src} alt={alt} className={styles.fullImg} />
+            <Image
+              src={src}
+              alt={alt}
+              width={fullWidth}
+              height={fullHeight}
+              className={styles.fullImg}
+            />
           </div>
         </div>
       )}

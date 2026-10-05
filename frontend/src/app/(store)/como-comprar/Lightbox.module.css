@@ -54,6 +54,11 @@
 }
 
 .fullImg {
+  /* width/height "auto" pisa los atributos intrínsecos que pone next/image
+     para que el navegador siga escalando la imagen libremente, igual que
+     con el <img> original. */
+  width: auto;
+  height: auto;
   max-width: 100%;
   max-height: 88vh;
   border-radius: 10px;
