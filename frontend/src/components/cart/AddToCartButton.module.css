@@ -27,6 +27,13 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
+/* Variante link ("Elegir sabor"): mismo look que el botón */
+.linkButton {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+
 /* A pedido */
 .pedidoBtn {
   width: 100%;

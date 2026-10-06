@@ -354,6 +354,11 @@ export default function CartDrawer() {
         setCouponStatus("invalid");
         setCouponErrorMessage(COUPON_UNAVAILABLE_AT_CHECKOUT_MESSAGE);
         setCouponInput("");
+      } else if (error.status === 400 && error.message) {
+        // 400 = problema del carrito que el cliente puede corregir (falta elegir
+        // sabor, stock insuficiente, producto sin stock): el server ya manda un
+        // mensaje legible; con el genérico el cliente no sabía qué cambiar.
+        alert(error.message);
       } else {
         alert("Error al crear el pedido. Intentá de nuevo.");
       }
