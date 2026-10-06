@@ -345,7 +345,9 @@ function validateStockAndActive(
 
     if (activeVariants.length > 0 && !item.flavor) {
       return NextResponse.json(
-        { error: `Elegí un sabor para "${product.name}"` },
+        {
+          error: `Tenés que elegir un sabor para "${product.name}" antes de finalizar la compra. Quitalo del carrito y volvé a agregarlo desde su página eligiendo el sabor.`,
+        },
         { status: 400 }
       );
     }
