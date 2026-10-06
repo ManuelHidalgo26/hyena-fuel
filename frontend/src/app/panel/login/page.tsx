@@ -14,8 +14,9 @@ type LoginPageProps = {
 };
 
 /**
- * Login oculto del panel privado (ADR 0003). No está enlazado desde ningún
- * lado de la tienda; solo se llega escribiendo la URL directamente.
+ * Login del panel privado (ADR 0003), compartido por admin y vendedores: el
+ * middleware manda a cada uno a su home según el rol. El único link desde la
+ * tienda es "Acceso vendedores" en el footer (`rel="nofollow"`, noindex acá).
  */
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const { error } = await searchParams;

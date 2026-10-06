@@ -25,7 +25,7 @@ const updateSellerSchema = z
 
 type UpdateSellerInput = z.infer<typeof updateSellerSchema>;
 
-/** Edita la ficha del vendedor (admin): nombre, teléfono, código, comisión default, activo. */
+/** Edita la ficha del vendedor (admin): nombre, teléfono, código, comisión default, activo (con su acceso). */
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   const guard = await requireAdmin();
   if (!guard.authorized) return guard.response;
@@ -69,6 +69,26 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
   if (!data) {
     return NextResponse.json({ error: "Vendedor no encontrado" }, { status: 404 });
+  }
+
+  // `active` también gobierna el acceso: reactivar sin levantar el baneo dejaría al vendedor
+  // "activo" en la tabla pero sin poder loguearse (y dar de baja por PATCH, sin bloquearlo).
+  if (parsed.data.active !== undefined) {
+    const { error: banError } = await supabase.auth.admin.updateUserById(id, {
+      ban_duration: parsed.data.active ? "none" : PERMANENT_BAN_DURATION,
+    });
+
+    if (banError) {
+      console.error("[PATCH /api/admin/sellers/[id]] ban", banError);
+      return NextResponse.json(
+        {
+          error: parsed.data.active
+            ? "El vendedor quedó activo pero no se pudo habilitar su acceso"
+            : "El vendedor quedó inactivo pero no se pudo bloquear su acceso",
+        },
+        { status: 500 }
+      );
+    }
   }
 
   return NextResponse.json(mapSeller(data));

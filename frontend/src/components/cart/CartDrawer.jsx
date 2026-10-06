@@ -76,6 +76,10 @@ export default function CartDrawer() {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [note, setNote] = useState("");
+  // Código de vendedor (Tanda A): opcional y sin validación en vivo. Si no existe o está
+  // inactivo, el pedido sale igual y solo se avisa en la pantalla de éxito.
+  const [sellerCode, setSellerCode] = useState("");
+  const [ignoredSellerCode, setIgnoredSellerCode] = useState(null);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderTotal, setOrderTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -272,6 +276,13 @@ export default function CartDrawer() {
             </a>
           </div>
 
+          {ignoredSellerCode && (
+            <p className={styles.sellerCodeNotice} role="status">
+              El código de vendedor <strong>{ignoredSellerCode}</strong> no está activo, así que no se
+              asoció a tu pedido. Tu compra quedó registrada igual.
+            </p>
+          )}
+
           <button onClick={() => setOrderSuccess(false)}>Cerrar</button>
         </div>
       </div>
@@ -314,6 +325,7 @@ export default function CartDrawer() {
         deliveryMethod,
         discountCode: appliedCoupon?.code,
         note,
+        sellerCode,
       });
 
       // GA4 purchase
@@ -339,6 +351,8 @@ export default function CartDrawer() {
       });
 
       setOrderTotal(totalFinal);
+      setIgnoredSellerCode(order.sellerCodeIgnored ? sellerCode.trim().toUpperCase() : null);
+      setSellerCode("");
       clearCart();
       closeCart();
       setOrderSuccess(true);
@@ -538,6 +552,31 @@ export default function CartDrawer() {
               maxLength={500}
               rows={3}
             />
+          </div>
+
+          {/* CÓDIGO DE VENDEDOR */}
+          <div className={styles.form}>
+            <div className={styles.field}>
+              <label htmlFor="checkout-seller-code" className={styles.noteLabel}>
+                Código de vendedor (opcional)
+              </label>
+              <input
+                id="checkout-seller-code"
+                type="text"
+                className={styles.sellerCodeInput}
+                placeholder="Ej. JUAN10"
+                autoComplete="off"
+                autoCapitalize="characters"
+                spellCheck={false}
+                maxLength={32}
+                value={sellerCode}
+                onChange={(e) => setSellerCode(e.target.value)}
+                aria-describedby="checkout-seller-code-hint"
+              />
+              <p id="checkout-seller-code-hint" className={styles.sellerCodeHint}>
+                Si te atendió un vendedor, escribí su código.
+              </p>
+            </div>
           </div>
 
           {/* MÉTODO DE PAGO */}

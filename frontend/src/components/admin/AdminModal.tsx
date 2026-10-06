@@ -24,6 +24,10 @@ export type AdminModalProps = {
   onConfirm: () => void;
   /** Se dispara al cancelar, tocar Escape o clickear fuera del panel. */
   onClose: () => void;
+  /** Contenido extra entre la descripción y los botones (ej. un form o las credenciales de un vendedor). */
+  children?: ReactNode;
+  /** Oculta "Cancelar" cuando el modal es solo informativo (queda un único botón de cierre). */
+  hideCancel?: boolean;
 };
 
 const FOCUSABLE_SELECTOR =
@@ -53,18 +57,21 @@ export default function AdminModal({
   confirmLoading = false,
   onConfirm,
   onClose,
+  children,
+  hideCancel = false,
 }: AdminModalProps) {
   const titleId = useId();
   const descriptionId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
 
     previouslyFocused.current = document.activeElement as HTMLElement | null;
-    cancelRef.current?.focus();
+    (cancelRef.current ?? confirmRef.current)?.focus();
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -129,11 +136,20 @@ export default function AdminModal({
           </p>
         )}
 
+        {children}
+
         <div className={styles.modalActions}>
-          <AdminButton ref={cancelRef} variant="secondary" onClick={onClose} disabled={confirmLoading}>
-            {cancelLabel}
-          </AdminButton>
-          <AdminButton variant={tone === "danger" ? "danger" : "primary"} onClick={onConfirm} loading={confirmLoading}>
+          {!hideCancel && (
+            <AdminButton ref={cancelRef} variant="secondary" onClick={onClose} disabled={confirmLoading}>
+              {cancelLabel}
+            </AdminButton>
+          )}
+          <AdminButton
+            ref={confirmRef}
+            variant={tone === "danger" ? "danger" : "primary"}
+            onClick={onConfirm}
+            loading={confirmLoading}
+          >
             {confirmLabel}
           </AdminButton>
         </div>

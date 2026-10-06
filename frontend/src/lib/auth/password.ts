@@ -1,7 +1,6 @@
 import { randomInt } from "node:crypto";
 
-/** Longitud mínima exigida en toda la app: alta de vendedor, reset admin y cambio propio (ADR 0003). */
-export const MIN_PASSWORD_LENGTH = 8;
+export { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH, passwordSchema } from "./passwordRules";
 
 const TEMP_PASSWORD_LENGTH = 12;
 // Sin caracteres ambiguos (0/O, 1/l/I): la contraseña temporal se entrega a mano al vendedor.

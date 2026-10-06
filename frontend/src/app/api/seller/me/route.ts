@@ -1,18 +1,17 @@
 import { NextResponse } from "next/server";
 import { requireSeller } from "../../../../lib/auth/guards";
 import { roundMoney } from "../../../../lib/money";
-import { CANCELLED_ORDER_STATUS, PAYABLE_ORDER_STATUSES } from "../../../../lib/orders";
-import { SELLER_COLUMNS, mapSeller, type SellerRow } from "../../../../lib/sellers";
+import {
+  SELLER_COLUMNS,
+  mapSeller,
+  summarizeSellerOrders,
+  type SellerOrderRow,
+  type SellerRow,
+} from "../../../../lib/sellers";
 import { createClient } from "../../../../lib/supabase/server";
 
 /** Base pública del sitio, misma convención que `sitemap.ts` / PDP para armar URLs absolutas. */
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://hyenafuel.com";
-
-type SellerOrderRow = {
-  status: string;
-  total_final: number | string;
-  commission_total: number | string;
-};
 
 type CommissionPaymentRow = {
   id: string;
@@ -24,12 +23,6 @@ type CommissionPaymentRow = {
   created_at: string;
 };
 
-type SalesSummary = {
-  ordersCount: number;
-  totalRevenue: number;
-  commissionAccumulated: number;
-};
-
 type Settlement = {
   id: string;
   period: string;
@@ -39,8 +32,6 @@ type Settlement = {
   notes: string | null;
   createdAt: string;
 };
-
-const PAYABLE_STATUSES: readonly string[] = PAYABLE_ORDER_STATUSES;
 
 /**
  * Resumen del vendedor logueado (ADR 0003): su ficha, código, link de referido, ventas +
@@ -99,32 +90,9 @@ export async function GET() {
   return NextResponse.json({
     seller: { ...seller, email: guard.user.email },
     referralLink: `${SITE_URL}/?ref=${seller.code}`,
-    sales: summarizeSales(ordersResult.data ?? []),
+    sales: summarizeSellerOrders(ordersResult.data ?? []),
     settlements: (settlementsResult.data ?? []).map(mapSettlement),
   });
-}
-
-/** Ventas = toda orden no cancelada; comisión acumulada = solo la de órdenes ya "ganadas" (ADR 0002 #5). */
-function summarizeSales(orders: SellerOrderRow[]): SalesSummary {
-  const summary = orders.reduce(
-    (acc, order) => {
-      if (order.status === CANCELLED_ORDER_STATUS) return acc;
-
-      acc.ordersCount += 1;
-      acc.totalRevenue += Number(order.total_final);
-      if (PAYABLE_STATUSES.includes(order.status)) {
-        acc.commissionAccumulated += Number(order.commission_total);
-      }
-      return acc;
-    },
-    { ordersCount: 0, totalRevenue: 0, commissionAccumulated: 0 }
-  );
-
-  return {
-    ordersCount: summary.ordersCount,
-    totalRevenue: roundMoney(summary.totalRevenue),
-    commissionAccumulated: roundMoney(summary.commissionAccumulated),
-  };
 }
 
 function mapSettlement(row: CommissionPaymentRow): Settlement {

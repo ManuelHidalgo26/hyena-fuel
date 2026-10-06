@@ -207,6 +207,8 @@ export function CartProvider({ children }) {
         discountCode,
         // Nota libre del pedido (ADR 0006). Opcional — se omite del payload si viene vacía.
         note,
+        // Código de vendedor (Tanda A). Opcional — se manda normalizado (trim + mayúsculas).
+        sellerCode,
     }) => {
     if (cartItems.length === 0) {
         throw new Error("El carrito está vacío");
@@ -223,6 +225,7 @@ export function CartProvider({ children }) {
         ...(email && email.trim() !== "" ? { customerEmail: email.trim() } : {}),
         ...(discountCode && discountCode.trim() !== "" ? { discountCode: discountCode.trim() } : {}),
         ...(note && note.trim() !== "" ? { note: note.trim() } : {}),
+        ...(sellerCode && sellerCode.trim() !== "" ? { sellerCode: sellerCode.trim().toUpperCase() } : {}),
     };
 
     const response = await fetch("/api/orders", {

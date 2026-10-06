@@ -716,3 +716,25 @@
     transform: translateX(0);
   }
 }
+
+/* Código de vendedor (Tanda A): se guarda en mayúsculas, se muestra igual. */
+.sellerCodeInput {
+  text-transform: uppercase;
+}
+
+.sellerCodeHint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #666;
+}
+
+/* Aviso suave en la pantalla de éxito: el pedido salió, solo no sumó al vendedor. */
+.sellerCodeNotice {
+  margin: 1rem 0 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #ddd;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}

@@ -1485,3 +1485,84 @@
   outline: none;
   box-shadow: var(--admin-focus-ring);
 }
+
+/* ---------------------------------------------------------------------
+ * Vendedores (Tanda A): credenciales de acceso, código destacado,
+ * input en mayúsculas.
+ * --------------------------------------------------------------------- */
+
+/* Input cuyo valor se guarda en mayúsculas (código de vendedor): se muestra igual. */
+.uppercaseInput {
+  text-transform: uppercase;
+}
+
+/* Bloque de credenciales (email + contraseña) dentro del modal post-alta / reset. */
+.credentialBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  background: var(--admin-surface-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+}
+
+.credentialRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.credentialLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--admin-text-muted);
+}
+
+.credentialValue {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.95rem;
+  color: var(--admin-text);
+  word-break: break-all;
+}
+
+.credentialActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+/* Código del vendedor en su portal: grande y copiable. */
+.sellerCodeDisplay {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.sellerCodeValue {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: var(--admin-accent);
+}
+
+/* Columna de formulario angosta (cambio de contraseña del vendedor). */
+.narrowForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  max-width: 420px;
+}
+
+.sectionTitle {
+  margin: 2rem 0 0.9rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--admin-text);
+}
