@@ -51,6 +51,11 @@ export const metadata = {
   },
 };
 
+// IDs de analítica: si la env var no está seteada en el deploy, no se carga el
+// script (antes se inyectaba `id=undefined` y GA4/Pixel no medían nada).
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FB_PIXEL_ID;
+
 export default function RootLayout({
   children,
 }: {
@@ -60,32 +65,38 @@ export default function RootLayout({
     <html lang="es" className={`${anton.variable} ${jakarta.variable}`}>
       <body className="layout-body">
         {/* Google Analytics 4 */}
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-          strategy="afterInteractive"
-        />
-        <Script id="ga4-init" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
-          `}
-        </Script>
+        {GA_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA_ID}');
+              `}
+            </Script>
+          </>
+        )}
 
         {/* Facebook Pixel */}
-        <Script id="fb-pixel" strategy="afterInteractive">
-          {`
-            !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){
-            n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-            n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
-            s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
-            (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init','${process.env.NEXT_PUBLIC_FB_PIXEL_ID}');
-            fbq('track','PageView');
-          `}
-        </Script>
+        {FB_PIXEL_ID && (
+          <Script id="fb-pixel" strategy="afterInteractive">
+            {`
+              !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){
+              n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+              n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
+              s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+              (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+              fbq('init','${FB_PIXEL_ID}');
+              fbq('track','PageView');
+            `}
+          </Script>
+        )}
         {children}
       </body>
     </html>
