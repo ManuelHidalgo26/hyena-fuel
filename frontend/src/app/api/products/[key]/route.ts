@@ -20,7 +20,7 @@ const updateProductSchema = z
       .string()
       .trim()
       .min(1)
-      .regex(/^[a-z0-9-]+$/, "El slug solo admite minúsculas, números y guiones")
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "El slug solo admite minúsculas, números y guiones simples (sin guion al inicio o al final)")
       .optional(),
     description: z.string().trim().min(1).nullable().optional(),
     price: z.number().nonnegative("El precio no puede ser negativo").optional(),
