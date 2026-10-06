@@ -15,6 +15,22 @@ const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
 ];
 
+/**
+ * Slugs viejos con guiones dobles o al final (generados por el slugify anterior
+ * del panel) → slug normalizado. 301 para no perder links compartidos ni SEO.
+ */
+const legacyProductSlugs: Record<string, string> = {
+  "combo-dupla-clasica-": "combo-dupla-clasica",
+  "combo-hipertrofia-": "combo-hipertrofia",
+  "proteina-classic-whey-protein-2-lbs-doypack---one-fit-nutrition":
+    "proteina-classic-whey-protein-2-lbs-doypack-one-fit-nutrition",
+  "pancake-proteicos-salado-sabor-queso-300-gr--granger": "pancake-proteicos-salado-sabor-queso-300-gr-granger",
+  "citrato-de-magnesio-150-gr---one-fit-nutrition": "citrato-de-magnesio-150-gr-one-fit-nutrition",
+  "creatina-pura-micronizada-doypack-300-gr---xbody-evolution":
+    "creatina-pura-micronizada-doypack-300-gr-xbody-evolution",
+  "creatina-saborizada-doypack-300-gr---star-nutrition": "creatina-saborizada-doypack-300-gr-star-nutrition",
+};
+
 const nextConfig: NextConfig = {
   images: {
     // avif primero: suele pesar 20-30% menos que webp en fotos (perf-audit
@@ -28,6 +44,13 @@ const nextConfig: NextConfig = {
         pathname: "/storage/v1/object/public/product-images/**",
       },
     ],
+  },
+  async redirects() {
+    return Object.entries(legacyProductSlugs).map(([from, to]) => ({
+      source: `/producto/${from}`,
+      destination: `/producto/${to}`,
+      permanent: true,
+    }));
   },
   async headers() {
     return [

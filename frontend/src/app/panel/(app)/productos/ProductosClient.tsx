@@ -129,14 +129,16 @@ function formatMargin(margin: Margin): string {
   return `$${margin.amount.toLocaleString("es-AR")} (${Math.round(margin.pct)}%)`;
 }
 
-/** Igual al slugify que ya usaba `admin/pedidos/AdminProductos.jsx`: minúsculas, sin diacríticos, guiones. */
+/** Minúsculas, sin diacríticos, un solo guion entre palabras y sin guiones en los bordes ("Combo  X - Y " → "combo-x-y"). */
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
 function slugify(text: string): string {
   return text
     .toLowerCase()
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "");
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 type VariantPayload = {
@@ -177,8 +179,8 @@ function validateProductForm(form: ProductFormFields): ValidationResult {
   const slug = form.slug.trim();
   if (!slug) {
     errors.slug = "Falta el slug";
-  } else if (!/^[a-z0-9-]+$/.test(slug)) {
-    errors.slug = "Solo minúsculas, números y guiones";
+  } else if (!SLUG_PATTERN.test(slug)) {
+    errors.slug = "Solo minúsculas, números y guiones simples (sin guion al inicio o al final)";
   }
 
   const price = Number(form.price);
@@ -337,7 +339,7 @@ function ProductFormFieldsGrid({
         />
       </AdminField>
 
-      <AdminField htmlFor={slugId} label="Slug" required hint="Solo minúsculas, números y guiones." error={errors.slug}>
+      <AdminField htmlFor={slugId} label="Slug" required hint="Solo minúsculas, números y guiones simples." error={errors.slug}>
         <input
           id={slugId}
           className={styles.input}
@@ -667,8 +669,10 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
   function handleCreateFieldChange(field: ProductTextField, value: string) {
     setCreateForm((prev) => {
       if (field === "name") {
-        // Autocompleta el slug mientras el admin no lo haya tocado a mano (paridad con el admin viejo).
-        return { ...prev, name: value, slug: prev.slug === "" ? slugify(value) : prev.slug };
+        // Autocompleta el slug mientras el admin no lo haya tocado a mano: si el slug
+        // actual es el que saldría del nombre anterior, se sigue regenerando.
+        const autoSlug = prev.slug === "" || prev.slug === slugify(prev.name);
+        return { ...prev, name: value, slug: autoSlug ? slugify(value) : prev.slug };
       }
       return { ...prev, [field]: value };
     });
