@@ -269,6 +269,9 @@ export default function VendedoresClient({ initialSellers }: VendedoresClientPro
   const [statusTarget, setStatusTarget] = useState<AdminSeller | null>(null);
   const [changingStatus, setChangingStatus] = useState(false);
 
+  const [deleteTarget, setDeleteTarget] = useState<AdminSeller | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const [passwordTarget, setPasswordTarget] = useState<AdminSeller | null>(null);
   const [passwordMode, setPasswordMode] = useState<PasswordMode>("generate");
   const [chosenPassword, setChosenPassword] = useState("");
@@ -435,6 +438,22 @@ export default function VendedoresClient({ initialSellers }: VendedoresClientPro
       router.refresh();
     } finally {
       setChangingStatus(false);
+    }
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setMutationError(null);
+    try {
+      const response = await fetch(`/api/admin/sellers/${deleteTarget.id}/permanent`, { method: "DELETE" });
+      if (!response.ok) {
+        setMutationError(await readErrorMessage(response, "No se pudo eliminar al vendedor"));
+      }
+      setDeleteTarget(null);
+      router.refresh();
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -617,6 +636,11 @@ export default function VendedoresClient({ initialSellers }: VendedoresClientPro
                     >
                       {seller.active ? "Dar de baja" : "Reactivar"}
                     </AdminButton>
+                    {!seller.active && seller.sales.ordersCount === 0 && (
+                      <AdminButton size="sm" variant="danger" onClick={() => setDeleteTarget(seller)}>
+                        Eliminar
+                      </AdminButton>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -650,6 +674,17 @@ export default function VendedoresClient({ initialSellers }: VendedoresClientPro
         confirmLoading={changingStatus}
         onClose={() => setStatusTarget(null)}
         onConfirm={handleStatusConfirm}
+      />
+
+      <AdminModal
+        open={deleteTarget !== null}
+        title={`¿Eliminar a ${deleteTarget?.name ?? ""} para siempre?`}
+        description="Se borra el vendedor y su cuenta de acceso. No se puede deshacer. Su email y su código quedan libres para usarlos de nuevo."
+        tone="danger"
+        confirmLabel="Eliminar"
+        confirmLoading={deleting}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteConfirm}
       />
 
       <AdminModal
