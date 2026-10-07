@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { trackEvent, GA_EVENTS } from "../lib/ga";
 import { fbTrack } from "../lib/fbpixel";
 import Toast from "../components/ui/Toast";
-import { captureReferralFromUrl, clearReferral } from "../lib/referral";
+import { captureReferralFromUrl, clearReferral, stripReferralParam } from "../lib/referral";
 
 const CartContext = createContext(null);
 
@@ -56,6 +56,11 @@ export function CartProvider({ children }) {
     const [referralCode, setReferralCode] = useState(() =>
     typeof window !== "undefined" ? captureReferralFromUrl() : null
     );
+
+    // Después de hidratar: limpia `?ref=` de la URL (ya quedó guardado arriba).
+    useEffect(() => {
+    stripReferralParam();
+    }, []);
 
     const discardReferral = () => {
     clearReferral();

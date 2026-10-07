@@ -55,24 +55,32 @@ export function clearReferral() {
 }
 
 /**
- * Lee `?ref=` de la URL actual: si es válido lo guarda y lo saca de la barra de
- * direcciones (la URL queda limpia para compartir y no duplica páginas). Devuelve
- * el código vigente (el nuevo o el que ya estaba guardado).
+ * Lee `?ref=` de la URL actual: si es válido lo guarda. Devuelve el código vigente
+ * (el nuevo o el que ya estaba guardado). No toca la URL: eso lo hace
+ * `stripReferralParam()` después de hidratar (si se hace durante el render, el
+ * router de Next vuelve a escribir la URL original al hidratar).
  */
 export function captureReferralFromUrl() {
   if (typeof window === "undefined") return null;
 
-  const url = new URL(window.location.href);
-  const fromUrl = normalizeReferralCode(url.searchParams.get(REFERRAL_QUERY_PARAM));
-
-  if (url.searchParams.has(REFERRAL_QUERY_PARAM)) {
-    url.searchParams.delete(REFERRAL_QUERY_PARAM);
-    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
-  }
+  const fromUrl = normalizeReferralCode(
+    new URLSearchParams(window.location.search).get(REFERRAL_QUERY_PARAM)
+  );
 
   if (fromUrl) {
     saveReferral(fromUrl);
     return fromUrl;
   }
   return readReferral();
+}
+
+/** Saca `?ref=` de la barra de direcciones (la URL queda limpia para compartir). */
+export function stripReferralParam() {
+  if (typeof window === "undefined") return;
+
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has(REFERRAL_QUERY_PARAM)) return;
+
+  url.searchParams.delete(REFERRAL_QUERY_PARAM);
+  window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
 }
