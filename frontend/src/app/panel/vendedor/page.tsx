@@ -3,6 +3,7 @@ import { getSessionUser } from "../../../lib/auth/guards";
 import { createClient } from "../../../lib/supabase/server";
 import {
   SELLER_COLUMNS,
+  buildReferralLink,
   mapSeller,
   summarizeSellerOrders,
   type SellerOrderRow,
@@ -11,6 +12,7 @@ import {
 import { AdminEmptyState, AdminPageHeader } from "../../../components/admin";
 import styles from "../../../components/admin/admin.module.css";
 import SellerCodeDisplay from "./SellerCodeDisplay";
+import SellerLinkDisplay from "./SellerLinkDisplay";
 import PasswordForm from "./PasswordForm";
 
 export const dynamic = "force-dynamic";
@@ -74,15 +76,24 @@ export default async function SellerPortalPage() {
     <>
       <AdminPageHeader
         title={`¡Hola, ${seller.name}!`}
-        description="Compartí tu código: cada compra que lo use te suma comisión."
+        description="Compartí tu link o tu código: cada compra que lo use te suma comisión."
       />
 
       <div className={styles.card}>
+        <h2 className={styles.cardTitle}>Tu link personal</h2>
+        <SellerLinkDisplay link={buildReferralLink(seller.code)} />
+        <p className={styles.hint}>
+          Compartilo por WhatsApp o Instagram: quien entre por este link y compre en los próximos 30 días
+          queda con tu código aplicado solo, sin tener que escribir nada.
+        </p>
+      </div>
+
+      <div className={styles.card} style={{ marginTop: "1rem" }}>
         <h2 className={styles.cardTitle}>Tu código de vendedor</h2>
         <SellerCodeDisplay code={seller.code} />
         <p className={styles.hint}>
-          El cliente lo escribe en el carrito, en &quot;Código de vendedor&quot;. Ganás el {seller.defaultCommissionPct}% de
-          cada producto que compre.
+          Si el cliente no entró por tu link, puede escribirlo en el carrito, en &quot;Código de vendedor&quot;. Ganás
+          el {seller.defaultCommissionPct}% de cada producto que compre.
         </p>
       </div>
 

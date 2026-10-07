@@ -1566,3 +1566,21 @@
   font-weight: 800;
   color: var(--admin-text);
 }
+
+/* Link personal del vendedor (Tanda B). */
+.sellerLinkRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sellerLinkValue {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9rem;
+  color: var(--admin-text);
+  word-break: break-all;
+  padding: 0.6rem 0.8rem;
+  background: var(--admin-surface-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+}

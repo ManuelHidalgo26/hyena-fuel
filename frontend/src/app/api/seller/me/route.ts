@@ -3,15 +3,13 @@ import { requireSeller } from "../../../../lib/auth/guards";
 import { roundMoney } from "../../../../lib/money";
 import {
   SELLER_COLUMNS,
+  buildReferralLink,
   mapSeller,
   summarizeSellerOrders,
   type SellerOrderRow,
   type SellerRow,
 } from "../../../../lib/sellers";
 import { createClient } from "../../../../lib/supabase/server";
-
-/** Base pública del sitio, misma convención que `sitemap.ts` / PDP para armar URLs absolutas. */
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://hyenafuel.com";
 
 type CommissionPaymentRow = {
   id: string;
@@ -89,7 +87,7 @@ export async function GET() {
 
   return NextResponse.json({
     seller: { ...seller, email: guard.user.email },
-    referralLink: `${SITE_URL}/?ref=${seller.code}`,
+    referralLink: buildReferralLink(seller.code),
     sales: summarizeSellerOrders(ordersResult.data ?? []),
     settlements: (settlementsResult.data ?? []).map(mapSettlement),
   });

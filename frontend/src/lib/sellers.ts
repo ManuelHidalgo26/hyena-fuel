@@ -23,6 +23,17 @@ export type Seller = {
   createdAt: string;
 };
 
+/** Dominio canónico de la tienda (mismo criterio que `sitemap.ts`). */
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.hyenafuel.com";
+
+/**
+ * Link personal del vendedor (Tanda B): quien entra por acá queda con el código
+ * aplicado solo en el carrito (ver `lib/referral.js`, parámetro `ref`).
+ */
+export function buildReferralLink(code: string): string {
+  return `${SITE_URL}/?ref=${encodeURIComponent(code)}`;
+}
+
 export const SELLER_COLUMNS = "id, code, name, phone, default_commission_pct, active, created_at";
 
 export function mapSeller(row: SellerRow): Seller {
