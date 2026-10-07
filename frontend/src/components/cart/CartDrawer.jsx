@@ -69,6 +69,8 @@ export default function CartDrawer() {
     getMissingForFreeShipping,
 
     checkout,
+    referralCode,
+    discardReferral,
   } = useCart();
 
   const [name, setName] = useState("");
@@ -78,7 +80,11 @@ export default function CartDrawer() {
   const [note, setNote] = useState("");
   // Código de vendedor (Tanda A): opcional y sin validación en vivo. Si no existe o está
   // inactivo, el pedido sale igual y solo se avisa en la pantalla de éxito.
-  const [sellerCode, setSellerCode] = useState("");
+  // `null` = el cliente no tocó el campo: se muestra el código de su link de
+  // vendedor (si llegó por uno). Apenas escribe, manda lo que escribió.
+  const [sellerCodeInput, setSellerCodeInput] = useState(null);
+  const sellerCode = sellerCodeInput ?? referralCode ?? "";
+  const sellerCodeFromLink = sellerCodeInput === null && Boolean(referralCode);
   const [ignoredSellerCode, setIgnoredSellerCode] = useState(null);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderTotal, setOrderTotal] = useState(0);
@@ -326,6 +332,7 @@ export default function CartDrawer() {
         discountCode: appliedCoupon?.code,
         note,
         sellerCode,
+        sellerCodeSource: sellerCodeFromLink ? "link" : "manual",
       });
 
       // GA4 purchase
@@ -352,7 +359,9 @@ export default function CartDrawer() {
 
       setOrderTotal(totalFinal);
       setIgnoredSellerCode(order.sellerCodeIgnored ? sellerCode.trim().toUpperCase() : null);
-      setSellerCode("");
+      // Un link con código inexistente/inactivo no se sigue mandando en próximas compras.
+      if (order.sellerCodeIgnored && sellerCodeFromLink) discardReferral();
+      setSellerCodeInput(null);
       clearCart();
       closeCart();
       setOrderSuccess(true);
@@ -570,11 +579,13 @@ export default function CartDrawer() {
                 spellCheck={false}
                 maxLength={32}
                 value={sellerCode}
-                onChange={(e) => setSellerCode(e.target.value)}
+                onChange={(e) => setSellerCodeInput(e.target.value)}
                 aria-describedby="checkout-seller-code-hint"
               />
               <p id="checkout-seller-code-hint" className={styles.sellerCodeHint}>
-                Si te atendió un vendedor, escribí su código.
+                {sellerCodeFromLink
+                  ? "✓ Aplicado automáticamente por el link de tu vendedor."
+                  : "Si te atendió un vendedor, escribí su código."}
               </p>
             </div>
           </div>

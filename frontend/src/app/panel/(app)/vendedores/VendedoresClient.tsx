@@ -15,6 +15,7 @@ import styles from "../../../../components/admin/admin.module.css";
 import type { AdminSeller } from "../../../../lib/admin/sellers";
 import { readErrorMessage } from "../../../../lib/admin/http";
 import { buildWhatsAppLink } from "../../../../lib/whatsapp";
+import { buildReferralLink } from "../../../../lib/sellers";
 import { isValidPasswordLength, PASSWORD_LENGTH_MESSAGE } from "../../../../lib/auth/passwordRules";
 
 /** Comisión con la que arranca el form de alta (editable): solo UI, no toca el default de la DB. */
@@ -141,6 +142,7 @@ function credentialsText(credentials: Credentials): string {
     `Email: ${seller.email ?? "(sin email)"}`,
     `Contraseña: ${password}`,
     `Tu código de vendedor: ${seller.code}`,
+    `Tu link para compartir: ${buildReferralLink(seller.code)}`,
   ].join("\n");
 }
 
@@ -276,6 +278,16 @@ export default function VendedoresClient({ initialSellers }: VendedoresClientPro
 
   const [credentials, setCredentials] = useState<Credentials | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
+
+  async function handleCopyLink(seller: AdminSeller) {
+    try {
+      await navigator.clipboard.writeText(buildReferralLink(seller.code));
+      setCopiedLinkId(seller.id);
+    } catch {
+      setMutationError(`No se pudo copiar. El link es: ${buildReferralLink(seller.code)}`);
+    }
+  }
 
   function openCreateForm() {
     setEditTarget(null);
@@ -585,6 +597,11 @@ export default function VendedoresClient({ initialSellers }: VendedoresClientPro
                 </td>
                 <td className={styles.cellActions}>
                   <div className={styles.cellActionsInner}>
+                    {seller.active && (
+                      <AdminButton size="sm" variant="secondary" onClick={() => handleCopyLink(seller)}>
+                        {copiedLinkId === seller.id ? "¡Copiado!" : "Copiar link"}
+                      </AdminButton>
+                    )}
                     <AdminButton size="sm" variant="secondary" onClick={() => openEditForm(seller)}>
                       Editar
                     </AdminButton>

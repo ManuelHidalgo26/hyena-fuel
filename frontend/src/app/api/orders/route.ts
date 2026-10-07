@@ -65,6 +65,8 @@ const createOrderSchema = z
       .max(32)
       .transform((value) => value.toUpperCase())
       .optional(),
+    /** De dónde salió el código de vendedor: su link (`?ref=`) o tipeado por el cliente. */
+    sellerCodeSource: z.enum(["link", "manual"]).optional(),
     discountCode: z.string().trim().min(1).max(MAX_DISCOUNT_CODE_LENGTH).optional(),
     note: z.string().trim().max(MAX_NOTE_LENGTH, `La nota admite hasta ${MAX_NOTE_LENGTH} caracteres`).optional(),
   })
@@ -161,7 +163,7 @@ export async function GET() {
 
 async function createOrder(input: CreateOrderInput): Promise<NextResponse> {
   const supabase = createAdminClient();
-  const { items, sellerCode, paymentMethod, deliveryMethod, discountCode, ...customer } = input;
+  const { items, sellerCode, sellerCodeSource, paymentMethod, deliveryMethod, discountCode, ...customer } = input;
   const mergedItems = mergeLineItemsByProduct(items);
 
   const productsById = await fetchProducts(supabase, mergedItems);
@@ -186,7 +188,15 @@ async function createOrder(input: CreateOrderInput): Promise<NextResponse> {
 
   const persisted = await persistOrder(
     supabase,
-    { customer, paymentMethod, deliveryMethod, seller, coupon: couponResult.coupon, totals },
+    {
+      customer,
+      paymentMethod,
+      deliveryMethod,
+      seller,
+      attributionSource: sellerCodeSource ?? "manual",
+      coupon: couponResult.coupon,
+      totals,
+    },
     frozenItems
   );
   if (!persisted.ok) return persisted.response;
@@ -428,6 +438,8 @@ type InsertOrderArgs = {
   paymentMethod: PaymentMethod;
   deliveryMethod: DeliveryMethod;
   seller: OrderSellerInput | null;
+  /** Solo se persiste si hay vendedor (constraint `orders_attribution_source_check`). */
+  attributionSource: "link" | "manual";
   coupon: OrderCouponInput | null;
   totals: ReturnType<typeof calculateOrderTotals>;
 };
@@ -458,7 +470,7 @@ async function persistOrder(
   args: InsertOrderArgs,
   items: FrozenOrderItem[]
 ): Promise<PersistOrderResult> {
-  const { customer, paymentMethod, deliveryMethod, seller, coupon, totals } = args;
+  const { customer, paymentMethod, deliveryMethod, seller, attributionSource, coupon, totals } = args;
 
   const rpcItems: RpcOrderItem[] = items.map((item) => ({
     product_id: item.productId,
@@ -483,7 +495,7 @@ async function persistOrder(
       p_shipping_cost: totals.shippingCost,
       p_total_final: totals.totalFinal,
       p_seller_id: seller?.id ?? null,
-      p_attribution_source: seller ? "manual" : null,
+      p_attribution_source: seller ? attributionSource : null,
       p_commission_total: totals.commissionTotal,
       p_items: rpcItems,
       p_discount_code_id: coupon?.id ?? null,

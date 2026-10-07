@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { trackEvent, GA_EVENTS } from "../lib/ga";
 import { fbTrack } from "../lib/fbpixel";
 import Toast from "../components/ui/Toast";
+import { captureReferralFromUrl, clearReferral, stripReferralParam } from "../lib/referral";
 
 const CartContext = createContext(null);
 
@@ -47,6 +48,24 @@ export function CartProvider({ children }) {
 
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [toast, setToast] = useState(null);
+
+    // Código de vendedor que llegó por su link (`?ref=`, ver lib/referral.js). Mismo
+    // patrón que `cartItems`: se lee en el cliente al montar. Solo lo usa el drawer,
+    // que no se renderiza hasta abrirse, así que no genera mismatch de hidratación.
+    // Es idempotente: la 2ª llamada (StrictMode) ya no ve `?ref=` y lee lo guardado.
+    const [referralCode, setReferralCode] = useState(() =>
+    typeof window !== "undefined" ? captureReferralFromUrl() : null
+    );
+
+    // Después de hidratar: limpia `?ref=` de la URL (ya quedó guardado arriba).
+    useEffect(() => {
+    stripReferralParam();
+    }, []);
+
+    const discardReferral = () => {
+    clearReferral();
+    setReferralCode(null);
+    };
 
     useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cartItems));
@@ -209,6 +228,8 @@ export function CartProvider({ children }) {
         note,
         // Código de vendedor (Tanda A). Opcional — se manda normalizado (trim + mayúsculas).
         sellerCode,
+        // "link" si el código vino solo por el link del vendedor, "manual" si lo escribió el cliente.
+        sellerCodeSource,
     }) => {
     if (cartItems.length === 0) {
         throw new Error("El carrito está vacío");
@@ -225,7 +246,9 @@ export function CartProvider({ children }) {
         ...(email && email.trim() !== "" ? { customerEmail: email.trim() } : {}),
         ...(discountCode && discountCode.trim() !== "" ? { discountCode: discountCode.trim() } : {}),
         ...(note && note.trim() !== "" ? { note: note.trim() } : {}),
-        ...(sellerCode && sellerCode.trim() !== "" ? { sellerCode: sellerCode.trim().toUpperCase() } : {}),
+        ...(sellerCode && sellerCode.trim() !== ""
+            ? { sellerCode: sellerCode.trim().toUpperCase(), sellerCodeSource: sellerCodeSource === "link" ? "link" : "manual" }
+            : {}),
     };
 
     const response = await fetch("/api/orders", {
@@ -269,6 +292,10 @@ export function CartProvider({ children }) {
         getMissingForFreeShipping,
 
         checkout,
+
+        // Link de vendedor (Tanda B)
+        referralCode,
+        discardReferral,
         }}
     >
         {children}
