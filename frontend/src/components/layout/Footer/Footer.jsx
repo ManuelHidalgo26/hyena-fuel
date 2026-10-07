@@ -155,6 +155,10 @@ export default function Footer() {
 
       <div className={styles.bottomBar}>
         © {new Date().getFullYear()} HYENA FUEL — Todos los derechos reservados.
+        <span aria-hidden="true"> · </span>
+        <Link href="/panel/login" rel="nofollow" className={styles.sellerAccessLink}>
+          Acceso vendedores
+        </Link>
       </div>
     </footer>
   );

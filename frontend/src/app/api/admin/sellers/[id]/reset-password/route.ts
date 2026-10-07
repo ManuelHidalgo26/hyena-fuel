@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "../../../../../../lib/auth/guards";
-import { generateTemporaryPassword, MIN_PASSWORD_LENGTH } from "../../../../../../lib/auth/password";
+import { generateTemporaryPassword, passwordSchema } from "../../../../../../lib/auth/password";
 import { createAdminClient } from "../../../../../../lib/supabase/admin";
 import { isUuid } from "../../../../../../lib/uuid";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 const resetPasswordSchema = z.object({
-  password: z
-    .string()
-    .min(MIN_PASSWORD_LENGTH, `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`)
-    .optional(),
+  password: passwordSchema.optional(),
 });
 
 /**
@@ -69,6 +66,12 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   });
 
   if (updateError) {
+    if (updateError.code === "weak_password") {
+      return NextResponse.json(
+        { error: "Esa contraseña es muy fácil de adivinar. Elegí otra o generá una automática." },
+        { status: 400 }
+      );
+    }
     console.error("[POST /api/admin/sellers/[id]/reset-password] updateUserById", updateError);
     return NextResponse.json({ error: "No se pudo resetear la contraseña" }, { status: 500 });
   }

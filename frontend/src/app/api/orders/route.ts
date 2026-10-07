@@ -58,7 +58,13 @@ const createOrderSchema = z
     customerAddress: z.string().trim().min(1).optional(),
     paymentMethod: z.enum(["transferencia", "mercadopago"]),
     deliveryMethod: z.enum(["envio", "retiro"]).default("envio"),
-    sellerCode: z.string().trim().min(1).optional(),
+    sellerCode: z
+      .string()
+      .trim()
+      .min(1)
+      .max(32)
+      .transform((value) => value.toUpperCase())
+      .optional(),
     discountCode: z.string().trim().min(1).max(MAX_DISCOUNT_CODE_LENGTH).optional(),
     note: z.string().trim().max(MAX_NOTE_LENGTH, `La nota admite hasta ${MAX_NOTE_LENGTH} caracteres`).optional(),
   })
@@ -191,7 +197,15 @@ async function createOrder(input: CreateOrderInput): Promise<NextResponse> {
   // en un 500 que invite a reintentar y duplicar el pedido.
   revalidateStorefront("order");
 
-  return NextResponse.json(mapOrderResponse(persisted.order, frozenItems), { status: 201 });
+  return NextResponse.json(
+    {
+      ...mapOrderResponse(persisted.order, frozenItems),
+      // El código de vendedor nunca bloquea la compra: si no existe o está inactivo, el
+      // pedido sale sin vendedor y el front avisa (no es un error para el cliente).
+      sellerCodeIgnored: Boolean(sellerCode) && !seller,
+    },
+    { status: 201 }
+  );
 }
 
 type CouponResolutionResult =

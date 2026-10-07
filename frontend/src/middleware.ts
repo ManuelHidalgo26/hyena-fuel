@@ -3,25 +3,22 @@ import { createServerClient } from "@supabase/ssr";
 import { getSupabasePublicEnv } from "./lib/supabase/env";
 
 const LOGIN_PATH = "/panel/login";
-const PANEL_HOME_PATH = "/panel";
-
-/** Único rol con acceso hoy a `/panel/**` (ADR 0003). El portal de vendedor
- *  (`/panel/vendedor/**`, rol `seller`) es una parte siguiente: como esa
- *  subruta todavía no existe, un `seller` autenticado tampoco tiene a dónde
- *  entrar bajo `/panel` y se lo trata igual que a un rol no permitido. */
-const ALLOWED_PANEL_ROLE = "admin";
+const ADMIN_HOME_PATH = "/panel";
+/** Portal del vendedor (ADR 0003): única zona de `/panel/**` habilitada para el rol `seller`. */
+const SELLER_HOME_PATH = "/panel/vendedor";
 
 /**
  * Refresca la sesión de Supabase (patrón oficial `@supabase/ssr` para
- * middleware) y protege `/panel/**` (ADR 0003):
+ * middleware) y protege `/panel/**` por rol (ADR 0003):
  *
  * - Sin sesión y no está en `/panel/login` → redirect a `/panel/login`.
- * - Con sesión pero sin rol permitido (no `admin`) → redirect a
- *   `/panel/login?error=forbidden` (no se le da acceso).
- * - En `/panel/login` con sesión de `admin` ya válida → redirect a `/panel`
- *   (evita que un `admin` logueado vea el form de login de nuevo). Si la
- *   sesión no es de `admin`, se deja ver `/panel/login` igual (evita un
- *   ping-pong de redirects contra el caso anterior).
+ * - `admin` → todo `/panel/**` salvo el portal del vendedor (lo manda a
+ *   `/panel/vendedores`, su vista de gestión).
+ * - `seller` → solo `/panel/vendedor/**`; cualquier otra ruta del panel lo
+ *   devuelve a su portal.
+ * - Otro rol (o ninguno) → `/panel/login?error=forbidden`.
+ * - En `/panel/login` con sesión válida de admin/seller → a su home (evita
+ *   ver el form de nuevo). Con otro rol se deja ver el login (sin ping-pong).
  *
  * Esta es la primera barrera (UX). Cada Route Handler privado se re-verifica
  * server-side con `lib/auth/guards.ts` y RLS es la última línea de defensa
@@ -52,19 +49,30 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAdmin = user?.app_metadata?.role === ALLOWED_PANEL_ROLE;
-  const isLoginPath = request.nextUrl.pathname === LOGIN_PATH;
+  const role = user?.app_metadata?.role;
+  const homePath = role === "admin" ? ADMIN_HOME_PATH : role === "seller" ? SELLER_HOME_PATH : null;
+  const { pathname } = request.nextUrl;
 
-  if (isLoginPath) {
-    return isAdmin ? redirectTo(request, PANEL_HOME_PATH) : response;
+  if (pathname === LOGIN_PATH) {
+    return homePath ? redirectTo(request, homePath) : response;
   }
 
   if (!user) {
     return redirectTo(request, LOGIN_PATH);
   }
 
-  if (!isAdmin) {
+  if (!homePath) {
     return redirectTo(request, LOGIN_PATH, "error=forbidden");
+  }
+
+  const isSellerArea = pathname === SELLER_HOME_PATH || pathname.startsWith(`${SELLER_HOME_PATH}/`);
+
+  if (role === "seller" && !isSellerArea) {
+    return redirectTo(request, SELLER_HOME_PATH);
+  }
+
+  if (role === "admin" && isSellerArea) {
+    return redirectTo(request, "/panel/vendedores");
   }
 
   return response;

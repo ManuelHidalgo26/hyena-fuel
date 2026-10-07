@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "../../../../lib/auth/guards";
-import { generateTemporaryPassword, MIN_PASSWORD_LENGTH } from "../../../../lib/auth/password";
+import { generateTemporaryPassword, passwordSchema } from "../../../../lib/auth/password";
 import { createAdminClient } from "../../../../lib/supabase/admin";
-import { SELLER_COLUMNS, mapSeller, sellerCodeSchema, type Seller, type SellerRow } from "../../../../lib/sellers";
+import { SELLER_COLUMNS, mapSeller, sellerCodeSchema, type SellerRow } from "../../../../lib/sellers";
+import { listSellersForAdmin, type SellerWithEmail } from "../../../../lib/admin/sellers";
 
 /** Código Postgres de violación de constraint único (`sellers.code`). */
 const UNIQUE_VIOLATION_CODE = "23505";
 
-type AdminClient = ReturnType<typeof createAdminClient>;
-
-/** Vendedor + email de su cuenta de auth (no vive en `sellers`, se resuelve aparte). */
-type SellerWithEmail = Seller & { email: string | null };
 
 const createSellerSchema = z.object({
   email: z.email("Email inválido"),
@@ -19,33 +16,22 @@ const createSellerSchema = z.object({
   phone: z.string().trim().min(1).optional(),
   code: sellerCodeSchema,
   defaultCommissionPct: z.number().min(0, "La comisión no puede ser negativa"),
-  password: z
-    .string()
-    .min(MIN_PASSWORD_LENGTH, `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`)
-    .optional(),
+  password: passwordSchema.optional(),
 });
 
 type CreateSellerInput = z.infer<typeof createSellerSchema>;
 
-/** Listado de vendedores para el panel admin, con el email de su cuenta de auth. */
+/** Listado de vendedores para el panel admin, con el email de su cuenta de auth y sus ventas. */
 export async function GET() {
   const guard = await requireAdmin();
   if (!guard.authorized) return guard.response;
 
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("sellers")
-    .select(SELLER_COLUMNS)
-    .order("created_at", { ascending: false })
-    .returns<SellerRow[]>();
-
-  if (error) {
+  try {
+    return NextResponse.json(await listSellersForAdmin(createAdminClient()));
+  } catch (error) {
     console.error("[GET /api/admin/sellers]", error);
     return NextResponse.json({ error: "No se pudieron obtener los vendedores" }, { status: 500 });
   }
-
-  const sellers = await attachEmails(supabase, (data ?? []).map(mapSeller));
-  return NextResponse.json(sellers);
 }
 
 /**
@@ -124,13 +110,4 @@ async function createSeller(input: CreateSellerInput): Promise<NextResponse> {
 
 function isEmailAlreadyRegistered(error: { code?: string } | null): boolean {
   return error?.code === "email_exists" || error?.code === "user_already_exists";
-}
-
-async function attachEmails(supabase: AdminClient, sellers: Seller[]): Promise<SellerWithEmail[]> {
-  return Promise.all(
-    sellers.map(async (seller) => {
-      const { data } = await supabase.auth.admin.getUserById(seller.id);
-      return { ...seller, email: data.user?.email ?? null };
-    })
-  );
 }

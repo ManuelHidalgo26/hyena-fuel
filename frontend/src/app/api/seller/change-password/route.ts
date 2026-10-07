@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireSeller } from "../../../../lib/auth/guards";
-import { MIN_PASSWORD_LENGTH } from "../../../../lib/auth/password";
+import { passwordSchema } from "../../../../lib/auth/password";
 import { createClient } from "../../../../lib/supabase/server";
 
 const changePasswordSchema = z.object({
-  password: z
-    .string()
-    .min(MIN_PASSWORD_LENGTH, `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`),
+  password: passwordSchema,
 });
 
 /**
@@ -38,6 +36,16 @@ export async function POST(request: NextRequest) {
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
 
   if (error) {
+    // Errores que el vendedor puede corregir (contraseña débil/filtrada o igual a la actual): 400 legible.
+    if (error.code === "weak_password") {
+      return NextResponse.json(
+        { error: "Esa contraseña es muy fácil de adivinar. Probá con una más larga o distinta." },
+        { status: 400 }
+      );
+    }
+    if (error.code === "same_password") {
+      return NextResponse.json({ error: "La contraseña nueva tiene que ser distinta de la actual" }, { status: 400 });
+    }
     console.error("[POST /api/seller/change-password]", error);
     return NextResponse.json({ error: "No se pudo cambiar la contraseña" }, { status: 500 });
   }

@@ -9,6 +9,7 @@ const NAV_ITEMS: Array<Pick<AdminNavItem, "href" | "label">> = [
   { href: "/panel/pedidos", label: "Pedidos" },
   { href: "/panel/productos", label: "Productos" },
   { href: "/panel/codigos", label: "Códigos" },
+  { href: "/panel/vendedores", label: "Vendedores" },
   { href: "/panel/resenas", label: "Reseñas" },
   { href: "/panel/suscriptores", label: "Suscriptores" },
 ];
