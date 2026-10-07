@@ -66,6 +66,13 @@ export default function AdminModal({
   const cancelRef = useRef<HTMLButtonElement>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
+  // `onClose` suele llegar como arrow inline (cambia en cada render del padre). Si fuera
+  // dependencia del efecto de abajo, cada tecla en un input del modal lo re-ejecutaría y
+  // le robaría el foco al input para mandarlo a "Cancelar".
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -79,7 +86,7 @@ export default function AdminModal({
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
 
@@ -108,7 +115,7 @@ export default function AdminModal({
       document.body.style.overflow = previousOverflow;
       previouslyFocused.current?.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
