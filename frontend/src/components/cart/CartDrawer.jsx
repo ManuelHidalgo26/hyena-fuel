@@ -73,10 +73,6 @@ export default function CartDrawer() {
     discardReferral,
   } = useCart();
 
-  const sellerCode = sellerCodeInput ?? referralCode ?? "";
-  const sellerCodeFromLink =
-    sellerCodeInput === null && Boolean(referralCode);
-
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -87,6 +83,8 @@ export default function CartDrawer() {
   // `null` = el cliente no tocó el campo: se muestra el código de su link de
   // vendedor (si llegó por uno). Apenas escribe, manda lo que escribió.
   const [sellerCodeInput, setSellerCodeInput] = useState(null);
+  const sellerCode = sellerCodeInput ?? referralCode ?? "";
+  const sellerCodeFromLink = sellerCodeInput === null && Boolean(referralCode);
   const [ignoredSellerCode, setIgnoredSellerCode] = useState(null);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderTotal, setOrderTotal] = useState(0);
