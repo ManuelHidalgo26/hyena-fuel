@@ -130,13 +130,36 @@ describe("handleMercadoPagoWebhook", () => {
     expect(mocks.revalidateStorefront).not.toHaveBeenCalled();
   });
 
-  it("pago inexistente en Mercado Pago (notificación de prueba): 200 sin aplicar", async () => {
+  it("pago inexistente en una notificación real: 500 para que Mercado Pago reintente", async () => {
     mocks.fetchPayment.mockResolvedValue(null);
 
-    const response = await handleMercadoPagoWebhook(signedRequest());
+    const response = await handleMercadoPagoWebhook(signedRequest({ body: { data: { id: PAYMENT_ID }, live_mode: true } }));
+
+    expect(response.status).toBe(500);
+    expect(mocks.syncPayment).not.toHaveBeenCalled();
+  });
+
+  it("pago inexistente sin live_mode en el body: se trata como real (500)", async () => {
+    mocks.fetchPayment.mockResolvedValue(null);
+
+    expect((await handleMercadoPagoWebhook(signedRequest())).status).toBe(500);
+  });
+
+  it("simulación del panel de Mercado Pago (live_mode false): 200 sin aplicar", async () => {
+    mocks.fetchPayment.mockResolvedValue(null);
+
+    const response = await handleMercadoPagoWebhook(signedRequest({ body: { data: { id: PAYMENT_ID }, live_mode: false } }));
 
     expect(response.status).toBe(200);
     expect(mocks.syncPayment).not.toHaveBeenCalled();
+  });
+
+  it("con firma inválida no lee el body", async () => {
+    const request = signedRequest({ signature: `ts=${Date.now()},v1=${"a".repeat(64)}` });
+    const json = vi.spyOn(request, "json");
+
+    expect((await handleMercadoPagoWebhook(request)).status).toBe(401);
+    expect(json).not.toHaveBeenCalled();
   });
 
   it("pago con external_reference inválido o estado desconocido: 200 ignorado", async () => {

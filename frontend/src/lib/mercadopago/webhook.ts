@@ -13,6 +13,7 @@ const PAYMENT_NOTIFICATION_TYPE = "payment";
 type WebhookBody = {
   type?: unknown;
   topic?: unknown;
+  live_mode?: unknown;
   data?: { id?: unknown };
 };
 
@@ -48,8 +49,10 @@ export async function handleMercadoPagoWebhook(request: NextRequest): Promise<Ne
     return respond({ error: "Webhook no configurado" }, 500);
   }
 
-  const body = await readJsonBody(request);
-  const dataId = request.nextUrl.searchParams.get("data.id") ?? asText(body.data?.id);
+  // Con `data.id` en la query la firma se valida antes de leer el body; si no viene, el id sale del body.
+  const queryDataId = request.nextUrl.searchParams.get("data.id");
+  const body = queryDataId ? null : await readJsonBody(request);
+  const dataId = queryDataId ?? asText(body?.data?.id);
 
   const isValidSignature = verifyWebhookSignature({
     signatureHeader: request.headers.get("x-signature"),
@@ -59,16 +62,15 @@ export async function handleMercadoPagoWebhook(request: NextRequest): Promise<Ne
   });
   if (!isValidSignature) return respond({ error: "Firma inválida" }, 401);
 
-  const notificationType = request.nextUrl.searchParams.get("type") ?? asText(body.type) ?? asText(body.topic);
+  const verifiedBody = body ?? (await readJsonBody(request));
+
+  const notificationType = request.nextUrl.searchParams.get("type") ?? asText(verifiedBody.type) ?? asText(verifiedBody.topic);
   if (notificationType !== PAYMENT_NOTIFICATION_TYPE) return respond({ ignored: true });
   if (!dataId || !PAYMENT_ID_PATTERN.test(dataId)) return respond({ ignored: true });
 
   try {
     const payment = await fetchPayment(client, dataId);
-    if (!payment) {
-      console.warn("[webhook mercadopago] pago inexistente", { paymentId: dataId });
-      return respond({ ignored: true });
-    }
+    if (!payment) return handleMissingPayment(dataId, verifiedBody);
 
     const result = await syncPayment(createAdminClient(), payment);
     if (result.kind === "ignored") {
@@ -89,4 +91,19 @@ export async function handleMercadoPagoWebhook(request: NextRequest): Promise<Ne
     console.error("[webhook mercadopago]", { paymentId: dataId, error });
     return respond({ error: "No se pudo procesar el pago" }, 500);
   }
+}
+
+/**
+ * MP no encontró el pago. En una notificación real puede ser una demora de replicación de MP:
+ * se responde 500 para que reintente. La simulación del panel (`live_mode: false`, id de
+ * prueba) se responde 200 porque nunca va a existir.
+ */
+function handleMissingPayment(paymentId: string, body: WebhookBody): NextResponse {
+  if (body.live_mode === false) {
+    console.warn("[webhook mercadopago] simulación sin pago real", { paymentId });
+    return respond({ ignored: true });
+  }
+
+  console.error("[webhook mercadopago] pago inexistente en una notificación real", { paymentId });
+  return respond({ error: "Pago no encontrado" }, 500);
 }
