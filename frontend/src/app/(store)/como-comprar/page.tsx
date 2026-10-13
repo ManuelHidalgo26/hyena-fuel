@@ -83,8 +83,8 @@ const steps = [
         Tenés dos opciones:
         <ul>
           <li>
-            💳 <strong>Débito / Crédito</strong> — coordinamos el pago por
-            WhatsApp o Instagram
+            💳 <strong>Débito / Crédito</strong> — pagás online con Mercado
+            Pago, en las cuotas que ofrezca tu tarjeta
           </li>
           <li>
             🏦 <strong>Transferencia bancaria</strong> — al alias{" "}
@@ -92,6 +92,8 @@ const steps = [
             <strong>10% de descuento</strong> automático
           </li>
         </ul>
+        Con tarjeta pagás el precio de lista; con transferencia o efectivo
+        tenés 10% OFF.
       </>
     ),
     img: "/images/como-comprar/paso5-pago.png",
@@ -111,8 +113,10 @@ const steps = [
             por WhatsApp o Instagram al alias <strong>{TRANSFER_ALIAS}</strong>
           </li>
           <li>
-            Si pagás con <strong>tarjeta (débito o crédito)</strong>, coordinamos
-            el pago y el envío por WhatsApp
+            Si pagás con <strong>tarjeta (débito o crédito)</strong>, te
+            llevamos a Mercado Pago para completar el pago. Al volver, ves la
+            confirmación y coordinamos la entrega por WhatsApp (los envíos
+            salen los miércoles) o el retiro en Córdoba.
           </li>
         </ul>
         Coordinamos la entrega o el retiro en el horario que mejor te quede.
