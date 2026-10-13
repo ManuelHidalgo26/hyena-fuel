@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FrozenOrderItem } from "../orders";
-import { buildPreferenceBody, toArgentinaIso, type PreferenceInput } from "./preference";
+import { buildPreferenceBody, isMercadoPagoUrl, toArgentinaIso, type PreferenceInput } from "./preference";
 
 const ORDER_ID = "a1b2c3d4-0000-4000-8000-000000000001";
 const PRODUCT_ID = "11111111-1111-4111-8111-111111111111";
@@ -133,6 +133,21 @@ describe("buildPreferenceBody", () => {
     expect(body.expires).toBe(true);
     expect(body.expiration_date_from).toBe("2026-10-13T11:59:00.000-03:00");
     expect(body.expiration_date_to).toBe("2026-10-13T14:00:00.000-03:00");
+  });
+});
+
+describe("isMercadoPagoUrl", () => {
+  it("acepta https en dominios de Mercado Pago", () => {
+    expect(isMercadoPagoUrl("https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=1")).toBe(true);
+    expect(isMercadoPagoUrl("https://www.mercadopago.com/checkout/v1/redirect?pref_id=1")).toBe(true);
+  });
+
+  it("rechaza http, otros dominios y parecidos", () => {
+    expect(isMercadoPagoUrl("http://www.mercadopago.com.ar/x")).toBe(false);
+    expect(isMercadoPagoUrl("https://evil.example/mercadopago.com")).toBe(false);
+    expect(isMercadoPagoUrl("https://mercadopago.com.evil.example/x")).toBe(false);
+    expect(isMercadoPagoUrl("https://notmercadopago.com/x")).toBe(false);
+    expect(isMercadoPagoUrl("no es una url")).toBe(false);
   });
 });
 

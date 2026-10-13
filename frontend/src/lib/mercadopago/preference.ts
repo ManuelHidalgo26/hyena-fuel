@@ -139,6 +139,18 @@ export function buildPreferenceBody(input: PreferenceInput): PreferenceBody {
   };
 }
 
+const MERCADOPAGO_HOST_PATTERN = /^(?:[a-z0-9-]+\.)*mercadopago\.com(?:\.ar)?$/;
+
+/** El link de pago tiene que ser https y de un dominio de Mercado Pago (defensa contra open redirect). */
+export function isMercadoPagoUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && MERCADOPAGO_HOST_PATTERN.test(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
 /** Crea la preferencia en Mercado Pago. Idempotente por pedido (`pref-<orderId>`). */
 export async function createPreference(
   client: MercadoPagoConfig,
@@ -149,8 +161,8 @@ export async function createPreference(
     requestOptions: { idempotencyKey: `pref-${input.orderId}` },
   });
 
-  if (!response.id || !response.init_point) {
-    throw new Error("Mercado Pago no devolvió el link de pago");
+  if (!response.id || !response.init_point || !isMercadoPagoUrl(response.init_point)) {
+    throw new Error("Mercado Pago no devolvió un link de pago válido");
   }
 
   return { id: response.id, initPoint: response.init_point };
