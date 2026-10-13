@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import logo from "../../../../public/images/hyena-fuel-logo.png";
 import styles from "./Footer.module.css";
+import { buildStoreWhatsAppLink } from "../../../lib/whatsapp";
 
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
@@ -93,7 +94,7 @@ export default function Footer() {
             <a href="https://www.instagram.com/hyenafuel/" target="_blank" rel="noopener noreferrer">
               📸 @hyenafuel
             </a>
-            <a href="https://wa.me/5493519152450" target="_blank" rel="noopener noreferrer">
+            <a href={buildStoreWhatsAppLink()} target="_blank" rel="noopener noreferrer">
               💬 WhatsApp
             </a>
           </div>
@@ -123,7 +124,7 @@ export default function Footer() {
         <div>
           <span className={styles.colTitle}>Contacto</span>
           <nav className={styles.links}>
-            <a href="https://wa.me/5493519152450" target="_blank" rel="noopener noreferrer">
+            <a href={buildStoreWhatsAppLink()} target="_blank" rel="noopener noreferrer">
               💬 WhatsApp
             </a>
             <a href="https://www.instagram.com/hyenafuel/" target="_blank" rel="noopener noreferrer">
