@@ -5,6 +5,7 @@ import { createAdminClient } from "../../../lib/supabase/admin";
 import { ADMIN_ORDER_COLUMNS, mapAdminOrder, type AdminOrderRow } from "../../../lib/admin/orders";
 import { resolveDiscountCode } from "../../../lib/discountCodes";
 import { roundMoney } from "../../../lib/money";
+import { getClientIp, isRateLimited } from "../../../lib/rateLimit";
 import { revalidateStorefront } from "../../../lib/revalidate";
 import { getMercadoPagoClient } from "../../../lib/mercadopago/client";
 import { createPreference } from "../../../lib/mercadopago/preference";
@@ -141,7 +142,15 @@ type CardPayment = {
   initPoint: string;
 };
 
+/** Tope de pedidos por IP y minuto: un comprador legítimo no necesita más y cada pedido con tarjeta crea una preferencia en MP. */
+const CREATE_ORDER_RATE_LIMIT = 10;
+const CREATE_ORDER_RATE_WINDOW_MS = 60_000;
+
 export async function POST(request: NextRequest) {
+  if (isRateLimited(`create-order:${getClientIp(request)}`, CREATE_ORDER_RATE_LIMIT, CREATE_ORDER_RATE_WINDOW_MS)) {
+    return NextResponse.json({ error: "Demasiados pedidos seguidos, probá de nuevo en un minuto" }, { status: 429 });
+  }
+
   const parsed = await parseCreateOrderBody(request);
   if (!parsed.ok) return parsed.response;
 
