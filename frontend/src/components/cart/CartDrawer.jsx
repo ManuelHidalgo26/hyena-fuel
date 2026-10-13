@@ -12,6 +12,27 @@ import { TRANSFER_ALIAS } from "../../lib/payment";
 const COUPON_UNAVAILABLE_AT_CHECKOUT_MESSAGE =
   "El código ya no está disponible — podés finalizar tu compra sin él";
 
+/** El link de pago solo se sigue si apunta a Mercado Pago (defensa contra open redirect). */
+const MERCADOPAGO_URL_PREFIX = "https://www.mercadopago.com";
+/** Clave de sessionStorage con los datos del pedido para registrar la compra al volver de Mercado Pago. */
+const MERCADOPAGO_PENDING_KEY = "hf_mp_pending";
+
+/**
+ * Lleva al comprador a pagar a Mercado Pago. Devuelve `true` si inició la redirección.
+ * Guarda lo necesario para el evento `purchase` de la vuelta (`/compra/resultado`).
+ */
+function redirectToMercadoPago(order, items) {
+  const initPoint = order.payment?.initPoint;
+  if (typeof initPoint !== "string" || !initPoint.startsWith(MERCADOPAGO_URL_PREFIX)) return false;
+
+  sessionStorage.setItem(
+    MERCADOPAGO_PENDING_KEY,
+    JSON.stringify({ orderId: order._id, value: order.totalFinal, items })
+  );
+  window.location.assign(initPoint);
+  return true;
+}
+
 /**
  * Previsualiza un código de descuento contra el carrito actual (ADR 0010 §5.1).
  * Siempre resuelve a `{valid, ...}` o `{valid:false, reason}` — nunca rechaza
@@ -299,6 +320,7 @@ export default function CartDrawer() {
 
   const handleCheckout = async () => {
     if (processingRef.current) return;
+    let isRedirecting = false;
 
     if (!name || !phone || (deliveryMethod === "envio" && !address)) {
       alert("Completá todos tus datos antes de continuar.");
@@ -334,6 +356,14 @@ export default function CartDrawer() {
         sellerCode,
         sellerCodeSource: sellerCodeFromLink ? "link" : "manual",
       });
+
+      // Con tarjeta el pedido todavía no está pago: se redirige a Mercado Pago sin vaciar el
+      // carrito ni registrar la compra (eso pasa en la vuelta, con el pago verificado).
+      isRedirecting = redirectToMercadoPago(
+        order,
+        cartItems.map((i) => ({ item_id: i._id, item_name: i.name, price: i.price, quantity: i.quantity }))
+      );
+      if (isRedirecting) return;
 
       // GA4 purchase
       trackEvent(GA_EVENTS.PURCHASE, {
@@ -386,8 +416,11 @@ export default function CartDrawer() {
         alert("Error al crear el pedido. Intentá de nuevo.");
       }
     } finally {
-      processingRef.current = false;
-      setIsLoading(false);
+      // Mientras navega a Mercado Pago el botón sigue bloqueado (evita un doble click).
+      if (!isRedirecting) {
+        processingRef.current = false;
+        setIsLoading(false);
+      }
     }
   };
 
