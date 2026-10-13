@@ -5,7 +5,7 @@ import { createAdminClient } from "../../../../../lib/supabase/admin";
 import { isUuid } from "../../../../../lib/uuid";
 
 /** Estados que exigen que un pedido con pago online ya esté cobrado (ADR 0012). */
-const STATUSES_REQUIRING_APPROVED_PAYMENT: readonly string[] = ["confirmed", "dispatched"];
+const STATUSES_REQUIRING_APPROVED_PAYMENT: readonly string[] = ["confirmed", "dispatched", "paid"];
 
 /** Enum de `orders.status` (ADR 0002). */
 const ORDER_STATUSES = ["pending", "confirmed", "dispatched", "paid", "cancelled"] as const;
