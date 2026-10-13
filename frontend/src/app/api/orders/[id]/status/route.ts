@@ -4,6 +4,9 @@ import { requireAdmin } from "../../../../../lib/auth/guards";
 import { createAdminClient } from "../../../../../lib/supabase/admin";
 import { isUuid } from "../../../../../lib/uuid";
 
+/** Estados que exigen que un pedido con pago online ya esté cobrado (ADR 0012). */
+const STATUSES_REQUIRING_APPROVED_PAYMENT: readonly string[] = ["confirmed", "dispatched"];
+
 /** Enum de `orders.status` (ADR 0002). */
 const ORDER_STATUSES = ["pending", "confirmed", "dispatched", "paid", "cancelled"] as const;
 
@@ -44,13 +47,15 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 
   const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("orders")
-    .update({ status: parsed.data.status })
-    .eq("id", id)
-    .select("id, status")
-    .maybeSingle()
-    .returns<OrderStatusRow | null>();
+  const requiresApprovedPayment = STATUSES_REQUIRING_APPROVED_PAYMENT.includes(parsed.data.status);
+
+  // Cualquier cambio manual de estado limpia la marca "Para revisar" (ADR 0012 D14). Para
+  // confirmar/despachar, el filtro hace atómico el chequeo del pago: un pedido con tarjeta sin
+  // pago aprobado no matchea (y se distingue de "no existe" más abajo).
+  let update = supabase.from("orders").update({ status: parsed.data.status, needs_review: false }).eq("id", id);
+  if (requiresApprovedPayment) update = update.or("payment_status.is.null,paid_at.not.is.null");
+
+  const { data, error } = await update.select("id, status").maybeSingle().returns<OrderStatusRow | null>();
 
   if (error) {
     console.error("[PATCH /api/orders/[id]/status]", error);
@@ -58,8 +63,15 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 
   if (!data) {
-    return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
+    return requiresApprovedPayment && (await orderExists(supabase, id))
+      ? NextResponse.json({ error: "El pago con tarjeta de este pedido todavía no está aprobado" }, { status: 409 })
+      : NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
   }
 
   return NextResponse.json({ _id: data.id, status: data.status });
+}
+
+async function orderExists(supabase: ReturnType<typeof createAdminClient>, id: string): Promise<boolean> {
+  const { data } = await supabase.from("orders").select("id").eq("id", id).maybeSingle();
+  return data !== null;
 }

@@ -6,6 +6,9 @@ import { ADMIN_ORDER_COLUMNS, mapAdminOrder, type AdminOrderRow } from "../../..
 import { resolveDiscountCode } from "../../../lib/discountCodes";
 import { roundMoney } from "../../../lib/money";
 import { revalidateStorefront } from "../../../lib/revalidate";
+import { getMercadoPagoClient } from "../../../lib/mercadopago/client";
+import { createPreference } from "../../../lib/mercadopago/preference";
+import { getSiteUrls } from "../../../lib/siteUrl";
 import {
   calculateOrderTotals,
   freezeOrderItems,
@@ -19,7 +22,9 @@ import {
   type OrderProductInput,
   type OrderSellerInput,
   type PaymentMethod,
+  type PaymentStatus,
 } from "../../../lib/orders";
+import type { MercadoPagoConfig } from "mercadopago";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -126,7 +131,14 @@ type OrderRow = {
   commission_total: number | string;
   discount_code: string | null;
   discount_code_amount: number | string;
+  payment_status: PaymentStatus | null;
   created_at: string;
+};
+
+/** Link de pago de Mercado Pago que el front usa para redirigir al comprador. */
+type CardPayment = {
+  provider: "mercadopago";
+  initPoint: string;
 };
 
 export async function POST(request: NextRequest) {
@@ -164,6 +176,13 @@ export async function GET() {
 async function createOrder(input: CreateOrderInput): Promise<NextResponse> {
   const supabase = createAdminClient();
   const { items, sellerCode, sellerCodeSource, paymentMethod, deliveryMethod, discountCode, ...customer } = input;
+
+  // Sin credenciales de Mercado Pago no se crea ningún pedido: el cliente puede elegir transferencia.
+  const mercadoPago = paymentMethod === "mercadopago" ? getMercadoPagoClient() : null;
+  if (paymentMethod === "mercadopago" && !mercadoPago) {
+    return NextResponse.json({ error: "El pago con tarjeta no está disponible en este momento" }, { status: 503 });
+  }
+
   const mergedItems = mergeLineItemsByProduct(items);
 
   const productsById = await fetchProducts(supabase, mergedItems);
@@ -201,21 +220,84 @@ async function createOrder(input: CreateOrderInput): Promise<NextResponse> {
   );
   if (!persisted.ok) return persisted.response;
 
-  // El pedido ya está persistido (stock descontado): la vitrina queda
-  // consistente con la última venta en vez de esperar hasta 5 min (ADR 0009
-  // D5). El helper nunca tira errores, así que no puede convertir este 201
-  // en un 500 que invite a reintentar y duplicar el pedido.
-  revalidateStorefront("order");
+  let payment: CardPayment | null = null;
+  if (mercadoPago) {
+    const started = await startCardPayment(supabase, mercadoPago, persisted.order, frozenItems, totals);
+    if (!started.ok) return started.response;
+    payment = started.payment;
+  } else {
+    // El pedido ya está persistido (stock descontado): la vitrina queda
+    // consistente con la última venta en vez de esperar hasta 5 min (ADR 0009
+    // D5). El helper nunca tira errores, así que no puede convertir este 201
+    // en un 500 que invite a reintentar y duplicar el pedido. Con tarjeta el
+    // stock se descuenta recién al aprobarse el pago (webhook).
+    revalidateStorefront("order");
+  }
 
   return NextResponse.json(
     {
-      ...mapOrderResponse(persisted.order, frozenItems),
+      ...mapOrderResponse(persisted.order, frozenItems, payment),
       // El código de vendedor nunca bloquea la compra: si no existe o está inactivo, el
       // pedido sale sin vendedor y el front avisa (no es un error para el cliente).
       sellerCodeIgnored: Boolean(sellerCode) && !seller,
     },
     { status: 201 }
   );
+}
+
+type CardPaymentResult =
+  | { ok: true; payment: CardPayment }
+  | { ok: false; response: NextResponse };
+
+/**
+ * Crea la preferencia de Checkout Pro para un pedido con tarjeta ya persistido (sin stock ni
+ * cupón descontados). Si Mercado Pago falla, el pedido se cancela en el acto: no hay nada que
+ * devolver y el comprador puede elegir transferencia (502).
+ */
+async function startCardPayment(
+  supabase: AdminClient,
+  mercadoPago: MercadoPagoConfig,
+  order: OrderRow,
+  items: FrozenOrderItem[],
+  totals: ReturnType<typeof calculateOrderTotals>
+): Promise<CardPaymentResult> {
+  try {
+    const preference = await createPreference(mercadoPago, {
+      orderId: order.id,
+      customerName: order.customer_name,
+      customerEmail: order.customer_email ?? undefined,
+      items,
+      shippingCost: totals.shippingCost,
+      couponDiscount: totals.couponDiscount,
+      totalFinal: totals.totalFinal,
+      urls: getSiteUrls(),
+    });
+
+    await savePreferenceId(supabase, order.id, preference.id);
+    return { ok: true, payment: { provider: "mercadopago", initPoint: preference.initPoint } };
+  } catch (error) {
+    console.error("[POST /api/orders] preferencia de Mercado Pago", error);
+    await cancelUnpaidOrder(supabase, order.id);
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "No pudimos iniciar el pago con tarjeta" }, { status: 502 }),
+    };
+  }
+}
+
+/** El id de la preferencia es informativo (soporte): si no se puede guardar, se loguea y se sigue. */
+async function savePreferenceId(supabase: AdminClient, orderId: string, preferenceId: string): Promise<void> {
+  const { error } = await supabase.from("orders").update({ mp_preference_id: preferenceId }).eq("id", orderId);
+  if (error) console.error("[POST /api/orders] no se pudo guardar mp_preference_id", error);
+}
+
+async function cancelUnpaidOrder(supabase: AdminClient, orderId: string): Promise<void> {
+  const { error } = await supabase
+    .from("orders")
+    .update({ status: "cancelled", payment_status: "cancelled" })
+    .eq("id", orderId)
+    .is("paid_at", null);
+  if (error) console.error("[POST /api/orders] no se pudo cancelar el pedido sin pago", error);
 }
 
 type CouponResolutionResult =
@@ -502,6 +584,7 @@ async function persistOrder(
       p_discount_code: totals.discountCode,
       p_discount_code_amount: totals.couponDiscount,
       p_note: customer.note || null,
+      p_defer_payment: paymentMethod === "mercadopago",
     })
     .single()
     .returns<OrderRow>();
@@ -530,8 +613,8 @@ async function persistOrder(
   return { ok: true, order: data };
 }
 
-/** Shape de respuesta compatible con lo que hoy consume el front (`order._id`, totales numéricos). */
-function mapOrderResponse(order: OrderRow, items: FrozenOrderItem[]) {
+/** Shape de respuesta compatible con lo que hoy consume el front (`order._id`, totales numéricos). `payment` es `null` salvo con tarjeta. */
+function mapOrderResponse(order: OrderRow, items: FrozenOrderItem[], payment: CardPayment | null) {
   return {
     _id: order.id,
     customerName: order.customer_name,
@@ -541,6 +624,8 @@ function mapOrderResponse(order: OrderRow, items: FrozenOrderItem[]) {
     paymentMethod: order.payment_method,
     deliveryMethod: order.delivery_method,
     status: order.status,
+    paymentStatus: order.payment_status,
+    payment,
     subtotal: Number(order.subtotal),
     discount: Number(order.discount),
     shippingCost: Number(order.shipping_cost),
