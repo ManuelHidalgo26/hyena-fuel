@@ -3,6 +3,7 @@ import { requireSeller } from "../../../../lib/auth/guards";
 import { roundMoney } from "../../../../lib/money";
 import {
   SELLER_COLUMNS,
+  SELLER_ORDER_COLUMNS,
   buildReferralLink,
   mapSeller,
   summarizeSellerOrders,
@@ -63,7 +64,7 @@ export async function GET() {
   const [ordersResult, settlementsResult] = await Promise.all([
     supabase
       .from("orders")
-      .select("status, total_final, commission_total")
+      .select(SELLER_ORDER_COLUMNS)
       .eq("seller_id", sellerId)
       .returns<SellerOrderRow[]>(),
     supabase

@@ -260,3 +260,94 @@ function computeCouponDiscount(coupon: OrderCouponInput, payableSubtotal: number
 
   return Math.min(Math.max(rawDiscount, 0), payableSubtotal);
 }
+
+// ---------------------------------------------------------------------------
+// Pago con tarjeta (Mercado Pago, ADR 0012). Helpers puros; el pricing de arriba no cambia.
+// ---------------------------------------------------------------------------
+
+/** Enum de `orders.payment_status` (migración 0014). `null` = sin pago online (transferencia o pedido histórico). */
+export const PAYMENT_STATUSES = [
+  "pending",
+  "in_process",
+  "in_mediation",
+  "approved",
+  "rejected",
+  "cancelled",
+  "refunded",
+  "charged_back",
+] as const;
+
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
+/** Motivos por los que un pedido queda "Para revisar" (`orders.review_reason`, migración 0014). */
+export type ReviewReason =
+  | "sin_stock"
+  | "monto_distinto"
+  | "pago_duplicado"
+  | "pago_en_pedido_cancelado"
+  | "pago_refunded"
+  | "pago_charged_back"
+  | "pago_in_mediation"
+  | "pago_cancelled";
+
+/** Horas sin pago aprobado después de las cuales un pedido con tarjeta se considera abandonado (ADR 0012 D11). */
+export const ABANDONED_ORDER_HOURS = 24;
+
+/** `payment_status` de un pedido con tarjeta que todavía no cobró y que el comprador puede abandonar. */
+export const ABANDONABLE_PAYMENT_STATUSES: readonly PaymentStatus[] = ["pending", "rejected", "cancelled"];
+
+/** Estados de `orders.status` que "Limpiar finalizados" borra siempre (salvo que requieran revisión). */
+export const COMPLETED_ORDER_STATUSES = ["dispatched", "paid", "cancelled"] as const;
+
+type OrderPaymentFacts = {
+  status: string;
+  paymentStatus: string | null;
+  paidAt: string | null;
+};
+
+/**
+ * "Es venta": no cancelado y, si tiene pago online, ya cobrado. Un pedido con tarjeta sin
+ * pagar existe en la tabla pero no cuenta en el dashboard ni en el portal del vendedor.
+ */
+export function isSaleOrder(order: OrderPaymentFacts): boolean {
+  if (order.status === CANCELLED_ORDER_STATUS) return false;
+  return order.paymentStatus === null || order.paidAt !== null;
+}
+
+/** El pedido tiene pago online (tarjeta) que todavía no fue aprobado: no se puede confirmar ni despachar. */
+export function hasUnapprovedOnlinePayment(order: Pick<OrderPaymentFacts, "paymentStatus" | "paidAt">): boolean {
+  return order.paymentStatus !== null && order.paidAt === null;
+}
+
+type AbandonableOrder = OrderPaymentFacts & {
+  paymentMethod: string;
+  createdAt: string;
+};
+
+/**
+ * Pedido con tarjeta sin pago aprobado y con más de 24 h: "Pago no completado". `in_process`
+ * e `in_mediation` nunca se consideran abandonados (el pago puede estar por acreditarse).
+ */
+export function isAbandonedCardOrder(order: AbandonableOrder, now: Date = new Date()): boolean {
+  if (order.paymentMethod !== "mercadopago" || order.paidAt !== null || order.status !== "pending") {
+    return false;
+  }
+  if (!order.paymentStatus || !ABANDONABLE_PAYMENT_STATUSES.includes(order.paymentStatus as PaymentStatus)) {
+    return false;
+  }
+
+  const ageMs = now.getTime() - new Date(order.createdAt).getTime();
+  return ageMs > ABANDONED_ORDER_HOURS * 60 * 60 * 1000;
+}
+
+/** Mismo criterio que `DELETE /api/orders/completed`: finalizado o abandonado, y nunca uno que requiere revisión. */
+export function isClearableOrder(order: AbandonableOrder & { needsReview: boolean }, now: Date = new Date()): boolean {
+  if (order.needsReview) return false;
+  const isCompleted = (COMPLETED_ORDER_STATUSES as readonly string[]).includes(order.status);
+  return isCompleted || isAbandonedCardOrder(order, now);
+}
+
+/** Identificador corto y legible del pedido (primeros 6 caracteres del UUID, en mayúsculas). */
+export function shortOrderId(orderId: string): string {
+  return orderId.slice(0, 6).toUpperCase();
+}

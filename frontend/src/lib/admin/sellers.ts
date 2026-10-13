@@ -2,6 +2,7 @@ import "server-only";
 import type { createAdminClient } from "../supabase/admin";
 import {
   SELLER_COLUMNS,
+  SELLER_ORDER_COLUMNS,
   mapSeller,
   summarizeSellerOrders,
   type Seller,
@@ -44,7 +45,7 @@ export async function listSellersForAdmin(supabase: AdminClient): Promise<AdminS
       .returns<SellerRow[]>(),
     supabase
       .from("orders")
-      .select("seller_id, status, total_final, commission_total")
+      .select(`seller_id, ${SELLER_ORDER_COLUMNS}`)
       .not("seller_id", "is", null)
       .returns<SellerOrderWithSellerRow[]>(),
   ]);
