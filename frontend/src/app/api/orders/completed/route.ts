@@ -8,6 +8,8 @@ import {
 } from "../../../../lib/orders";
 
 const HOUR_MS = 60 * 60 * 1000;
+/** Finalizados que se borran siempre; un cancelado solo si nunca se cobró (ver `isClearableOrder`). */
+const FINISHED_STATUSES = COMPLETED_ORDER_STATUSES.filter((status) => status !== "cancelled");
 
 /**
  * Filtro PostgREST equivalente a `isClearableOrder` (lib/orders.ts): pedidos finalizados
@@ -23,12 +25,12 @@ function buildClearableFilter(now: Date): string {
     `created_at.lt.${abandonedBefore}`,
   ].join(",");
 
-  return `status.in.(${COMPLETED_ORDER_STATUSES.join(",")}),and(${abandoned})`;
+  return `status.in.(${FINISHED_STATUSES.join(",")}),and(status.eq.cancelled,paid_at.is.null),and(${abandoned})`;
 }
 
 /**
  * Borra en bloque las órdenes finalizadas y las de tarjeta abandonadas. Nunca borra un pedido
- * que requiere revisión (`needs_review`). `order_items` cae en cascada (FK `on delete cascade`).
+ * que requiere revisión (`needs_review`) ni uno cancelado que ya se cobró. `order_items` cae en cascada (FK `on delete cascade`).
  */
 export async function DELETE() {
   const guard = await requireAdmin();

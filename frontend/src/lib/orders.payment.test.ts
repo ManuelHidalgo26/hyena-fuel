@@ -67,6 +67,10 @@ describe("isClearableOrder", () => {
     expect(isClearableOrder({ ...cardOrder, status: "cancelled", needsReview: true }, NOW)).toBe(false);
   });
 
+  it("no limpia un cancelado que ya se cobró", () => {
+    expect(isClearableOrder({ ...cardOrder, status: "cancelled", paymentStatus: "approved", paidAt: hoursAgo(30) }, NOW)).toBe(false);
+  });
+
   it("no limpia un pedido pendiente reciente", () => {
     expect(isClearableOrder({ ...cardOrder, createdAt: hoursAgo(1) }, NOW)).toBe(false);
   });

@@ -1,5 +1,7 @@
 import type { HTMLAttributes, ReactNode } from "react";
 import styles from "./admin.module.css";
+import { PAYMENT_STATUS_LABEL, PAYMENT_STATUS_TONE } from "../../lib/admin/paymentLabels";
+import type { PaymentStatus } from "../../lib/orders";
 
 export type AdminBadgeTone = "neutral" | "info" | "accent" | "success" | "warning" | "danger";
 export type AdminBadgeVariant = "solid" | "outline";
@@ -61,7 +63,7 @@ export type PaymentMethod = "transferencia" | "mercadopago";
 
 const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
   transferencia: "Transferencia",
-  mercadopago: "Tarjeta / efectivo",
+  mercadopago: "Tarjeta",
 };
 
 const PAYMENT_METHOD_TONE: Record<PaymentMethod, AdminBadgeTone> = {
@@ -76,6 +78,30 @@ export function PaymentMethodBadge({ method }: { method: PaymentMethod }) {
       {PAYMENT_METHOD_LABEL[method]}
     </AdminBadge>
   );
+}
+
+/** Estado financiero del pago con tarjeta: dato principal de la celda de pago (solid). */
+export function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
+  const label = PAYMENT_STATUS_LABEL[status];
+  return (
+    <AdminBadge tone={PAYMENT_STATUS_TONE[status]} aria-label={`Pago: ${label}`}>
+      {label}
+    </AdminBadge>
+  );
+}
+
+/** Derivado (no se guarda): pedido con tarjeta sin pago aprobado y con más de 24 h. */
+export function PaymentIncompleteBadge() {
+  return (
+    <AdminBadge tone="neutral" aria-label="Pago: Pago no completado">
+      Pago no completado
+    </AdminBadge>
+  );
+}
+
+/** Marca de pedido que requiere acción del admin; el motivo va en `REVIEW_REASON_LABEL` bajo el badge. */
+export function ReviewBadge() {
+  return <AdminBadge tone="warning">Para revisar</AdminBadge>;
 }
 
 export type DeliveryMethod = "envio" | "retiro";

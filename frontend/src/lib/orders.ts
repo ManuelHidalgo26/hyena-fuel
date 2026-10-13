@@ -340,9 +340,13 @@ export function isAbandonedCardOrder(order: AbandonableOrder, now: Date = new Da
   return ageMs > ABANDONED_ORDER_HOURS * 60 * 60 * 1000;
 }
 
-/** Mismo criterio que `DELETE /api/orders/completed`: finalizado o abandonado, y nunca uno que requiere revisión. */
+/**
+ * Mismo criterio que `DELETE /api/orders/completed`: finalizado o abandonado. Nunca uno que
+ * requiere revisión ni uno cancelado que ya se cobró (el admin tiene que resolver ese cobro).
+ */
 export function isClearableOrder(order: AbandonableOrder & { needsReview: boolean }, now: Date = new Date()): boolean {
   if (order.needsReview) return false;
+  if (order.status === "cancelled" && order.paidAt !== null) return false;
   const isCompleted = (COMPLETED_ORDER_STATUSES as readonly string[]).includes(order.status);
   return isCompleted || isAbandonedCardOrder(order, now);
 }
