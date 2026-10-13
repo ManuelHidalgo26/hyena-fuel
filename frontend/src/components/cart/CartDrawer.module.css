@@ -238,6 +238,7 @@
 ========================= */
 .checkout {
   width: 100%;
+  min-height: 48px;
   padding: 0.9rem;
   background: #ff6a00;
   color: #000;
@@ -737,4 +738,65 @@
   color: #ddd;
   font-size: 0.85rem;
   line-height: 1.4;
+}
+
+/* =========================
+    Pago con tarjeta (Mercado Pago)
+========================= */
+.radioText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.radioHint {
+  font-size: 0.78rem;
+  color: #555;
+}
+
+.payBoxText {
+  color: #111;
+  font-size: 0.85rem;
+}
+
+.checkoutNote {
+  margin-top: 0.6rem;
+  text-align: center;
+}
+
+.checkoutError {
+  margin-top: 1rem;
+  padding: 0.8rem 1rem;
+  background: #fdecea;
+  border: 1.5px solid #b42318;
+  border-radius: 10px;
+  color: #7a1a10;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.checkoutError p {
+  margin: 0;
+}
+
+.checkoutErrorAction {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 0.9rem;
+  background: transparent;
+  border: 1px solid #b42318;
+  border-radius: 6px;
+  color: #7a1a10;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.checkoutErrorAction:focus-visible,
+.checkout:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 2px;
 }

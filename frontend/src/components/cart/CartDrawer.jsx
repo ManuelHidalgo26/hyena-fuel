@@ -7,6 +7,7 @@ import { useCart, toOrderItemsPayload } from "../../context/CartContext";
 import { trackEvent, GA_EVENTS } from "../../lib/ga";
 import { fbTrack } from "../../lib/fbpixel";
 import { TRANSFER_ALIAS } from "../../lib/payment";
+import { buildStoreWhatsAppLink } from "../../lib/whatsapp";
 
 /** Copy exacto de la carrera perdida al finalizar (spec §6.3) — NO confiar en `error.message` del 409 (ver §B.6). */
 const COUPON_UNAVAILABLE_AT_CHECKOUT_MESSAGE =
@@ -17,17 +18,34 @@ const MERCADOPAGO_URL_PREFIX = "https://www.mercadopago.com";
 /** Clave de sessionStorage con los datos del pedido para registrar la compra al volver de Mercado Pago. */
 const MERCADOPAGO_PENDING_KEY = "hf_mp_pending";
 
+/** Si el navegador no salió hacia Mercado Pago en este tiempo, se vuelve a habilitar el botón. */
+const REDIRECT_TIMEOUT_MS = 8000;
+
+const MP_UNAVAILABLE_MESSAGE =
+  "El pago con tarjeta no está disponible por ahora. Podés pagar por transferencia o efectivo con 10% OFF.";
+const MP_FAILED_MESSAGE =
+  "No pudimos abrir Mercado Pago en este momento. Probá de nuevo en unos minutos o elegí transferencia con 10% OFF.";
+const GENERIC_PAYMENT_ERROR_MESSAGE = "No pudimos iniciar el pago. Revisá tu conexión y probá de nuevo.";
+
+/** Error inline del pago con tarjeta según el status que devolvió `POST /api/orders`. */
+function toCardCheckoutError(status) {
+  if (status === 503) return { kind: "mp-unavailable", message: MP_UNAVAILABLE_MESSAGE };
+  if (status === 502) return { kind: "mp-failed", message: MP_FAILED_MESSAGE };
+  return { kind: "generic", message: GENERIC_PAYMENT_ERROR_MESSAGE };
+}
+
 /**
  * Lleva al comprador a pagar a Mercado Pago. Devuelve `true` si inició la redirección.
- * Guarda lo necesario para el evento `purchase` de la vuelta (`/compra/resultado`).
+ * Guarda lo necesario para el evento `purchase` y el aviso del código de vendedor de la
+ * vuelta (`/compra/resultado`).
  */
-function redirectToMercadoPago(order, items) {
+function redirectToMercadoPago(order, pending) {
   const initPoint = order.payment?.initPoint;
   if (typeof initPoint !== "string" || !initPoint.startsWith(MERCADOPAGO_URL_PREFIX)) return false;
 
   sessionStorage.setItem(
     MERCADOPAGO_PENDING_KEY,
-    JSON.stringify({ orderId: order._id, value: order.totalFinal, items })
+    JSON.stringify({ orderId: order._id, value: order.totalFinal, ...pending })
   );
   window.location.assign(initPoint);
   return true;
@@ -110,7 +128,13 @@ export default function CartDrawer() {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderTotal, setOrderTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  // `true` desde que hay link de pago hasta que el navegador sale hacia Mercado Pago.
+  const [redirecting, setRedirecting] = useState(false);
+  // Error inline del pago con tarjeta: { kind: "mp-unavailable" | "mp-failed" | "generic", message }.
+  const [checkoutError, setCheckoutError] = useState(null);
   const processingRef = useRef(false);
+  const redirectTimeoutRef = useRef(null);
+  const checkoutButtonRef = useRef(null);
 
   const [paymentMethod, setPaymentMethod] = useState("transferencia");
   const [deliveryMethod, setDeliveryMethod] = useState("envio");
@@ -213,6 +237,34 @@ export default function CartDrawer() {
     };
   }, []);
 
+  // Volver con "atrás" desde Mercado Pago restaura la página (bfcache) con el botón bloqueado.
+  useEffect(() => {
+    const handlePageShow = (event) => {
+      if (!event.persisted) return;
+      clearTimeout(redirectTimeoutRef.current);
+      processingRef.current = false;
+      setIsLoading(false);
+      setRedirecting(false);
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+      clearTimeout(redirectTimeoutRef.current);
+    };
+  }, []);
+
+  // Un error de pago deja de valer apenas cambia algo que lo podía causar.
+  useEffect(() => {
+    setCheckoutError(null);
+  }, [paymentMethod, cartItems]);
+
+  const handleSwitchToTransfer = () => {
+    setPaymentMethod("transferencia");
+    setCheckoutError(null);
+    requestAnimationFrame(() => checkoutButtonRef.current?.focus());
+  };
+
   const handleCopyAlias = async () => {
     try {
       if (!navigator.clipboard) return;
@@ -264,7 +316,7 @@ export default function CartDrawer() {
     requestAnimationFrame(() => couponInputRef.current?.focus());
   };
 
-  const WHATSAPP_MSG = encodeURIComponent(
+  const whatsappLink = buildStoreWhatsAppLink(
     "Hola! Acabo de hacer un pedido en Hyena Fuel, les mando el comprobante."
   );
 
@@ -274,19 +326,15 @@ export default function CartDrawer() {
         <div className={styles.successBox}>
           <h2>✅ Pedido registrado</h2>
           <p>
-            {paymentMethod === "mercadopago"
-              ? deliveryMethod === "retiro"
-                ? <>¡Pedido registrado! Retirá en <strong>Córdoba</strong> — coordinamos el lugar, el horario y el pago con tarjeta (débito o crédito) por WhatsApp o Instagram.</>
-                : "Recibimos tu pedido. Coordinamos el pago con tarjeta (débito o crédito) y la entrega por WhatsApp."
-              : deliveryMethod === "retiro"
-                ? <>Transferí <strong>${formatArs(orderTotal)}</strong> al alias <strong>{TRANSFER_ALIAS}</strong> (o coordinás el pago en efectivo) y enviános el comprobante. Retirá en <strong>Córdoba</strong>, coordinamos el lugar y el horario por WhatsApp.</>
-                : <>Transferí <strong>${formatArs(orderTotal)}</strong> al alias <strong>{TRANSFER_ALIAS}</strong> (o coordinás el pago en efectivo) y enviános el comprobante por WhatsApp o Instagram para confirmar tu pedido.</>
+            {deliveryMethod === "retiro"
+              ? <>Transferí <strong>${formatArs(orderTotal)}</strong> al alias <strong>{TRANSFER_ALIAS}</strong> (o coordinás el pago en efectivo) y enviános el comprobante. Retirá en <strong>Córdoba</strong>, coordinamos el lugar y el horario por WhatsApp.</>
+              : <>Transferí <strong>${formatArs(orderTotal)}</strong> al alias <strong>{TRANSFER_ALIAS}</strong> (o coordinás el pago en efectivo) y enviános el comprobante por WhatsApp o Instagram para confirmar tu pedido.</>
             }
           </p>
 
           <div className={styles.successActions}>
             <a
-              href={`https://wa.me/5493519152450?text=${WHATSAPP_MSG}`}
+              href={whatsappLink}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.whatsappBtn}
@@ -318,9 +366,22 @@ export default function CartDrawer() {
 
   if (!isCartOpen) return null;
 
+  const checkoutButtonLabel =
+    paymentMethod === "mercadopago"
+      ? redirecting
+        ? "Abriendo Mercado Pago…"
+        : isLoading
+          ? "Preparando tu pago…"
+          : "Pagar con tarjeta"
+      : isLoading
+        ? "Procesando..."
+        : "Finalizar compra";
+
   const handleCheckout = async () => {
     if (processingRef.current) return;
+    const isCardPayment = paymentMethod === "mercadopago";
     let isRedirecting = false;
+    setCheckoutError(null);
 
     if (!name || !phone || (deliveryMethod === "envio" && !address)) {
       alert("Completá todos tus datos antes de continuar.");
@@ -359,11 +420,26 @@ export default function CartDrawer() {
 
       // Con tarjeta el pedido todavía no está pago: se redirige a Mercado Pago sin vaciar el
       // carrito ni registrar la compra (eso pasa en la vuelta, con el pago verificado).
-      isRedirecting = redirectToMercadoPago(
-        order,
-        cartItems.map((i) => ({ item_id: i._id, item_name: i.name, price: i.price, quantity: i.quantity }))
-      );
-      if (isRedirecting) return;
+      if (isCardPayment) {
+        isRedirecting = redirectToMercadoPago(order, {
+          items: cartItems.map((i) => ({ item_id: i._id, item_name: i.name, price: i.price, quantity: i.quantity })),
+          sellerCodeIgnored: Boolean(order.sellerCodeIgnored),
+          sellerCode: order.sellerCodeIgnored ? sellerCode.trim().toUpperCase() : undefined,
+        });
+        if (!isRedirecting) {
+          setCheckoutError(toCardCheckoutError());
+          return;
+        }
+        if (order.sellerCodeIgnored && sellerCodeFromLink) discardReferral();
+        setRedirecting(true);
+        redirectTimeoutRef.current = setTimeout(() => {
+          processingRef.current = false;
+          setIsLoading(false);
+          setRedirecting(false);
+          setCheckoutError(toCardCheckoutError());
+        }, REDIRECT_TIMEOUT_MS);
+        return;
+      }
 
       // GA4 purchase
       trackEvent(GA_EVENTS.PURCHASE, {
@@ -407,6 +483,8 @@ export default function CartDrawer() {
         setCouponStatus("invalid");
         setCouponErrorMessage(COUPON_UNAVAILABLE_AT_CHECKOUT_MESSAGE);
         setCouponInput("");
+      } else if (isCardPayment && error.status !== 400) {
+        setCheckoutError(toCardCheckoutError(error.status));
       } else if (error.status === 400 && error.message) {
         // 400 = problema del carrito que el cliente puede corregir (falta elegir
         // sabor, stock insuficiente, producto sin stock): el server ya manda un
@@ -633,7 +711,10 @@ export default function CartDrawer() {
                 checked={paymentMethod === "mercadopago"}
                 onChange={() => setPaymentMethod("mercadopago")}
               />
-              💳 Débito / Crédito
+              <span className={styles.radioText}>
+                💳 Débito / Crédito
+                <span className={styles.radioHint}>Pagás en Mercado Pago. Cuotas según tu tarjeta.</span>
+              </span>
             </label>
 
             <label className={styles.radioLabel}>
@@ -645,6 +726,24 @@ export default function CartDrawer() {
               🏦 Transferencia / Efectivo&nbsp;
               <span className={styles.discountBadge}>10% OFF</span>
             </label>
+
+            {paymentMethod === "mercadopago" && (
+              <div className={styles.aliasBox}>
+                <p className={styles.aliasBoxLabel}>Pago con tarjeta</p>
+                <p className={`${styles.aliasHint} ${styles.payBoxText}`}>
+                  Al tocar &quot;Pagar con tarjeta&quot; te llevamos a Mercado Pago para pagar con débito,
+                  crédito o dinero en cuenta. Ahí ves las cuotas disponibles según tu tarjeta.
+                </p>
+                <p className={styles.aliasHint}>
+                  Precio de lista. Con transferencia o efectivo tenés 10% OFF.
+                </p>
+                <p className={styles.aliasHint}>
+                  {deliveryMethod === "retiro"
+                    ? "Retirás en Córdoba: coordinamos el lugar y el horario por WhatsApp."
+                    : "Coordinamos el envío por WhatsApp. Los envíos salen los miércoles."}
+                </p>
+              </div>
+            )}
 
             {paymentMethod === "transferencia" && (
               <div className={styles.aliasBox}>
@@ -784,6 +883,20 @@ export default function CartDrawer() {
               <strong>${formatArs(totalFinal)}</strong>
             </div>
 
+            {checkoutError && (
+              <div className={styles.checkoutError} role="alert">
+                <p>
+                  <span aria-hidden="true">⚠️ </span>
+                  {checkoutError.message}
+                </p>
+                {checkoutError.kind !== "generic" && (
+                  <button type="button" className={styles.checkoutErrorAction} onClick={handleSwitchToTransfer}>
+                    Pagar por transferencia
+                  </button>
+                )}
+              </div>
+            )}
+
             <div className={styles.actions}>
               <button
                 className={styles.clearCart}
@@ -796,13 +909,28 @@ export default function CartDrawer() {
               </button>
 
               <button
+                ref={checkoutButtonRef}
                 className={styles.checkout}
                 onClick={handleCheckout}
                 disabled={isLoading}
+                aria-busy={isLoading}
               >
-                {isLoading ? "Procesando..." : "Finalizar compra"}
+                {checkoutButtonLabel}
               </button>
+              <span className={styles.srOnly} role="status">
+                {paymentMethod === "mercadopago" && isLoading
+                  ? redirecting
+                    ? "Te llevamos a Mercado Pago"
+                    : "Preparando tu pago"
+                  : ""}
+              </span>
             </div>
+
+            {paymentMethod === "mercadopago" && (
+              <p className={`${styles.aliasHint} ${styles.checkoutNote}`}>
+                Vas a completar el pago en Mercado Pago. Al terminar, volvés a Hyena Fuel.
+              </p>
+            )}
 
             {/* TRUST BADGES */}
             <div className={styles.trustBadges}>
