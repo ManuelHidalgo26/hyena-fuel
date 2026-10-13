@@ -328,13 +328,15 @@ begin
       v_outcome := 'approved_amount_mismatch';
 
     else
-      -- C.1 Stock: todo o nada (el bloque con EXCEPTION es una subtransacción). Mismo orden
-      --     de locks que create_order (products/variants -> discount_codes).
+      -- C.1 Stock: todo o nada (el bloque con EXCEPTION es una subtransacción). Se bloquea en
+      --     orden estable (product_id, sabor) para que dos pagos concurrentes no se tomen los
+      --     locks cruzados; después products/variants -> discount_codes, como create_order.
       begin
         for v_item in
           select product_id, name, quantity, flavor
             from public.order_items
            where order_id = p_order_id
+           order by product_id, lower(flavor)
         loop
           if v_item.product_id is null then
             raise exception using errcode = 'HY001', message = 'Producto eliminado';
