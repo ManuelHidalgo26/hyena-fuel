@@ -1,7 +1,14 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-/** Ventana en la que aceptamos el `ts` de la firma (defensa en profundidad contra replays). */
-export const SIGNATURE_TOLERANCE_MS = 15 * 60 * 1000;
+/**
+ * Ventana en la que aceptamos el `ts` de la firma. Mercado Pago reintenta a los 15 min, 30 min,
+ * 6 h, 48 h y 96 h, posiblemente con el `ts` original, así que la ventana cubre ese plazo. Un
+ * replay es inofensivo: el handler re-consulta el pago a la API y la RPC es idempotente.
+ */
+export const SIGNATURE_TOLERANCE_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Una firma más vieja que esto es un reintento tardío: se acepta, pero se deja un log. */
+const STALE_SIGNATURE_LOG_MS = 15 * 60 * 1000;
 
 /** Un `ts` mayor a esto está en milisegundos; si no, en segundos. */
 const MILLISECONDS_TIMESTAMP_THRESHOLD = 1e12;
@@ -53,7 +60,13 @@ function isWithinTolerance(ts: string, nowMs: number): boolean {
 
   const value = Number(ts);
   const tsMs = value > MILLISECONDS_TIMESTAMP_THRESHOLD ? value : value * 1000;
-  return Math.abs(nowMs - tsMs) <= SIGNATURE_TOLERANCE_MS;
+  const ageMs = Math.abs(nowMs - tsMs);
+  if (ageMs > SIGNATURE_TOLERANCE_MS) return false;
+
+  if (ageMs > STALE_SIGNATURE_LOG_MS) {
+    console.warn("[webhook mercadopago] firma con ts viejo (reintento tardío)", { ageMinutes: Math.round(ageMs / 60000) });
+  }
+  return true;
 }
 
 /**

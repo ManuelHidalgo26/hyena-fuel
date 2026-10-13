@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { SIGNATURE_TOLERANCE_MS, verifyWebhookSignature } from "./signature";
 
 // Secreto inventado solo para los tests: no es ninguna credencial real.
@@ -72,6 +72,23 @@ describe("verifyWebhookSignature", () => {
       const recent = NOW_MS - SIGNATURE_TOLERANCE_MS + 60_000;
       expect(verifyWebhookSignature({ ...validInput, signatureHeader: signedAt(recent, "s") })).toBe(true);
       expect(verifyWebhookSignature({ ...validInput, signatureHeader: signedAt(recent, "ms") })).toBe(true);
+    });
+
+    it("acepta un reintento tardío de Mercado Pago (6 h) y deja un log", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      const sixHoursAgo = NOW_MS - 6 * 60 * 60 * 1000;
+
+      expect(verifyWebhookSignature({ ...validInput, signatureHeader: signedAt(sixHoursAgo, "s") })).toBe(true);
+      expect(warn).toHaveBeenCalledTimes(1);
+      warn.mockRestore();
+    });
+
+    it("no loguea con un ts reciente", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+      verifyWebhookSignature(validInput);
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
     });
 
     it("rechaza un ts viejo o del futuro, en segundos y en milisegundos", () => {
