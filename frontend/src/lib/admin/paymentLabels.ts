@@ -35,4 +35,5 @@ export const REVIEW_REASON_LABEL: Record<ReviewReason, string> = {
   pago_charged_back: "Contracargo registrado en Mercado Pago.",
   pago_in_mediation: "Pago en disputa en Mercado Pago.",
   pago_cancelled: "Pago cancelado en Mercado Pago.",
+  conflicto_stock: "Pago aprobado, pero el stock no se pudo descontar por un conflicto temporal. Descontalo a mano y coordiná con el cliente.",
 };

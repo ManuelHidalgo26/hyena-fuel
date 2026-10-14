@@ -28,6 +28,6 @@ describe("etiquetas de pago del panel", () => {
   });
 
   it("tiene un motivo legible para cada motivo de revisión", () => {
-    expect(Object.keys(REVIEW_REASON_LABEL)).toHaveLength(8);
+    expect(Object.keys(REVIEW_REASON_LABEL)).toHaveLength(9);
   });
 });

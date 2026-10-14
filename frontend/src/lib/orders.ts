@@ -288,7 +288,8 @@ export type ReviewReason =
   | "pago_refunded"
   | "pago_charged_back"
   | "pago_in_mediation"
-  | "pago_cancelled";
+  | "pago_cancelled"
+  | "conflicto_stock";
 
 /** Horas sin pago aprobado después de las cuales un pedido con tarjeta se considera abandonado (ADR 0012 D11). */
 export const ABANDONED_ORDER_HOURS = 24;

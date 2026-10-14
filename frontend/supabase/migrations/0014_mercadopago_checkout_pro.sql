@@ -30,7 +30,7 @@ alter table public.orders add column if not exists needs_review boolean not null
 alter table public.orders add column if not exists review_reason text
   check (review_reason in (
     'sin_stock','monto_distinto','pago_duplicado','pago_en_pedido_cancelado',
-    'pago_refunded','pago_charged_back','pago_in_mediation','pago_cancelled'
+    'pago_refunded','pago_charged_back','pago_in_mediation','pago_cancelled','conflicto_stock'
   ));
 
 create index if not exists orders_payment_ref_idx on public.orders(payment_ref);
@@ -127,7 +127,14 @@ begin
     case when p_defer_payment then null else now() end
   ) returning id into v_order_id;
 
-  for v_item in select * from jsonb_array_elements(p_items) loop
+  -- Los ítems se recorren en orden estable (product_id, sabor), el mismo con el que
+  -- `apply_mercadopago_payment` toma sus locks de stock: dos transacciones concurrentes que
+  -- toquen los mismos productos los bloquean en el mismo orden y no se produce deadlock.
+  for v_item in
+    select item
+      from jsonb_array_elements(p_items) as t(item)
+     order by (item ->> 'product_id')::uuid, lower(nullif(btrim(item ->> 'flavor'), ''))
+  loop
     v_product_id   := (v_item ->> 'product_id')::uuid;
     v_quantity     := (v_item ->> 'quantity')::integer;
     v_product_name := v_item ->> 'name';
@@ -218,7 +225,8 @@ grant execute on function public.create_order(
 --
 -- Outcomes: order_not_found, not_applicable, noop, stale, status_updated, reversed,
 -- duplicate_payment, approved, approved_without_stock, approved_amount_mismatch,
--- approved_on_cancelled. Estado de pago desconocido => SQLSTATE 22023.
+-- approved_on_cancelled, approved_stock_conflict (deadlock/serialización al descontar stock:
+-- queda en revisión con review_reason 'conflicto_stock'). Estado de pago desconocido => SQLSTATE 22023.
 create or replace function public.apply_mercadopago_payment(
   p_order_id          uuid,
   p_payment_id        text,
@@ -366,11 +374,20 @@ begin
                status = case when status = 'pending' then 'confirmed' else status end
          where id = p_order_id;
         v_outcome := 'approved';
-      exception when sqlstate 'HY001' then
-        update public.orders
-           set needs_review = true, review_reason = 'sin_stock'
-         where id = p_order_id;
-        v_outcome := 'approved_without_stock';
+      exception
+        when sqlstate 'HY001' then
+          update public.orders
+             set needs_review = true, review_reason = 'sin_stock'
+           where id = p_order_id;
+          v_outcome := 'approved_without_stock';
+        -- Deadlock (40P01) o fallo de serialización (40001) con otra transacción de stock: el
+        -- pago ya está acreditado y los descuentos de este bloque se revirtieron, así que el
+        -- pedido queda para revisión manual en vez de abortar toda la RPC sin dejar rastro.
+        when sqlstate '40P01' or sqlstate '40001' then
+          update public.orders
+             set needs_review = true, review_reason = 'conflicto_stock'
+           where id = p_order_id;
+          v_outcome := 'approved_stock_conflict';
       end;
 
       -- C.2 Cupón: registra el uso SIN guard (el precio ya se cobró), también si faltó stock.
