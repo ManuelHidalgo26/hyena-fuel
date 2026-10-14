@@ -5,6 +5,8 @@ type PreferenceBody = Parameters<Preference["create"]>[0]["body"];
 type PreferenceItem = NonNullable<PreferenceBody["items"]>[number];
 
 const CURRENCY = "ARS";
+/** Categoría genérica de ítem que pide el checklist de calidad de Mercado Pago. */
+const ITEM_CATEGORY_ID = "others";
 /** Aparece en el resumen de la tarjeta del comprador. */
 const STATEMENT_DESCRIPTOR = "HYENAFUEL";
 /** El checkout vence a las 2 h: pasado ese plazo Mercado Pago no deja pagar. */
@@ -51,6 +53,7 @@ function buildDetailedItems(input: PreferenceInput): PreferenceItem[] {
     quantity: item.quantity,
     unit_price: item.unitPrice,
     currency_id: CURRENCY,
+    category_id: ITEM_CATEGORY_ID,
   }));
 
   if (input.shippingCost > 0) {
@@ -60,6 +63,7 @@ function buildDetailedItems(input: PreferenceInput): PreferenceItem[] {
       quantity: 1,
       unit_price: input.shippingCost,
       currency_id: CURRENCY,
+      category_id: ITEM_CATEGORY_ID,
     });
   }
 
@@ -78,6 +82,7 @@ function buildSingleItem(input: PreferenceInput): PreferenceItem[] {
       quantity: 1,
       unit_price: input.totalFinal,
       currency_id: CURRENCY,
+      category_id: ITEM_CATEGORY_ID,
     },
   ];
 }
@@ -105,6 +110,13 @@ function buildItems(input: PreferenceInput): PreferenceItem[] {
   return buildSingleItem(input);
 }
 
+/** Parte el nombre completo en nombre y apellido (primer token / resto); sin apellido, solo el nombre. */
+function splitCustomerName(fullName: string): { name: string; surname?: string } {
+  const [name, ...rest] = fullName.trim().split(/\s+/);
+  const surname = rest.join(" ");
+  return surname ? { name, surname } : { name };
+}
+
 /** Cuerpo de la preferencia de Checkout Pro. Puro: no toca la red ni el entorno. */
 export function buildPreferenceBody(input: PreferenceInput): PreferenceBody {
   const { baseUrl, webhookBypassQuery } = input.urls;
@@ -116,7 +128,7 @@ export function buildPreferenceBody(input: PreferenceInput): PreferenceBody {
   return {
     items: buildItems(input),
     payer: {
-      name: input.customerName,
+      ...splitCustomerName(input.customerName),
       ...(input.customerEmail ? { email: input.customerEmail } : {}),
     },
     external_reference: input.orderId,

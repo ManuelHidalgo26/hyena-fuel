@@ -42,9 +42,9 @@ describe("buildPreferenceBody", () => {
     );
 
     expect(body.items).toEqual([
-      { id: PRODUCT_ID, title: "Whey Protein 2 lbs", quantity: 2, unit_price: 50000, currency_id: "ARS" },
-      { id: PRODUCT_ID, title: "Creatina — Limón", quantity: 1, unit_price: 20000, currency_id: "ARS" },
-      { id: "envio", title: "Envío a domicilio", quantity: 1, unit_price: 5000, currency_id: "ARS" },
+      { id: PRODUCT_ID, title: "Whey Protein 2 lbs", quantity: 2, unit_price: 50000, currency_id: "ARS", category_id: "others" },
+      { id: PRODUCT_ID, title: "Creatina — Limón", quantity: 1, unit_price: 20000, currency_id: "ARS", category_id: "others" },
+      { id: "envio", title: "Envío a domicilio", quantity: 1, unit_price: 5000, currency_id: "ARS", category_id: "others" },
     ]);
     expect(sumItemsInCents(body)).toBe(125000 * 100);
   });
@@ -67,6 +67,7 @@ describe("buildPreferenceBody", () => {
         quantity: 1,
         unit_price: 95000,
         currency_id: "ARS",
+        category_id: "others",
       },
     ]);
   });
@@ -123,8 +124,13 @@ describe("buildPreferenceBody", () => {
   });
 
   it("manda el email del pagador solo si existe", () => {
-    expect(buildPreferenceBody(baseInput()).payer).toEqual({ name: "Juan Pérez", email: "juan@example.com" });
-    expect(buildPreferenceBody(baseInput({ customerEmail: undefined })).payer).toEqual({ name: "Juan Pérez" });
+    expect(buildPreferenceBody(baseInput()).payer).toEqual({ name: "Juan", surname: "Pérez", email: "juan@example.com" });
+    expect(buildPreferenceBody(baseInput({ customerEmail: undefined })).payer).toEqual({ name: "Juan", surname: "Pérez" });
+    expect(buildPreferenceBody(baseInput({ customerName: "Ana María de la Cruz", customerEmail: undefined })).payer).toEqual({
+      name: "Ana",
+      surname: "María de la Cruz",
+    });
+    expect(buildPreferenceBody(baseInput({ customerName: "Madonna", customerEmail: undefined })).payer).toEqual({ name: "Madonna" });
   });
 
   it("vence a las 2 h con fechas en horario de Argentina", () => {
