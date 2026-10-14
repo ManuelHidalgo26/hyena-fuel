@@ -6,7 +6,7 @@
  * Supabase: solo agregación en memoria.
  */
 import { roundMoney } from "../money";
-import { CANCELLED_ORDER_STATUS, PAYABLE_ORDER_STATUSES } from "../orders";
+import { isSaleOrder, PAYABLE_ORDER_STATUSES } from "../orders";
 import type { AdminOrder, OrderStatus } from "./orders";
 import type { AdminProduct } from "../products";
 
@@ -36,11 +36,6 @@ export type DashboardData = {
   salesByDay: Array<{ date: string; orders: number; revenue: number }>;
   topProducts: Array<{ name: string; units: number; revenue: number }>;
 };
-
-/** "Venta" = orden no cancelada (spec §3.2). */
-function isSale(order: AdminOrder): boolean {
-  return order.status !== CANCELLED_ORDER_STATUS;
-}
 
 /** Comisión solo pagable/acumulable desde `confirmed` (ADR 0002 #5, spec §3.2). */
 function isPayable(order: AdminOrder): boolean {
@@ -149,7 +144,7 @@ function computeTopProducts(salesOrders: AdminOrder[]): DashboardData["topProduc
  * para tests deterministas; en producción usa el momento del request SSR.
  */
 export function computeDashboardData(orders: AdminOrder[], products: AdminProduct[], now: Date = new Date()): DashboardData {
-  const salesOrders = orders.filter(isSale);
+  const salesOrders = orders.filter(isSaleOrder);
   const payableOrders = orders.filter(isPayable);
 
   return {

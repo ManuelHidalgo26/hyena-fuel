@@ -11,20 +11,23 @@ import {
   AdminEmptyState,
   OrderStatusBadge,
   PaymentMethodBadge,
+  PaymentStatusBadge,
+  PaymentIncompleteBadge,
+  ReviewBadge,
   DeliveryMethodBadge,
 } from "../../../../components/admin";
 import styles from "../../../../components/admin/admin.module.css";
 import type { AdminOrder, OrderStatus } from "../../../../lib/admin/orders";
 import { readErrorMessage } from "../../../../lib/admin/http";
+import { REVIEW_REASON_LABEL } from "../../../../lib/admin/paymentLabels";
+import { hasUnapprovedOnlinePayment, isAbandonedCardOrder, isClearableOrder } from "../../../../lib/orders";
 
 type PaymentFilter = "all" | "transferencia" | "mercadopago";
-
-const COMPLETED_STATUSES: OrderStatus[] = ["dispatched", "paid", "cancelled"];
 
 const PAYMENT_FILTER_OPTIONS: Array<{ value: PaymentFilter; label: string }> = [
   { value: "all", label: "Todos" },
   { value: "transferencia", label: "Transferencia" },
-  { value: "mercadopago", label: "Mercado Pago" },
+  { value: "mercadopago", label: "Tarjeta" },
 ];
 
 type StatusAction = { label: string; nextStatus: OrderStatus };
@@ -32,6 +35,8 @@ type StatusAction = { label: string; nextStatus: OrderStatus };
 /** Botones de transición disponibles según el estado actual (paridad con el admin viejo). */
 function getStatusActions(order: AdminOrder): StatusAction[] {
   const actions: StatusAction[] = [];
+  // Un pedido con tarjeta sin pago aprobado no se confirma ni se despacha (el server también lo frena con 409).
+  if (hasUnapprovedOnlinePayment(order)) return actions;
   if (order.status === "pending") {
     actions.push({ label: "Confirmar", nextStatus: "confirmed" });
   }
@@ -72,14 +77,17 @@ export default function PedidosClient({ initialOrders }: PedidosClientProps) {
   const [clearModalOpen, setClearModalOpen] = useState(false);
   const [clearLoading, setClearLoading] = useState(false);
 
+  // Instante fijo de la sesión de la pantalla: la lista se refresca con `router.refresh()`.
+  const [now] = useState(() => new Date());
+
   const filteredOrders = useMemo(() => {
     if (paymentFilter === "all") return initialOrders;
     return initialOrders.filter((order) => order.paymentMethod === paymentFilter);
   }, [initialOrders, paymentFilter]);
 
   const completedCount = useMemo(
-    () => initialOrders.filter((order) => COMPLETED_STATUSES.includes(order.status)).length,
-    [initialOrders]
+    () => initialOrders.filter((order) => isClearableOrder(order, now)).length,
+    [initialOrders, now]
   );
 
   async function updateStatus(orderId: string, status: OrderStatus) {
@@ -196,9 +204,17 @@ export default function PedidosClient({ initialOrders }: PedidosClientProps) {
               const isUpdating = updatingOrderId === order._id;
               const statusActions = getStatusActions(order);
               const showCancel = canCancel(order);
+              const isAbandoned = isAbandonedCardOrder(order, now);
+              const awaitingPayment = hasUnapprovedOnlinePayment(order);
+              const rowClass = [
+                order.status === "cancelled" || isAbandoned ? styles.rowInactive : "",
+                order.needsReview ? styles.rowNeedsReview : "",
+              ]
+                .filter(Boolean)
+                .join(" ");
 
               return (
-                <tr key={order._id} className={order.status === "cancelled" ? styles.rowInactive : undefined}>
+                <tr key={order._id} className={rowClass || undefined}>
                   <td className={styles.cellMuted}>{formatDate(order.createdAt)}</td>
                   <td>
                     <p className={styles.rowTitle}>{order.customerName}</p>
@@ -214,13 +230,30 @@ export default function PedidosClient({ initialOrders }: PedidosClientProps) {
                     ))}
                   </td>
                   <td>
-                    <PaymentMethodBadge method={order.paymentMethod} />
+                    <div className={styles.cellStack}>
+                      <PaymentMethodBadge method={order.paymentMethod} />
+                      {order.paymentStatus !== null &&
+                        (isAbandoned ? <PaymentIncompleteBadge /> : <PaymentStatusBadge status={order.paymentStatus} />)}
+                      {order.paymentRef && (
+                        <p className={`${styles.rowSubtitle} ${styles.paymentRef}`}>ID de pago: {order.paymentRef}</p>
+                      )}
+                    </div>
                   </td>
                   <td>
                     <DeliveryMethodBadge method={order.deliveryMethod} />
                   </td>
                   <td>
-                    <OrderStatusBadge status={order.status} />
+                    <div className={styles.cellStack}>
+                      <OrderStatusBadge status={order.status} />
+                      {order.needsReview && (
+                        <>
+                          <ReviewBadge />
+                          {order.reviewReason && (
+                            <p className={styles.rowSubtitle}>{REVIEW_REASON_LABEL[order.reviewReason]}</p>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </td>
                   <td className={styles.cellNumeric}>${order.totalFinal.toLocaleString("es-AR")}</td>
                   <td className={styles.cellActions}>
@@ -228,6 +261,9 @@ export default function PedidosClient({ initialOrders }: PedidosClientProps) {
                       <span className={styles.cellMuted}>—</span>
                     ) : (
                       <div className={styles.cellActionsInner}>
+                        {awaitingPayment && (
+                          <p className={styles.rowSubtitle}>Se habilita cuando se apruebe el pago</p>
+                        )}
                         {statusActions.map((action) => (
                           <AdminButton
                             key={action.nextStatus}
@@ -263,7 +299,11 @@ export default function PedidosClient({ initialOrders }: PedidosClientProps) {
         title="¿Cancelar este pedido?"
         description={
           cancelTarget
-            ? `El pedido de ${cancelTarget.customerName} pasa a estado cancelado. Esta acción no se puede deshacer.`
+            ? `El pedido de ${cancelTarget.customerName} pasa a estado cancelado. Esta acción no se puede deshacer.${
+                cancelTarget.paymentStatus === "approved"
+                  ? " El cobro no se modifica desde acá: si hace falta revertirlo, hacelo desde tu cuenta de Mercado Pago."
+                  : ""
+              }`
             : undefined
         }
         tone="danger"
@@ -276,7 +316,7 @@ export default function PedidosClient({ initialOrders }: PedidosClientProps) {
       <AdminModal
         open={clearModalOpen}
         title="¿Limpiar pedidos finalizados?"
-        description={`Se van a eliminar ${completedCount} pedido${completedCount === 1 ? "" : "s"} despachado(s), pagado(s) o cancelado(s). Esta acción no se puede deshacer.`}
+        description={`Se van a eliminar ${completedCount} pedido${completedCount === 1 ? "" : "s"} despachado(s), pagado(s), cancelado(s) o con pago no completado. Esta acción no se puede deshacer.`}
         tone="danger"
         confirmLabel="Limpiar finalizados"
         confirmLoading={clearLoading}

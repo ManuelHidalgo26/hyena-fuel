@@ -1,4 +1,5 @@
 import styles from "./WhatsAppFloat.module.css";
+import { buildStoreWhatsAppLink } from "../../../lib/whatsapp";
 
 /**
  * Botón flotante de WhatsApp (spec Fase 2 §3.1/§11, tanda B1). Solo vive en
@@ -7,7 +8,7 @@ import styles from "./WhatsAppFloat.module.css";
 export default function WhatsAppFloat() {
   return (
     <a
-      href="https://wa.me/5493519152450"
+      href={buildStoreWhatsAppLink()}
       target="_blank"
       rel="noopener noreferrer"
       className={styles.fab}

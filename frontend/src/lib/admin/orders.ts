@@ -5,6 +5,8 @@
  * columnas/mapper en vez de duplicarlas (deuda D2-1).
  */
 
+import type { PaymentStatus, ReviewReason } from "../orders";
+
 /** Enum exacto de `orders.status`/`payment_method`/`delivery_method` (ADR 0002, `check` constraints en 0001_init.sql). */
 export type OrderStatus = "pending" | "confirmed" | "dispatched" | "paid" | "cancelled";
 export type OrderPaymentMethod = "transferencia" | "mercadopago";
@@ -40,6 +42,16 @@ export type AdminOrder = {
   discountCodeAmount: number;
   /** Nota libre del comprador (ADR 0006), lectura admin-only — `null` si no dejó nada. */
   note: string | null;
+  /** Estado del pago online (tarjeta). `null` = transferencia o pedido histórico sin pago online. */
+  paymentStatus: PaymentStatus | null;
+  paymentStatusDetail: string | null;
+  /** Id del pago de Mercado Pago (o referencia manual). */
+  paymentRef: string | null;
+  paidAt: string | null;
+  stockCommittedAt: string | null;
+  /** El pedido requiere una acción del admin; el motivo está en `reviewReason`. */
+  needsReview: boolean;
+  reviewReason: ReviewReason | null;
   createdAt: string;
   items: AdminOrderItem[];
 };
@@ -74,13 +86,20 @@ export type AdminOrderRow = {
   discount_code: string | null;
   discount_code_amount: number | string;
   note: string | null;
+  payment_status: string | null;
+  payment_status_detail: string | null;
+  payment_ref: string | null;
+  paid_at: string | null;
+  stock_committed_at: string | null;
+  needs_review: boolean;
+  review_reason: string | null;
   created_at: string;
   order_items: AdminOrderItemRow[];
 };
 
 /** Columnas de `orders` + `order_items` embebidos, fuente única para el panel admin y `GET /api/orders`. */
 export const ADMIN_ORDER_COLUMNS =
-  "id, customer_name, customer_email, customer_phone, customer_address, payment_method, delivery_method, status, subtotal, discount, shipping_cost, total_final, seller_id, attribution_source, commission_total, discount_code, discount_code_amount, note, created_at, order_items(id, product_id, name, quantity, unit_price, unit_cost, unit_commission, flavor)";
+  "id, customer_name, customer_email, customer_phone, customer_address, payment_method, delivery_method, status, subtotal, discount, shipping_cost, total_final, seller_id, attribution_source, commission_total, discount_code, discount_code_amount, note, payment_status, payment_status_detail, payment_ref, paid_at, stock_committed_at, needs_review, review_reason, created_at, order_items(id, product_id, name, quantity, unit_price, unit_cost, unit_commission, flavor)";
 
 /** Las columnas de texto vienen validadas por `check` constraints en Postgres (ver 0001_init.sql). */
 function toOrderStatus(value: string): OrderStatus {
@@ -89,6 +108,14 @@ function toOrderStatus(value: string): OrderStatus {
 
 function toPaymentMethod(value: string): OrderPaymentMethod {
   return value as OrderPaymentMethod;
+}
+
+function toPaymentStatus(value: string | null): PaymentStatus | null {
+  return value as PaymentStatus | null;
+}
+
+function toReviewReason(value: string | null): ReviewReason | null {
+  return value as ReviewReason | null;
 }
 
 function toDeliveryMethod(value: string): OrderDeliveryMethod {
@@ -115,6 +142,13 @@ export function mapAdminOrder(row: AdminOrderRow): AdminOrder {
     discountCode: row.discount_code,
     discountCodeAmount: Number(row.discount_code_amount),
     note: row.note,
+    paymentStatus: toPaymentStatus(row.payment_status),
+    paymentStatusDetail: row.payment_status_detail,
+    paymentRef: row.payment_ref,
+    paidAt: row.paid_at,
+    stockCommittedAt: row.stock_committed_at,
+    needsReview: row.needs_review,
+    reviewReason: toReviewReason(row.review_reason),
     createdAt: row.created_at,
     items: row.order_items.map((item) => ({
       productId: item.product_id,

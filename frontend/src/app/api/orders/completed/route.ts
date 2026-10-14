@@ -1,11 +1,37 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "../../../../lib/auth/guards";
 import { createAdminClient } from "../../../../lib/supabase/admin";
+import {
+  ABANDONABLE_PAYMENT_STATUSES,
+  ABANDONED_ORDER_HOURS,
+  COMPLETED_ORDER_STATUSES,
+} from "../../../../lib/orders";
 
-/** Estados considerados "finalizados": ya no requieren seguimiento en el panel (ADR 0002 `orders.status`). */
-const COMPLETED_STATUSES = ["dispatched", "paid", "cancelled"] as const;
+const HOUR_MS = 60 * 60 * 1000;
+/** Finalizados que se borran siempre; un cancelado solo si nunca se cobró (ver `isClearableOrder`). */
+const FINISHED_STATUSES = COMPLETED_ORDER_STATUSES.filter((status) => status !== "cancelled");
 
-/** Borra en bloque las órdenes finalizadas. `order_items` cae en cascada (FK `on delete cascade`). */
+/**
+ * Filtro PostgREST equivalente a `isClearableOrder` (lib/orders.ts): pedidos finalizados
+ * (ADR 0002 `orders.status`) o con tarjeta abandonados (sin pago aprobado y con más de 24 h).
+ */
+function buildClearableFilter(now: Date): string {
+  const abandonedBefore = new Date(now.getTime() - ABANDONED_ORDER_HOURS * HOUR_MS).toISOString();
+  const abandoned = [
+    "payment_method.eq.mercadopago",
+    `payment_status.in.(${ABANDONABLE_PAYMENT_STATUSES.join(",")})`,
+    "paid_at.is.null",
+    "status.eq.pending",
+    `created_at.lt.${abandonedBefore}`,
+  ].join(",");
+
+  return `status.in.(${FINISHED_STATUSES.join(",")}),and(status.eq.cancelled,paid_at.is.null),and(${abandoned})`;
+}
+
+/**
+ * Borra en bloque las órdenes finalizadas y las de tarjeta abandonadas. Nunca borra un pedido
+ * que requiere revisión (`needs_review`) ni uno cancelado que ya se cobró. `order_items` cae en cascada (FK `on delete cascade`).
+ */
 export async function DELETE() {
   const guard = await requireAdmin();
   if (!guard.authorized) return guard.response;
@@ -14,7 +40,8 @@ export async function DELETE() {
   const { data, error } = await supabase
     .from("orders")
     .delete()
-    .in("status", COMPLETED_STATUSES)
+    .eq("needs_review", false)
+    .or(buildClearableFilter(new Date()))
     .select("id")
     .returns<{ id: string }[]>();
 

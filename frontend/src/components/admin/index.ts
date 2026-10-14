@@ -24,6 +24,9 @@ export {
   PaymentMethodBadge,
   DeliveryMethodBadge,
   DiscountCodeStatusBadge,
+  PaymentStatusBadge,
+  PaymentIncompleteBadge,
+  ReviewBadge,
 } from "./AdminBadge";
 export type {
   AdminBadgeProps,

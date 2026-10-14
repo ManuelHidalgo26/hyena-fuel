@@ -439,6 +439,22 @@
   background: var(--admin-surface-raised);
 }
 
+.rowNeedsReview td:first-child {
+  box-shadow: inset 3px 0 0 var(--admin-warning-border);
+}
+
+.cellStack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.paymentRef {
+  font-variant-numeric: tabular-nums;
+  user-select: all;
+}
+
 .rowInactive td {
   opacity: 0.5;
 }

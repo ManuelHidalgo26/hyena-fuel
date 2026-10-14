@@ -32,3 +32,12 @@ export function buildWhatsAppLink(message: string, phone?: string | null): strin
   const text = encodeURIComponent(message);
   return number ? `https://wa.me/${number}?text=${text}` : `https://wa.me/?text=${text}`;
 }
+
+/** Número de WhatsApp de la tienda (formato `wa.me`). Único lugar donde vive: todo link al negocio sale de acá. */
+export const STORE_WHATSAPP_NUMBER = "5493519152450";
+
+/** Link `wa.me` al WhatsApp de la tienda, con mensaje precargado opcional. */
+export function buildStoreWhatsAppLink(message?: string): string {
+  const base = `https://wa.me/${STORE_WHATSAPP_NUMBER}`;
+  return message ? `${base}?text=${encodeURIComponent(message)}` : base;
+}

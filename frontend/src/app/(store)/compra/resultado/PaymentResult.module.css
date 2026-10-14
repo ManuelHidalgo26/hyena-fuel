@@ -1,0 +1,223 @@
+.page {
+  display: flex;
+  justify-content: center;
+  padding: var(--hyena-space-7) var(--hyena-space-4) var(--hyena-space-8);
+  min-height: 60vh;
+}
+
+.card {
+  width: 100%;
+  max-width: 520px;
+  height: fit-content;
+  padding: var(--hyena-space-6) var(--hyena-space-5);
+  background: var(--hyena-surface);
+  border: 1px solid var(--hyena-border);
+  border-radius: var(--hyena-radius-lg);
+  box-shadow: var(--hyena-shadow-soft);
+  color: var(--hyena-text);
+  text-align: center;
+}
+
+.statusIcon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto var(--hyena-space-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+
+.success {
+  color: var(--hyena-success);
+  background: var(--hyena-success-bg);
+  border-color: var(--hyena-success-border);
+}
+
+.warning {
+  color: var(--hyena-warning);
+  background: var(--hyena-warning-bg);
+  border-color: var(--hyena-warning-border);
+}
+
+.danger {
+  color: var(--hyena-ember);
+  background: var(--hyena-ember-bg);
+  border-color: var(--hyena-ember-border);
+}
+
+.neutral {
+  color: var(--hyena-text-faint);
+  background: var(--hyena-surface-raised);
+  border-color: var(--hyena-border-strong);
+}
+
+.loading {
+  color: var(--hyena-orange);
+  background: var(--hyena-surface-raised);
+  border-color: var(--hyena-border-strong);
+}
+
+.spinner {
+  width: 26px;
+  height: 26px;
+  border: 3px solid var(--hyena-border-strong);
+  border-top-color: var(--hyena-orange);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.title {
+  margin: 0 0 var(--hyena-space-3);
+  font-size: var(--hyena-text-display-lg);
+  line-height: 1.2;
+  color: var(--hyena-text);
+}
+
+.title:focus {
+  outline: none;
+}
+
+.title:focus-visible {
+  outline: 3px solid var(--hyena-orange-strong);
+  outline-offset: 4px;
+}
+
+.body {
+  margin: 0 0 var(--hyena-space-3);
+  font-size: var(--hyena-text-body);
+  line-height: 1.5;
+  color: var(--hyena-text-muted);
+}
+
+.details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--hyena-space-2) var(--hyena-space-4);
+  margin: var(--hyena-space-4) 0;
+  padding: var(--hyena-space-4);
+  background: var(--hyena-surface-raised);
+  border-radius: var(--hyena-radius-sm);
+  text-align: left;
+  font-size: var(--hyena-text-small);
+}
+
+.details dt {
+  color: var(--hyena-text-muted);
+}
+
+.details dd {
+  margin: 0;
+  color: var(--hyena-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.notice {
+  margin: var(--hyena-space-3) 0;
+  padding: var(--hyena-space-3);
+  background: var(--hyena-surface-raised);
+  border-radius: var(--hyena-radius-sm);
+  color: var(--hyena-text-muted);
+  font-size: var(--hyena-text-small);
+  line-height: 1.4;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: var(--hyena-space-5);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 var(--hyena-space-5);
+  border: 1px solid transparent;
+  border-radius: var(--hyena-radius-sm);
+  font-size: var(--hyena-text-body);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity var(--hyena-duration-fast) var(--hyena-ease);
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--hyena-orange-strong);
+  outline-offset: 2px;
+}
+
+.btnPrimary {
+  background: var(--hyena-orange);
+  color: var(--hyena-orange-contrast);
+}
+
+.btnSecondary {
+  background: transparent;
+  color: var(--hyena-text);
+  border-color: var(--hyena-border-strong);
+}
+
+.btnText {
+  background: transparent;
+  color: var(--hyena-text-muted);
+  text-decoration: underline;
+}
+
+.btnWhatsapp {
+  background: #25d366;
+  color: #000;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (min-width: 640px) {
+  .actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+    border-top-color: var(--hyena-border-strong);
+  }
+
+  .btn {
+    transition: none;
+  }
+}

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { roundMoney } from "./money";
-import { CANCELLED_ORDER_STATUS, PAYABLE_ORDER_STATUSES } from "./orders";
+import { isSaleOrder, PAYABLE_ORDER_STATUSES } from "./orders";
 
 /** Fila cruda de `sellers` (ADR 0002). No incluye el email: vive en `auth.users`. */
 export type SellerRow = {
@@ -63,9 +63,14 @@ export const sellerCodeSchema = z
 /** Fila mínima de `orders` para resumir las ventas de un vendedor. */
 export type SellerOrderRow = {
   status: string;
+  payment_status: string | null;
+  paid_at: string | null;
   total_final: number | string;
   commission_total: number | string;
 };
+
+/** Columnas de `orders` que necesita `summarizeSellerOrders` (shape de `SellerOrderRow`). */
+export const SELLER_ORDER_COLUMNS = "status, payment_status, paid_at, total_final, commission_total";
 
 export type SellerSalesSummary = {
   ordersCount: number;
@@ -76,14 +81,16 @@ export type SellerSalesSummary = {
 const PAYABLE_STATUSES: readonly string[] = PAYABLE_ORDER_STATUSES;
 
 /**
- * Ventas = toda orden no cancelada; comisión acumulada = solo la de órdenes ya "ganadas"
+ * Ventas = toda orden no cancelada y, si es con tarjeta, ya cobrada (`isSaleOrder`); comisión acumulada = solo la de órdenes ya "ganadas"
  * (ADR 0002 #5). Compartido entre el portal del vendedor (`/api/seller/me`, `/panel/vendedor`)
  * y el listado admin (`/panel/vendedores`) para que ambos muestren el mismo número.
  */
 export function summarizeSellerOrders(orders: SellerOrderRow[]): SellerSalesSummary {
   const summary = orders.reduce(
     (acc, order) => {
-      if (order.status === CANCELLED_ORDER_STATUS) return acc;
+      if (!isSaleOrder({ status: order.status, paymentStatus: order.payment_status, paidAt: order.paid_at })) {
+        return acc;
+      }
 
       acc.ordersCount += 1;
       acc.totalRevenue += Number(order.total_final);
