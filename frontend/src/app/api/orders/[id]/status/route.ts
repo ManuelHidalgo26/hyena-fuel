@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "../../../../../lib/auth/guards";
 import { createAdminClient } from "../../../../../lib/supabase/admin";
+import { PAYMENT_REVERSAL_REVIEW_REASONS } from "../../../../../lib/orders";
 import { isUuid } from "../../../../../lib/uuid";
 
 /** Estados que exigen que un pedido con pago online ya esté cobrado (ADR 0012). */
@@ -49,11 +50,11 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   const supabase = createAdminClient();
   const requiresApprovedPayment = STATUSES_REQUIRING_APPROVED_PAYMENT.includes(parsed.data.status);
 
-  // Cualquier cambio manual de estado limpia la marca "Para revisar" (ADR 0012 D14). Para
-  // confirmar/despachar, el filtro hace atómico el chequeo del pago: un pedido con tarjeta sin
-  // pago aprobado no matchea (y se distingue de "no existe" más abajo).
-  let update = supabase.from("orders").update({ status: parsed.data.status, needs_review: false }).eq("id", id);
-  if (requiresApprovedPayment) update = update.or("payment_status.is.null,paid_at.not.is.null");
+  // Para confirmar/despachar, el filtro hace atómico el chequeo del pago: solo matchea un pedido
+  // sin pago online o con el pago vigente aprobado (un pago revertido conserva `paid_at`, por
+  // eso se gatea por `payment_status`). Un pedido que no matchea se distingue de "no existe" más abajo.
+  let update = supabase.from("orders").update({ status: parsed.data.status }).eq("id", id);
+  if (requiresApprovedPayment) update = update.or("payment_status.is.null,payment_status.eq.approved");
 
   const { data, error } = await update.select("id, status").maybeSingle().returns<OrderStatusRow | null>();
 
@@ -68,7 +69,24 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       : NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
   }
 
+  const clearError = await clearReviewMark(supabase, id);
+  if (clearError) console.error("[PATCH /api/orders/[id]/status] limpiar revisión", clearError);
+
   return NextResponse.json({ _id: data.id, status: data.status });
+}
+
+/**
+ * Un cambio manual de estado limpia la marca "Para revisar" (ADR 0012 D14), salvo la de un pago
+ * revertido o en disputa: esa exige una acción explícita sobre el pago, no un cambio de estado.
+ * Si falla, el estado ya cambió y la marca queda (falla hacia más revisión), por eso solo se loguea.
+ */
+async function clearReviewMark(supabase: ReturnType<typeof createAdminClient>, id: string): Promise<unknown> {
+  const { error } = await supabase
+    .from("orders")
+    .update({ needs_review: false })
+    .eq("id", id)
+    .not("review_reason", "in", `(${PAYMENT_REVERSAL_REVIEW_REASONS.join(",")})`);
+  return error;
 }
 
 async function orderExists(supabase: ReturnType<typeof createAdminClient>, id: string): Promise<boolean> {

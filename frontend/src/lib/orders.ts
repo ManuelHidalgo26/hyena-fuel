@@ -291,6 +291,14 @@ export type ReviewReason =
   | "pago_cancelled"
   | "conflicto_stock";
 
+/** Motivos de revisión por un pago revertido o en disputa: no se limpian con un cambio de estado cualquiera. */
+export const PAYMENT_REVERSAL_REVIEW_REASONS: readonly ReviewReason[] = [
+  "pago_refunded",
+  "pago_charged_back",
+  "pago_in_mediation",
+  "pago_cancelled",
+];
+
 /** Horas sin pago aprobado después de las cuales un pedido con tarjeta se considera abandonado (ADR 0012 D11). */
 export const ABANDONED_ORDER_HOURS = 24;
 

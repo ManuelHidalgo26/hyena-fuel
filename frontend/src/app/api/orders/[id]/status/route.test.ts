@@ -46,7 +46,7 @@ describe("PATCH /api/orders/[id]/status", () => {
       expect(response.status).toBe(409);
       expect((await response.json()).error).toContain("todavía no está aprobado");
       const [update] = fake.queriesFor("orders");
-      expect(findCall(update, "or")?.args[0]).toBe("payment_status.is.null,paid_at.not.is.null");
+      expect(findCall(update, "or")?.args[0]).toBe("payment_status.is.null,payment_status.eq.approved");
     }
   );
 
@@ -68,7 +68,25 @@ describe("PATCH /api/orders/[id]/status", () => {
 
     expect(response.status).toBe(200);
     const [update] = fake.queriesFor("orders");
-    expect(findCall(update, "update")?.args[0]).toEqual({ status: "confirmed", needs_review: false });
+    expect(findCall(update, "update")?.args[0]).toEqual({ status: "confirmed" });
+    const clear = fake.queriesFor("orders")[1];
+    expect(findCall(clear, "update")?.args[0]).toEqual({ needs_review: false });
+  });
+
+  it("no limpia la revisión de un pago revertido o en disputa", async () => {
+    const fake = createFakeSupabase({
+      tables: { orders: { data: { id: ORDER_ID, status: "cancelled" }, error: null } },
+    });
+    mocks.createAdminClient.mockReturnValue(fake.client);
+
+    await patch("cancelled");
+
+    const clear = fake.queriesFor("orders")[1];
+    expect(findCall(clear, "not")?.args).toEqual([
+      "review_reason",
+      "in",
+      "(pago_refunded,pago_charged_back,pago_in_mediation,pago_cancelled)",
+    ]);
   });
 
   it("cancelar siempre está permitido: no agrega el filtro de pago", async () => {
