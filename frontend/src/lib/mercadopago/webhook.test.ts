@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getMercadoPagoClient: vi.fn(),
   getWebhookSecret: vi.fn(),
+  isMercadoPagoSandbox: vi.fn(),
   fetchPayment: vi.fn(),
   syncPayment: vi.fn(),
   revalidateStorefront: vi.fn(),
@@ -14,6 +15,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("./client", () => ({
   getMercadoPagoClient: mocks.getMercadoPagoClient,
   getWebhookSecret: mocks.getWebhookSecret,
+  isMercadoPagoSandbox: mocks.isMercadoPagoSandbox,
 }));
 vi.mock("./sync", () => ({ fetchPayment: mocks.fetchPayment, syncPayment: mocks.syncPayment }));
 vi.mock("../revalidate", () => ({ revalidateStorefront: mocks.revalidateStorefront }));
@@ -57,6 +59,7 @@ function signedRequest(options: { dataId?: string; type?: string; signature?: st
 
 beforeEach(() => {
   vi.resetAllMocks();
+  mocks.isMercadoPagoSandbox.mockReturnValue(false);
   vi.spyOn(console, "info").mockImplementation(() => undefined);
   vi.spyOn(console, "warn").mockImplementation(() => undefined);
   vi.spyOn(console, "error").mockImplementation(() => undefined);
@@ -130,25 +133,28 @@ describe("handleMercadoPagoWebhook", () => {
     expect(mocks.revalidateStorefront).not.toHaveBeenCalled();
   });
 
-  it("pago inexistente en una notificación real: 500 para que Mercado Pago reintente", async () => {
+  it("pago inexistente en producción real: 500 para que Mercado Pago reintente", async () => {
     mocks.fetchPayment.mockResolvedValue(null);
 
-    const response = await handleMercadoPagoWebhook(signedRequest({ body: { data: { id: PAYMENT_ID }, live_mode: true } }));
+    const response = await handleMercadoPagoWebhook(signedRequest());
 
     expect(response.status).toBe(500);
     expect(mocks.syncPayment).not.toHaveBeenCalled();
   });
 
-  it("pago inexistente sin live_mode en el body: se trata como real (500)", async () => {
-    mocks.fetchPayment.mockResolvedValue(null);
-
-    expect((await handleMercadoPagoWebhook(signedRequest())).status).toBe(500);
-  });
-
-  it("simulación del panel de Mercado Pago (live_mode false): 200 sin aplicar", async () => {
+  it("pago inexistente en producción: ignora un live_mode false del body (sin firmar)", async () => {
     mocks.fetchPayment.mockResolvedValue(null);
 
     const response = await handleMercadoPagoWebhook(signedRequest({ body: { data: { id: PAYMENT_ID }, live_mode: false } }));
+
+    expect(response.status).toBe(500);
+  });
+
+  it("pago inexistente en un despliegue de prueba (decidido por el server): 200 sin aplicar", async () => {
+    mocks.fetchPayment.mockResolvedValue(null);
+    mocks.isMercadoPagoSandbox.mockReturnValue(true);
+
+    const response = await handleMercadoPagoWebhook(signedRequest({ body: { data: { id: PAYMENT_ID }, live_mode: true } }));
 
     expect(response.status).toBe(200);
     expect(mocks.syncPayment).not.toHaveBeenCalled();

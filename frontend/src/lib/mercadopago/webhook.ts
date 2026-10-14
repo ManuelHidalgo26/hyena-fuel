@@ -2,7 +2,7 @@ import "server-only";
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "../supabase/admin";
 import { revalidateStorefront } from "../revalidate";
-import { getMercadoPagoClient, getWebhookSecret } from "./client";
+import { getMercadoPagoClient, getWebhookSecret, isMercadoPagoSandbox } from "./client";
 import { verifyWebhookSignature } from "./signature";
 import { fetchPayment, syncPayment } from "./sync";
 
@@ -13,7 +13,6 @@ const PAYMENT_NOTIFICATION_TYPE = "payment";
 type WebhookBody = {
   type?: unknown;
   topic?: unknown;
-  live_mode?: unknown;
   data?: { id?: unknown };
 };
 
@@ -62,15 +61,15 @@ export async function handleMercadoPagoWebhook(request: NextRequest): Promise<Ne
   });
   if (!isValidSignature) return respond({ error: "Firma inválida" }, 401);
 
-  const verifiedBody = body ?? (await readJsonBody(request));
+  const notificationBody = body ?? (await readJsonBody(request));
 
-  const notificationType = request.nextUrl.searchParams.get("type") ?? asText(verifiedBody.type) ?? asText(verifiedBody.topic);
+  const notificationType = request.nextUrl.searchParams.get("type") ?? asText(notificationBody.type) ?? asText(notificationBody.topic);
   if (notificationType !== PAYMENT_NOTIFICATION_TYPE) return respond({ ignored: true });
   if (!dataId || !PAYMENT_ID_PATTERN.test(dataId)) return respond({ ignored: true });
 
   try {
     const payment = await fetchPayment(client, dataId);
-    if (!payment) return handleMissingPayment(dataId, verifiedBody);
+    if (!payment) return handleMissingPayment(dataId);
 
     const result = await syncPayment(createAdminClient(), payment);
     if (result.kind === "ignored") {
@@ -94,12 +93,13 @@ export async function handleMercadoPagoWebhook(request: NextRequest): Promise<Ne
 }
 
 /**
- * MP no encontró el pago. En una notificación real puede ser una demora de replicación de MP:
- * se responde 500 para que reintente. La simulación del panel (`live_mode: false`, id de
- * prueba) se responde 200 porque nunca va a existir.
+ * MP no encontró el pago. En producción con credenciales reales puede ser una demora de
+ * replicación de MP: se responde 500 para que reintente. En un despliegue de prueba (ver
+ * `isMercadoPagoSandbox`) es la simulación del panel de MP, cuyo id nunca va a existir: 200.
+ * El `live_mode` del body no se usa: viene sin firmar y un atacante podría fingirlo.
  */
-function handleMissingPayment(paymentId: string, body: WebhookBody): NextResponse {
-  if (body.live_mode === false) {
+function handleMissingPayment(paymentId: string): NextResponse {
+  if (isMercadoPagoSandbox()) {
     console.warn("[webhook mercadopago] simulación sin pago real", { paymentId });
     return respond({ ignored: true });
   }

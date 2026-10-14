@@ -12,7 +12,26 @@ export function getMercadoPagoClient(): MercadoPagoConfig | null {
   const accessToken = process.env.MP_ACCESS_TOKEN?.trim();
   if (!accessToken) return null;
 
-  return new MercadoPagoConfig({ accessToken, options: { timeout: MERCADOPAGO_TIMEOUT_MS } });
+  return new MercadoPagoConfig({
+    accessToken,
+    options: { timeout: MERCADOPAGO_TIMEOUT_MS },
+  });
+}
+
+/** Prefijo de los access token de las credenciales de prueba de Mercado Pago. */
+const TEST_ACCESS_TOKEN_PREFIX = "TEST-";
+
+/**
+ * `true` si este despliegue no procesa pagos reales: no es producción de Vercel o el access token
+ * configurado es de prueba. Es estado del server; nunca depende de lo que diga un request.
+ */
+export function isMercadoPagoSandbox(): boolean {
+  return (
+    process.env.VERCEL_ENV !== "production" ||
+    Boolean(
+      process.env.MP_ACCESS_TOKEN?.trim().startsWith(TEST_ACCESS_TOKEN_PREFIX),
+    )
+  );
 }
 
 /** Clave secreta de Webhooks de la aplicación de Mercado Pago, o `null` si no está configurada. */
