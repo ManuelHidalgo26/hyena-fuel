@@ -68,7 +68,10 @@ function setupSupabase(paymentMethod: "mercadopago" | "transferencia") {
   return fake;
 }
 
-function orderRequest(paymentMethod: "mercadopago" | "transferencia") {
+function orderRequest(
+  paymentMethod: "mercadopago" | "transferencia",
+  contact: { customerPhone?: string; customerEmail?: string } = {}
+) {
   return new NextRequest("http://localhost/api/orders", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -76,6 +79,7 @@ function orderRequest(paymentMethod: "mercadopago" | "transferencia") {
       items: [{ productId: PRODUCT_ID, quantity: 1 }],
       customerName: "Juan",
       customerPhone: "123",
+      ...contact,
       paymentMethod,
       deliveryMethod: "retiro",
     }),
@@ -179,5 +183,27 @@ describe("POST /api/orders rate limit", () => {
     expect(response.status).toBe(429);
     expect(fake.rpcCalls).toHaveLength(0);
     expect(mocks.isRateLimited).toHaveBeenCalledWith("create-order:1.2.3.4", 10, 60_000);
+  });
+
+  it("responde 429 sin tocar la base cuando el teléfono excede el límite aunque cambie la IP", async () => {
+    const fake = setupSupabase("transferencia");
+    mocks.isRateLimited.mockImplementation((key: string) => key.startsWith("create-order-phone:"));
+
+    const response = await POST(orderRequest("transferencia", { customerPhone: "+54 9 11-5555-1234" }));
+
+    expect(response.status).toBe(429);
+    expect(fake.rpcCalls).toHaveLength(0);
+    expect(mocks.isRateLimited).toHaveBeenCalledWith("create-order-phone:5491155551234", 5, 600_000);
+  });
+
+  it("responde 429 cuando el email (sin distinguir mayúsculas) excede el límite", async () => {
+    const fake = setupSupabase("transferencia");
+    mocks.isRateLimited.mockImplementation((key: string) => key.startsWith("create-order-email:"));
+
+    const response = await POST(orderRequest("transferencia", { customerEmail: "Juan@Example.com" }));
+
+    expect(response.status).toBe(429);
+    expect(fake.rpcCalls).toHaveLength(0);
+    expect(mocks.isRateLimited).toHaveBeenCalledWith("create-order-email:juan@example.com", 5, 600_000);
   });
 });

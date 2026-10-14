@@ -48,13 +48,18 @@ function pruneExpiredBuckets(now: number, windowMs: number): void {
 }
 
 /**
- * IP del cliente a partir de los headers que reenvía el proxy de Vercel. `NextRequest` ya
- * no expone `.ip` (removido en Next 15+); en su defecto, "unknown" agrupa a todos los
- * clientes sin header reenviado bajo la misma clave (peor que nada, pero no rompe).
+ * IP del cliente. `x-forwarded-for` lo arma el cliente si el proxy solo agrega hops, así que su
+ * primer valor es spoofeable. Orden de confianza: `x-vercel-forwarded-for` (lo fija la edge de
+ * Vercel y pisa lo que mande el cliente), `x-real-ip` y, en último término, el ÚLTIMO hop de
+ * `x-forwarded-for` (el que agregó el proxy más cercano). Sin ningún header: "unknown".
  */
 export function getClientIp(request: Request): string {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  if (forwardedFor) return forwardedFor.split(",")[0].trim();
+  const vercelForwardedFor = request.headers.get("x-vercel-forwarded-for")?.split(",")[0].trim();
+  if (vercelForwardedFor) return vercelForwardedFor;
 
-  return request.headers.get("x-real-ip") ?? "unknown";
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+
+  const lastHop = request.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim();
+  return lastHop || "unknown";
 }

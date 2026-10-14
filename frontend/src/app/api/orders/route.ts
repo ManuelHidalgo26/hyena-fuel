@@ -145,6 +145,16 @@ type CardPayment = {
 /** Tope de pedidos por IP y minuto: un comprador legítimo no necesita más y cada pedido con tarjeta crea una preferencia en MP. */
 const CREATE_ORDER_RATE_LIMIT = 10;
 const CREATE_ORDER_RATE_WINDOW_MS = 60_000;
+/** Tope por contacto (teléfono/email) del pedido: frena el abuso rotando IPs. */
+const CREATE_ORDER_CONTACT_RATE_LIMIT = 5;
+const CREATE_ORDER_CONTACT_RATE_WINDOW_MS = 10 * 60_000;
+
+/** Claves de rate limit por contacto: teléfono solo dígitos y email en minúsculas, para que variantes de formato cuenten igual. */
+function contactRateLimitKeys(customer: { customerPhone: string; customerEmail?: string }): string[] {
+  const keys = [`create-order-phone:${customer.customerPhone.replace(/\D/g, "")}`];
+  if (customer.customerEmail) keys.push(`create-order-email:${customer.customerEmail.toLowerCase()}`);
+  return keys;
+}
 
 export async function POST(request: NextRequest) {
   if (isRateLimited(`create-order:${getClientIp(request)}`, CREATE_ORDER_RATE_LIMIT, CREATE_ORDER_RATE_WINDOW_MS)) {
@@ -153,6 +163,13 @@ export async function POST(request: NextRequest) {
 
   const parsed = await parseCreateOrderBody(request);
   if (!parsed.ok) return parsed.response;
+
+  const isContactLimited = contactRateLimitKeys(parsed.data).some((key) =>
+    isRateLimited(key, CREATE_ORDER_CONTACT_RATE_LIMIT, CREATE_ORDER_CONTACT_RATE_WINDOW_MS)
+  );
+  if (isContactLimited) {
+    return NextResponse.json({ error: "Demasiados pedidos seguidos, probá de nuevo en unos minutos" }, { status: 429 });
+  }
 
   try {
     return await createOrder(parsed.data);
