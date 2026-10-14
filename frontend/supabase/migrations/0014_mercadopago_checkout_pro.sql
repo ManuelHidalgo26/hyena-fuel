@@ -287,11 +287,19 @@ begin
         v_outcome := 'noop';
       end if;
     elsif v_status = 'approved' then
-      -- Otro pago aprobado para el mismo pedido: NO toca stock ni cupón.
-      update public.orders
-         set needs_review = true, review_reason = 'pago_duplicado'
-       where id = p_order_id;
-      v_outcome := 'duplicate_payment';
+      -- Otro pago aprobado para el mismo pedido: NO toca stock ni cupón. Si este mismo pago ya
+      -- se registró como duplicado, la notificación repetida no vuelve a marcar el pedido (el
+      -- admin pudo haberlo revisado ya).
+      if exists (select 1 from public.payment_events
+                  where order_id = p_order_id and provider_payment_id = p_payment_id
+                    and outcome = 'duplicate_payment') then
+        v_outcome := 'noop';
+      else
+        update public.orders
+           set needs_review = true, review_reason = 'pago_duplicado'
+         where id = p_order_id;
+        v_outcome := 'duplicate_payment';
+      end if;
     else
       v_outcome := 'noop';
     end if;

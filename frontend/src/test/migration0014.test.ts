@@ -31,4 +31,10 @@ describe("migración 0014 (guardas estáticas de SQL)", () => {
   it("el motivo conflicto_stock está permitido por el check de review_reason", () => {
     expect(migration).toMatch(/review_reason text\s+check \(review_reason in \([^;]*'conflicto_stock'/);
   });
+
+  it("un pago duplicado ya registrado no vuelve a marcar el pedido para revisión", () => {
+    expect(functionBody("apply_mercadopago_payment")).toMatch(
+      /provider_payment_id = p_payment_id\s+and outcome = 'duplicate_payment'/
+    );
+  });
 });
