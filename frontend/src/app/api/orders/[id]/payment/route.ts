@@ -98,6 +98,10 @@ async function syncFromMercadoPago(supabase: AdminClient, orderId: string, payme
     if (!payment || payment.externalReference !== orderId) return false;
 
     const result = await syncPayment(supabase, payment);
+    console.info("[GET /api/orders/[id]/payment] sync", {
+      order: shortOrderId(orderId),
+      outcome: result.kind === "applied" ? result.outcome : `ignored:${result.reason}`,
+    });
     if (result.kind === "applied" && result.outcome === "approved") revalidateStorefront("mp-payment");
     return result.kind === "applied";
   } catch (error) {

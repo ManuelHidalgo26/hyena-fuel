@@ -3,12 +3,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "../supabase/admin";
 import { revalidateStorefront } from "../revalidate";
 import { getMercadoPagoClient, getWebhookSecret, isMercadoPagoSandbox } from "./client";
-import { verifyWebhookSignature } from "./signature";
+import { checkWebhookSignature, readSignatureTimestamp } from "./signature";
 import { fetchPayment, syncPayment } from "./sync";
 
 /** Los ids de pago de Mercado Pago son numéricos; cualquier otra cosa no se consulta. */
 const PAYMENT_ID_PATTERN = /^\d{1,20}$/;
 const PAYMENT_NOTIFICATION_TYPE = "payment";
+const LOG_PREFIX = "[webhook mercadopago]";
 
 type WebhookBody = {
   type?: unknown;
@@ -53,25 +54,50 @@ export async function handleMercadoPagoWebhook(request: NextRequest): Promise<Ne
   const body = queryDataId ? null : await readJsonBody(request);
   const dataId = queryDataId ?? asText(body?.data?.id);
 
-  const isValidSignature = verifyWebhookSignature({
-    signatureHeader: request.headers.get("x-signature"),
-    requestId: request.headers.get("x-request-id"),
-    dataId,
-    secret,
+  const signatureHeader = request.headers.get("x-signature");
+  const requestId = request.headers.get("x-request-id");
+  console.info(`${LOG_PREFIX} entrada`, {
+    method: request.method,
+    hasQueryDataId: queryDataId !== null,
+    queryType: request.nextUrl.searchParams.get("type"),
+    queryTopic: request.nextUrl.searchParams.get("topic"),
+    hasSignature: signatureHeader !== null,
+    hasRequestId: requestId !== null,
+    signatureTs: readSignatureTimestamp(signatureHeader),
   });
-  if (!isValidSignature) return respond({ error: "Firma inválida" }, 401);
+
+  const signatureCheck = checkWebhookSignature({ signatureHeader, requestId, dataId, secret });
+  if (!signatureCheck.isValid) {
+    console.warn(`${LOG_PREFIX} firma inválida`, {
+      reason: signatureCheck.reason,
+      manifest: signatureCheck.manifest,
+      receivedV1Prefix: signatureCheck.receivedV1Prefix,
+      secretLength: secret.length,
+    });
+    return respond({ error: "Firma inválida" }, 401);
+  }
 
   const notificationBody = body ?? (await readJsonBody(request));
 
   const notificationType = request.nextUrl.searchParams.get("type") ?? asText(notificationBody.type) ?? asText(notificationBody.topic);
-  if (notificationType !== PAYMENT_NOTIFICATION_TYPE) return respond({ ignored: true });
-  if (!dataId || !PAYMENT_ID_PATTERN.test(dataId)) return respond({ ignored: true });
+  if (notificationType !== PAYMENT_NOTIFICATION_TYPE) {
+    console.info(`${LOG_PREFIX} ignorado: tipo distinto de payment`, { notificationType });
+    return respond({ ignored: true });
+  }
+  if (!dataId || !PAYMENT_ID_PATTERN.test(dataId)) {
+    console.info(`${LOG_PREFIX} ignorado: data.id ausente o inválido`, { hasDataId: dataId !== null });
+    return respond({ ignored: true });
+  }
 
   try {
     const payment = await fetchPayment(client, dataId);
     if (!payment) return handleMissingPayment(dataId);
 
     const result = await syncPayment(createAdminClient(), payment);
+    console.info(`${LOG_PREFIX} syncPayment`, {
+      kind: result.kind,
+      outcome: result.kind === "applied" ? result.outcome : null,
+    });
     if (result.kind === "ignored") {
       console.warn("[webhook mercadopago] pago ignorado", { paymentId: payment.id, reason: result.reason });
       return respond({ ignored: true });
@@ -87,7 +113,7 @@ export async function handleMercadoPagoWebhook(request: NextRequest): Promise<Ne
 
     return respond({ ok: true });
   } catch (error) {
-    console.error("[webhook mercadopago]", { paymentId: dataId, error });
+    console.error(`${LOG_PREFIX} error`, { paymentId: dataId, message: error instanceof Error ? error.message : String(error) });
     return respond({ error: "No se pudo procesar el pago" }, 500);
   }
 }
@@ -99,8 +125,9 @@ export async function handleMercadoPagoWebhook(request: NextRequest): Promise<Ne
  * El `live_mode` del body no se usa: viene sin firmar y un atacante podría fingirlo.
  */
 function handleMissingPayment(paymentId: string): NextResponse {
-  if (isMercadoPagoSandbox()) {
-    console.warn("[webhook mercadopago] simulación sin pago real", { paymentId });
+  const isSandbox = isMercadoPagoSandbox();
+  console.warn(`${LOG_PREFIX} pago no encontrado en Mercado Pago`, { paymentId, isSandbox });
+  if (isSandbox) {
     return respond({ ignored: true });
   }
 

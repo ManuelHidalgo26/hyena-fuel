@@ -39,6 +39,7 @@ function call(id: string, query = "") {
 
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
   vi.spyOn(console, "error").mockImplementation(() => undefined);
   mocks.isRateLimited.mockReturnValue(false);
   mocks.getMercadoPagoClient.mockReturnValue({ accessToken: "fake" });

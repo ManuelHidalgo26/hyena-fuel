@@ -69,19 +69,44 @@ function isWithinTolerance(ts: string, nowMs: number): boolean {
   return true;
 }
 
+export type SignatureFailureReason = "header_ausente_o_mal_formado" | "ts_fuera_de_ventana" | "hmac_no_coincide";
+
+/** Resultado de validar la firma. En fallo trae lo necesario para diagnosticar sin exponer el secreto. */
+export type SignatureCheck =
+  | { isValid: true }
+  | { isValid: false; reason: SignatureFailureReason; manifest: string | null; receivedV1Prefix: string | null };
+
+const V1_PREFIX_LENGTH = 6;
+
 /**
  * Valida el `x-signature` de un webhook de Mercado Pago: HMAC-SHA256 del manifest con la
  * clave secreta, comparado en tiempo constante, y `ts` dentro de la tolerancia. Cualquier
- * header mal formado devuelve `false` (nunca lanza).
+ * header mal formado devuelve un fallo (nunca lanza).
  */
-export function verifyWebhookSignature(input: WebhookSignatureInput): boolean {
+export function checkWebhookSignature(input: WebhookSignatureInput): SignatureCheck {
   const parsed = parseSignatureHeader(input.signatureHeader);
-  if (!parsed || !SHA256_HEX_PATTERN.test(parsed.v1)) return false;
-  if (!isWithinTolerance(parsed.ts, input.nowMs ?? Date.now())) return false;
+  if (!parsed || !SHA256_HEX_PATTERN.test(parsed.v1)) {
+    return { isValid: false, reason: "header_ausente_o_mal_formado", manifest: null, receivedV1Prefix: null };
+  }
 
-  const expected = createHmac("sha256", input.secret)
-    .update(buildManifest(input.dataId, input.requestId, parsed.ts))
-    .digest();
+  const manifest = buildManifest(input.dataId, input.requestId, parsed.ts);
+  const receivedV1Prefix = parsed.v1.slice(0, V1_PREFIX_LENGTH);
+  if (!isWithinTolerance(parsed.ts, input.nowMs ?? Date.now())) {
+    return { isValid: false, reason: "ts_fuera_de_ventana", manifest, receivedV1Prefix };
+  }
 
-  return timingSafeEqual(expected, Buffer.from(parsed.v1, "hex"));
+  const expected = createHmac("sha256", input.secret).update(manifest).digest();
+  if (!timingSafeEqual(expected, Buffer.from(parsed.v1, "hex"))) {
+    return { isValid: false, reason: "hmac_no_coincide", manifest, receivedV1Prefix };
+  }
+  return { isValid: true };
+}
+
+export function verifyWebhookSignature(input: WebhookSignatureInput): boolean {
+  return checkWebhookSignature(input).isValid;
+}
+
+/** `ts` del header `x-signature` tal cual viene (solo para diagnóstico), o null si no se puede leer. */
+export function readSignatureTimestamp(header: string | null): string | null {
+  return parseSignatureHeader(header)?.ts ?? null;
 }
