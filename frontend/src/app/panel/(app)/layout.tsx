@@ -18,9 +18,9 @@ export default async function AdminAppLayout({ children }: { children: ReactNode
   }
 
   return (
-    <>
+    <div className={styles.adminShell}>
       <PanelNav userEmail={user.email} />
       <main className={styles.page}>{children}</main>
-    </>
+    </div>
   );
 }

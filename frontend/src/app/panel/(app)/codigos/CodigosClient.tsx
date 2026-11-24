@@ -425,7 +425,7 @@ export default function CodigosClient({ initialCodes }: CodigosClientProps) {
       {initialCodes.length === 0 ? (
         <AdminEmptyState title="No hay códigos todavía" description="Cuando crees el primero, va a aparecer acá." />
       ) : (
-        <AdminTable caption="Listado de códigos de descuento">
+        <AdminTable caption="Listado de códigos de descuento" stack>
           <thead>
             <tr>
               <th>Código</th>
@@ -442,12 +442,12 @@ export default function CodigosClient({ initialCodes }: CodigosClientProps) {
                 <td>
                   <span className={styles.rowTitle}>{code.code}</span>
                 </td>
-                <td className={styles.cellNumeric}>{formatTypeAndValue(code)}</td>
-                <td className={styles.cellNumeric}>
+                <td className={styles.cellNumeric} data-label="Tipo y valor">{formatTypeAndValue(code)}</td>
+                <td className={styles.cellNumeric} data-label="Usos">
                   {code.usesCount} / {code.maxUses === null ? "∞" : code.maxUses}
                 </td>
-                <td className={styles.cellMuted}>{formatVigencia(code.startsAt, code.expiresAt)}</td>
-                <td>
+                <td className={styles.cellMuted} data-label="Vigencia">{formatVigencia(code.startsAt, code.expiresAt)}</td>
+                <td data-label="Estado">
                   <DiscountCodeStatusBadge status={code.status} />
                 </td>
                 <td className={styles.cellActions}>

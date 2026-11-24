@@ -186,7 +186,7 @@ export default function PedidosClient({ initialOrders }: PedidosClientProps) {
           description="Probá con otro filtro."
         />
       ) : (
-        <AdminTable caption="Listado de pedidos">
+        <AdminTable caption="Listado de pedidos" stack>
           <thead>
             <tr>
               <th>Fecha</th>
@@ -215,21 +215,21 @@ export default function PedidosClient({ initialOrders }: PedidosClientProps) {
 
               return (
                 <tr key={order._id} className={rowClass || undefined}>
-                  <td className={styles.cellMuted}>{formatDate(order.createdAt)}</td>
-                  <td>
+                  <td className={styles.cellMuted} data-label="Fecha">{formatDate(order.createdAt)}</td>
+                  <td data-label="Cliente">
                     <p className={styles.rowTitle}>{order.customerName}</p>
                     <p className={styles.rowSubtitle}>{order.customerPhone ?? order.customerEmail ?? "—"}</p>
                     {order.customerAddress && <p className={styles.rowSubtitle}>{order.customerAddress}</p>}
                     {order.note && <p className={styles.rowSubtitle}>📝 {order.note}</p>}
                   </td>
-                  <td>
+                  <td data-label="Ítems">
                     {order.items.map((item) => (
                       <p key={item.name} className={styles.rowSubtitle}>
                         {item.quantity}× {item.name}
                       </p>
                     ))}
                   </td>
-                  <td>
+                  <td data-label="Medio de pago">
                     <div className={styles.cellStack}>
                       <PaymentMethodBadge method={order.paymentMethod} />
                       {order.paymentStatus !== null &&
@@ -239,10 +239,10 @@ export default function PedidosClient({ initialOrders }: PedidosClientProps) {
                       )}
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Entrega">
                     <DeliveryMethodBadge method={order.deliveryMethod} />
                   </td>
-                  <td>
+                  <td data-label="Estado">
                     <div className={styles.cellStack}>
                       <OrderStatusBadge status={order.status} />
                       {order.needsReview && (
@@ -255,7 +255,7 @@ export default function PedidosClient({ initialOrders }: PedidosClientProps) {
                       )}
                     </div>
                   </td>
-                  <td className={styles.cellNumeric}>${order.totalFinal.toLocaleString("es-AR")}</td>
+                  <td className={styles.cellNumeric} data-label="Total">${order.totalFinal.toLocaleString("es-AR")}</td>
                   <td className={styles.cellActions}>
                     {statusActions.length === 0 && !showCancel ? (
                       <span className={styles.cellMuted}>—</span>

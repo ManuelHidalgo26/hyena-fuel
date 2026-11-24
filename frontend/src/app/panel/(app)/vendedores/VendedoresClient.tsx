@@ -582,7 +582,7 @@ export default function VendedoresClient({ initialSellers }: VendedoresClientPro
           description="Cuando des de alta al primero, va a aparecer acá con sus ventas."
         />
       ) : (
-        <AdminTable caption="Listado de vendedores">
+        <AdminTable caption="Listado de vendedores" stack>
           <thead>
             <tr>
               <th>Vendedor</th>
@@ -602,14 +602,14 @@ export default function VendedoresClient({ initialSellers }: VendedoresClientPro
                   <div className={styles.rowTitle}>{seller.name}</div>
                   <div className={styles.rowSubtitle}>{seller.email ?? "Sin email"}</div>
                 </td>
-                <td>
+                <td data-label="Código">
                   <span className={styles.rowTitle}>{seller.code}</span>
                 </td>
-                <td className={styles.cellMuted}>{seller.phone ?? "—"}</td>
-                <td className={styles.cellNumeric}>{seller.defaultCommissionPct}%</td>
-                <td className={styles.cellNumeric}>{seller.sales.ordersCount}</td>
-                <td className={styles.cellNumeric}>{formatMoney(seller.sales.commissionAccumulated)}</td>
-                <td>
+                <td className={styles.cellMuted} data-label="Teléfono">{seller.phone ?? "—"}</td>
+                <td className={styles.cellNumeric} data-label="Comisión">{seller.defaultCommissionPct}%</td>
+                <td className={styles.cellNumeric} data-label="Ventas">{seller.sales.ordersCount}</td>
+                <td className={styles.cellNumeric} data-label="Comisión ganada">{formatMoney(seller.sales.commissionAccumulated)}</td>
+                <td data-label="Estado">
                   <AdminBadge tone={seller.active ? "success" : "danger"}>
                     {seller.active ? "Activo" : "Dado de baja"}
                   </AdminBadge>

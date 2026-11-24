@@ -60,7 +60,7 @@ export default async function SuscriptoresPage() {
           <tbody>
             {subscribers.map((subscriber) => (
               <tr key={subscriber.id}>
-                <td>{subscriber.email}</td>
+                <td className={styles.cellBreak}>{subscriber.email}</td>
                 <td className={styles.cellMuted}>{new Date(subscriber.created_at).toLocaleDateString("es-AR")}</td>
               </tr>
             ))}

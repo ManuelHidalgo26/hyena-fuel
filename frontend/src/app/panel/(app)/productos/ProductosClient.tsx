@@ -983,7 +983,7 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
       {initialProducts.length === 0 ? (
         <AdminEmptyState title="No hay productos" description="Cuando cargues el primero, va a aparecer acá." />
       ) : (
-        <AdminTable caption="Listado de productos">
+        <AdminTable caption="Listado de productos" stack>
           <thead>
             <tr>
               <th>Producto</th>
@@ -1039,16 +1039,19 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
                         </div>
                       </div>
                     </td>
-                    <td className={styles.cellMuted}>{product.brand ?? "—"}</td>
-                    <td className={styles.cellNumeric}>${product.price.toLocaleString("es-AR")}</td>
-                    <td className={styles.cellNumeric}>
+                    <td className={styles.cellMuted} data-label="Marca">{product.brand ?? "—"}</td>
+                    <td className={styles.cellNumeric} data-label="Precio">${product.price.toLocaleString("es-AR")}</td>
+                    <td className={styles.cellNumeric} data-label="Transferencia">
                       {product.transferPrice !== null ? `$${product.transferPrice.toLocaleString("es-AR")}` : "—"}
                     </td>
-                    <td className={styles.cellNumeric}>${product.cost.toLocaleString("es-AR")}</td>
-                    <td className={`${styles.cellNumeric} ${margin && margin.amount < 0 ? styles.marginNegative : ""}`}>
+                    <td className={styles.cellNumeric} data-label="Costo">${product.cost.toLocaleString("es-AR")}</td>
+                    <td
+                      className={`${styles.cellNumeric} ${margin && margin.amount < 0 ? styles.marginNegative : ""}`}
+                      data-label="Margen (transf.)"
+                    >
                       {formatMargin(margin)}
                     </td>
-                    <td className={styles.cellNumeric}>
+                    <td className={styles.cellNumeric} data-label="Stock">
                       {hasActiveVariants ? (
                         <span className={styles.cellMuted}>
                           {activeVariants.reduce((sum, variant) => sum + variant.stock, 0)} ({activeVariants.length} sabores)
@@ -1090,7 +1093,7 @@ export default function ProductosClient({ initialProducts }: ProductosClientProp
                         </div>
                       )}
                     </td>
-                    <td>
+                    <td data-label="Estado">
                       <AdminBadge tone={product.active ? "success" : "neutral"}>
                         {product.active ? "Activo" : "Inactivo"}
                       </AdminBadge>

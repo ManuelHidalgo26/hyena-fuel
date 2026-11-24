@@ -44,6 +44,13 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* Vistas de admin (panel/(app)/layout.tsx): nav y contenido usan más ancho
+   para que las tablas entren completas. El portal del vendedor no lleva esta
+   clase y conserva el ancho por defecto (1180px). */
+.adminShell {
+  --admin-content-max: 1600px;
+}
+
 /* ---------------------------------------------------------------------
    2. Nav del panel — panel/(app)/layout.tsx (componente AdminNav)
    --------------------------------------------------------------------- */
@@ -57,7 +64,7 @@
 }
 
 .navInner {
-  max-width: 1180px;
+  max-width: var(--admin-content-max, 1180px);
   margin: 0 auto;
   min-height: 64px;
   padding: 0.6rem 1.5rem;
@@ -157,7 +164,7 @@
    --------------------------------------------------------------------- */
 
 .page {
-  max-width: 1180px;
+  max-width: var(--admin-content-max, 1180px);
   margin: 0 auto;
   padding: 2rem 1.5rem 3rem;
 }
@@ -399,7 +406,9 @@
 
 .tableWrap {
   width: 100%;
+  /* Solo red de seguridad: las tablas con `stack` no deberían desbordar. */
   overflow-x: auto;
+  container-type: inline-size;
   background: var(--admin-surface);
   border: 1px solid var(--admin-border);
   border-radius: var(--admin-radius-md);
@@ -419,16 +428,25 @@
   font-weight: 700;
   color: var(--admin-text-muted);
   background: var(--admin-surface-raised);
-  padding: 0.8rem 1rem;
+  padding: 0.8rem 0.6rem;
   border-bottom: 1px solid var(--admin-border-strong);
-  white-space: nowrap;
 }
 
 .table td {
-  padding: 0.8rem 1rem;
+  padding: 0.8rem 0.6rem;
   color: var(--admin-text);
   border-bottom: 1px solid var(--admin-border);
   vertical-align: middle;
+}
+
+.table th:first-child,
+.table td:first-child {
+  padding-left: 1rem;
+}
+
+.table th:last-child,
+.table td:last-child {
+  padding-right: 1rem;
 }
 
 .table tbody tr:last-child td {
@@ -448,6 +466,11 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0.35rem;
+}
+
+/* El motivo de "Para revisar" es largo: no le saca ancho a las otras columnas. */
+.cellStack .rowSubtitle {
+  max-width: 220px;
 }
 
 .paymentRef {
@@ -504,8 +527,18 @@
   font-weight: 700;
 }
 
+.table th.cellNumeric {
+  text-align: right;
+}
+
 .cellMuted {
   color: var(--admin-text-muted);
+}
+
+/* Texto sin espacios (emails, slugs): puede partir para no ensanchar la tabla. */
+.cellBreak,
+.table .rowSubtitle {
+  overflow-wrap: anywhere;
 }
 
 .cellActions {
@@ -524,7 +557,8 @@
    así que el fondo debe seguir el color de la fila (normal/hover/
    inactiva) para que el contenido que scrollea por debajo no se
    transparente. Ancho fijo (140px): columna compacta para el stack
-   vertical de botones (ver `.cellActionsInner`).
+   vertical de botones (ver `.cellActionsInner`). En modo tarjeta
+   (`.tableStack`) deja de ser sticky.
    Nota: se evaluó pinnear también "Estado" (solo Productos) para
    mostrarlo junto a Acciones, pero a 375px con dos columnas sticky no
    queda ancho legible para el nombre del producto (queda tapado) —
@@ -545,6 +579,109 @@
   flex-direction: column;
   align-items: stretch;
   gap: 0.4rem;
+}
+
+/* Los botones no parten, pero un texto de ayuda sí: no ensancha la columna. */
+.cellActionsInner .rowSubtitle {
+  white-space: normal;
+}
+
+/* Modo tarjeta (`<AdminTable stack>`): cuando el contenedor no da para todas
+   las columnas, cada fila es una tarjeta con sus datos en grilla. Depende del
+   ancho de la tabla (container query), no del de la ventana. */
+@container (max-width: 1080px) {
+  .tableStack,
+  .tableStack tbody {
+    display: block;
+  }
+
+  .tableStack thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .tableStack tbody tr {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.9rem 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--admin-border-strong);
+  }
+
+  .tableStack tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .tableStack tbody td,
+  .tableStack tbody td:first-child,
+  .tableStack tbody td:last-child {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border-bottom: none;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .tableStack tbody tr:hover,
+  .tableStack tbody tr:hover td {
+    background: var(--admin-surface-raised);
+  }
+
+  .tableStack tbody td:not([data-label]) {
+    grid-column: 1 / -1;
+  }
+
+  .tableStack tbody td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.3rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--admin-text-muted);
+  }
+
+  .tableStack .badge {
+    white-space: normal;
+  }
+
+  .tableStack tbody td.cellActions {
+    position: static;
+    width: auto;
+    box-shadow: none;
+  }
+
+  .tableStack .cellActionsInner {
+    flex-flow: row wrap;
+    align-items: center;
+  }
+
+  .tableStack .cellActionsInner > button {
+    flex: 1 1 120px;
+  }
+
+  .tableStack .cellActionsInner .rowSubtitle {
+    flex: 1 0 100%;
+    margin-top: 0;
+  }
+
+  .tableStack .cellNumeric .stockStepper {
+    justify-content: start;
+  }
+
+  /* La marca "Para revisar" va en el borde de la tarjeta, no en la 1ª celda. */
+  .tableStack .rowNeedsReview {
+    box-shadow: inset 3px 0 0 var(--admin-warning-border);
+  }
+
+  .tableStack .rowNeedsReview td:first-child {
+    box-shadow: none;
+  }
 }
 
 /* ---------------------------------------------------------------------
@@ -1341,8 +1478,8 @@
 /* Reemplaza el `style={{maxWidth:88}}` inline del stock rápido. Ancho fijo
    legible para 4-5 dígitos, centrado, tabular. */
 .stockInput {
-  width: 5rem;
-  min-width: 5rem;
+  width: 3.75rem;
+  min-width: 3.75rem;
   flex: 0 0 auto;
   text-align: center;
   font-variant-numeric: tabular-nums;
@@ -1355,6 +1492,17 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+}
+
+/* En la tabla, "Guardar" baja debajo del stepper en vez de ensanchar la columna. */
+.cellNumeric .stockStepper {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  justify-content: end;
+}
+
+.cellNumeric .stockStepper > :nth-child(4) {
+  grid-column: 1 / -1;
 }
 
 /* Combinar con AdminButton size="sm" variant="secondary" para un botón
