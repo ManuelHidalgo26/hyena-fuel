@@ -800,3 +800,14 @@
   outline: 2px solid #111;
   outline-offset: 2px;
 }
+
+/* Aviso: los precios guardados en el carrito cambiaron en la tienda. */
+.pricesUpdated {
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid #f0c36d;
+  border-radius: 6px;
+  background: #fff8e6;
+  color: #5c4400;
+  font-size: 0.9rem;
+}

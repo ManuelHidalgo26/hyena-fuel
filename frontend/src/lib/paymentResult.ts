@@ -141,7 +141,7 @@ export function getResultView(view: ResultViewKey, data: ResultData = {}, hint: 
         title: "El pago no se completó",
         tone: "danger",
         body: [
-          "Podés intentarlo de nuevo con otra tarjeta u otro medio de pago, o elegir transferencia o efectivo con 10% OFF. Tus productos siguen en el carrito.",
+          "Podés intentarlo de nuevo con otra tarjeta u otro medio de pago, o elegir transferencia o efectivo con precio especial. Tus productos siguen en el carrito.",
         ],
         actions: [{ id: "open-cart", label: "Volver al carrito" }, WHATSAPP, { id: "back-to-store", label: "Volver a la tienda" }],
         showDetails: false,

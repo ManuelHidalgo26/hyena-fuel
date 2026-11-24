@@ -143,7 +143,7 @@ export function buildPreferenceBody(input: PreferenceInput): PreferenceBody {
     statement_descriptor: STATEMENT_DESCRIPTOR,
     binary_mode: false,
     // Sin `installments`: las cuotas son las que ofrezca Mercado Pago. Efectivo excluido:
-    // el efectivo se cobra por "Transferencia / Efectivo" con 10% OFF.
+    // el efectivo se cobra por "Transferencia / Efectivo" a precio especial.
     payment_methods: { excluded_payment_types: [{ id: "ticket" }, { id: "atm" }] },
     expires: true,
     expiration_date_from: toArgentinaIso(new Date(now.getTime() - EXPIRATION_START_SKEW_MS)),

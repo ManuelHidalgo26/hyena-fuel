@@ -22,9 +22,11 @@ const MERCADOPAGO_PENDING_KEY = "hf_mp_pending";
 const REDIRECT_TIMEOUT_MS = 8000;
 
 const MP_UNAVAILABLE_MESSAGE =
-  "El pago con tarjeta no está disponible por ahora. Podés pagar por transferencia o efectivo con 10% OFF.";
+  "El pago con tarjeta no está disponible por ahora. Podés pagar por transferencia o efectivo con precio especial.";
 const MP_FAILED_MESSAGE =
-  "No pudimos abrir Mercado Pago en este momento. Probá de nuevo en unos minutos o elegí transferencia con 10% OFF.";
+  "No pudimos abrir Mercado Pago en este momento. Probá de nuevo en unos minutos o elegí transferencia con precio especial.";
+const PRICES_UPDATED_MESSAGE =
+  "Actualizamos los precios de tu carrito. Revisá el total antes de finalizar.";
 const GENERIC_PAYMENT_ERROR_MESSAGE = "No pudimos iniciar el pago. Revisá tu conexión y probá de nuevo.";
 
 /** Error inline del pago con tarjeta según el status que devolvió `POST /api/orders`. */
@@ -108,6 +110,7 @@ export default function CartDrawer() {
     getMissingForFreeShipping,
 
     checkout,
+    refreshPrices,
     referralCode,
     discardReferral,
   } = useCart();
@@ -132,6 +135,8 @@ export default function CartDrawer() {
   const [redirecting, setRedirecting] = useState(false);
   // Error inline del pago con tarjeta: { kind: "mp-unavailable" | "mp-failed" | "generic", message }.
   const [checkoutError, setCheckoutError] = useState(null);
+  // Aviso visible cuando los precios guardados en el carrito cambiaron en la tienda.
+  const [pricesUpdated, setPricesUpdated] = useState(false);
   const processingRef = useRef(false);
   const redirectTimeoutRef = useRef(null);
   const checkoutButtonRef = useRef(null);
@@ -160,6 +165,7 @@ export default function CartDrawer() {
   // doble descuento). Total a pagar = subtotal (ya con descuento) + envío − cupón.
   const subtotal = getSubtotalByPaymentMethod(paymentMethod);
   const discount = getDiscountByPaymentMethod(paymentMethod);
+  const transferSaving = getDiscountByPaymentMethod("transferencia");
   const shippingCost = getShippingCost(paymentMethod);
   const missingForFree = getMissingForFreeShipping(paymentMethod);
   const effectiveShipping = deliveryMethod === "retiro" ? 0 : shippingCost;
@@ -228,6 +234,20 @@ export default function CartDrawer() {
       });
     }
   }, [isCartOpen, cartItems, closeCart]);
+
+  // Al abrir el carrito se traen los precios vigentes (pudieron cambiar desde que se agregó).
+  useEffect(() => {
+    if (!isCartOpen) return;
+
+    let cancelled = false;
+    setPricesUpdated(false);
+    refreshPrices().then((changed) => {
+      if (!cancelled && changed) setPricesUpdated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isCartOpen, refreshPrices]);
 
   useEffect(() => {
     return () => {
@@ -391,6 +411,15 @@ export default function CartDrawer() {
     processingRef.current = true;
     setIsLoading(true);
 
+    // Si un precio cambió con el carrito abierto, el cliente tiene que ver el total nuevo
+    // antes de confirmar.
+    if (await refreshPrices()) {
+      setPricesUpdated(true);
+      processingRef.current = false;
+      setIsLoading(false);
+      return;
+    }
+
     // GA4 + FB begin_checkout / InitiateCheckout
     trackEvent(GA_EVENTS.BEGIN_CHECKOUT, {
       currency: "ARS",
@@ -444,7 +473,7 @@ export default function CartDrawer() {
       // GA4 purchase
       trackEvent(GA_EVENTS.PURCHASE, {
         transaction_id: order._id,
-        value: totalFinal,
+        value: order.totalFinal,
         currency: "ARS",
         items: cartItems.map((item) => ({
           item_id: item._id,
@@ -458,12 +487,13 @@ export default function CartDrawer() {
       fbTrack("Purchase", {
         content_ids: cartItems.map((i) => i._id),
         content_type: "product",
-        value: totalFinal,
+        value: order.totalFinal,
         currency: "ARS",
         num_items: cartItems.reduce((s, i) => s + i.quantity, 0),
       });
 
-      setOrderTotal(totalFinal);
+      // El monto a transferir es el que registró el servidor, no el calculado en el navegador.
+      setOrderTotal(order.totalFinal);
       setIgnoredSellerCode(order.sellerCodeIgnored ? sellerCode.trim().toUpperCase() : null);
       // Un link con código inexistente/inactivo no se sigue mandando en próximas compras.
       if (order.sellerCodeIgnored && sellerCodeFromLink) discardReferral();
@@ -724,7 +754,9 @@ export default function CartDrawer() {
                 onChange={() => setPaymentMethod("transferencia")}
               />
               🏦 Transferencia / Efectivo&nbsp;
-              <span className={styles.discountBadge}>10% OFF</span>
+              {transferSaving > 0 && (
+                <span className={styles.discountBadge}>AHORRÁS ${formatArs(transferSaving)}</span>
+              )}
             </label>
 
             {paymentMethod === "mercadopago" && (
@@ -734,9 +766,11 @@ export default function CartDrawer() {
                   Al tocar &quot;Pagar con tarjeta&quot; te llevamos a Mercado Pago para pagar con débito,
                   crédito o dinero en cuenta. Ahí ves las cuotas disponibles según tu tarjeta.
                 </p>
-                <p className={styles.aliasHint}>
-                  Precio de lista. Con transferencia o efectivo tenés 10% OFF.
-                </p>
+                {transferSaving > 0 && (
+                  <p className={styles.aliasHint}>
+                    Precio de lista. Con transferencia o efectivo ahorrás ${formatArs(transferSaving)}.
+                  </p>
+                )}
                 <p className={styles.aliasHint}>
                   {deliveryMethod === "retiro"
                     ? "Retirás en Córdoba: coordinamos el lugar y el horario por WhatsApp."
@@ -837,6 +871,12 @@ export default function CartDrawer() {
 
           {/* RESUMEN */}
           <div className={styles.summary}>
+            {pricesUpdated && (
+              <p className={styles.pricesUpdated} role="status">
+                {PRICES_UPDATED_MESSAGE}
+              </p>
+            )}
+
             <div className={styles.summaryRow}>
               <span>Subtotal:</span>
               <strong>${subtotal.toLocaleString("es-AR")}</strong>
@@ -844,7 +884,7 @@ export default function CartDrawer() {
 
             {discount > 0 && (
               <div className={`${styles.summaryRow} ${styles.discountRow}`}>
-                <span>Ahorrás con transferencia/efectivo (10% OFF):</span>
+                <span>Ahorrás con transferencia/efectivo:</span>
                 <strong>${discount.toLocaleString("es-AR")}</strong>
               </div>
             )}

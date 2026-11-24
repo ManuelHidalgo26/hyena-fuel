@@ -88,12 +88,12 @@ const steps = [
           </li>
           <li>
             🏦 <strong>Transferencia bancaria</strong> — al alias{" "}
-            <strong>{TRANSFER_ALIAS}</strong> y obtenés{" "}
-            <strong>10% de descuento</strong> automático
+            <strong>{TRANSFER_ALIAS}</strong>, con el{" "}
+            <strong>precio especial</strong> que ves en cada producto
           </li>
         </ul>
         Con tarjeta pagás el precio de lista; con transferencia o efectivo
-        tenés 10% OFF.
+        pagás el precio especial.
       </>
     ),
     img: "/images/como-comprar/paso5-pago.png",

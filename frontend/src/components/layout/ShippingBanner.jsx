@@ -6,7 +6,7 @@ import styles from "./ShippingBanner.module.css";
 
 const STATIC_MESSAGES = [
   "📅 Envíos los miércoles — coordinás por WhatsApp",
-  "🏦 10% OFF pagando por transferencia",
+  "🏦 Precio especial pagando por transferencia",
 ];
 
 export default function ShippingBanner() {

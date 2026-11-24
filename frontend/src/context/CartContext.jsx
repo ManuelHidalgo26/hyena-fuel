@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useCallback, useContext, useState, useEffect, useRef } from "react";
 import { trackEvent, GA_EVENTS } from "../lib/ga";
 import { fbTrack } from "../lib/fbpixel";
 import Toast from "../components/ui/Toast";
+import { applyCurrentPrices, fetchCurrentPrices, parseStoredCart } from "../lib/cart";
 import { captureReferralFromUrl, clearReferral, stripReferralParam } from "../lib/referral";
 
 const CartContext = createContext(null);
@@ -34,17 +35,21 @@ export function toOrderItemsPayload(cartItems) {
   }));
 }
 
+/** Carrito guardado, o vacío si no hay storage (modo privado, bloqueo) o el dato está dañado. */
+function readStoredCart() {
+  if (typeof window === "undefined") return [];
+  try {
+    return parseStoredCart(localStorage.getItem("cart"));
+  } catch {
+    return [];
+  }
+}
+
 export function CartProvider({ children }) {
     /* =========================
         State
     ========================= */
-    const [cartItems, setCartItems] = useState(() => {
-    if (typeof window !== "undefined") {
-        const storedCart = localStorage.getItem("cart");
-        return storedCart ? JSON.parse(storedCart) : [];
-    }
-    return [];
-    });
+    const [cartItems, setCartItems] = useState(readStoredCart);
 
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [toast, setToast] = useState(null);
@@ -68,8 +73,27 @@ export function CartProvider({ children }) {
     };
 
     useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cartItems));
+    try {
+        localStorage.setItem("cart", JSON.stringify(cartItems));
+    } catch {
+        // Sin storage disponible: el carrito vive solo en esta pestaña.
+    }
     }, [cartItems]);
+
+    // El carrito guarda el precio de cuando se agregó cada producto: acá se actualiza al
+    // vigente. Devuelve `true` si algún precio cambió.
+    const cartItemsRef = useRef(cartItems);
+    useEffect(() => {
+    cartItemsRef.current = cartItems;
+    }, [cartItems]);
+
+    const refreshPrices = useCallback(async () => {
+    const before = cartItemsRef.current;
+    const prices = await fetchCurrentPrices(before);
+    const changed = applyCurrentPrices(before, prices) !== before;
+    if (changed) setCartItems((prev) => applyCurrentPrices(prev, prices));
+    return changed;
+    }, []);
 
     const openCart = () => setIsCartOpen(true);
     const closeCart = () => setIsCartOpen(false);
@@ -292,6 +316,7 @@ export function CartProvider({ children }) {
         getMissingForFreeShipping,
 
         checkout,
+        refreshPrices,
 
         // Link de vendedor (Tanda B)
         referralCode,

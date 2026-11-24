@@ -16,7 +16,7 @@ const NAV_LINKS = [
 
 const PAYMENT_BADGES = [
   "💵 Efectivo",
-  "🏦 Transferencia (10% OFF)",
+  "🏦 Transferencia (precio especial)",
   "💳 Débito",
   "💳 Crédito",
 ];
