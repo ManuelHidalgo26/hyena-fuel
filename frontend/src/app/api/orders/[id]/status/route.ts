@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "../../../../../lib/auth/guards";
 import { createAdminClient } from "../../../../../lib/supabase/admin";
-import { PAYMENT_REVERSAL_REVIEW_REASONS } from "../../../../../lib/orders";
+import { CANCELLED_ORDER_STATUS, PAYMENT_REVERSAL_REVIEW_REASONS } from "../../../../../lib/orders";
+import { revalidateStorefront } from "../../../../../lib/revalidate";
 import { isUuid } from "../../../../../lib/uuid";
 
 /** Estados que exigen que un pedido con pago online ya esté cobrado (ADR 0012). */
@@ -22,7 +23,13 @@ type OrderStatusRow = {
   status: string;
 };
 
-/** Cambia el estado de una orden (admin). */
+type CancelOrderRow = {
+  outcome: "not_found" | "already_cancelled" | "cancelled";
+  restocked_items: number;
+  skipped_items: number;
+};
+
+/** Cambia el estado de una orden (admin). Cancelar además repone su stock. */
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   const guard = await requireAdmin();
   if (!guard.authorized) return guard.response;
@@ -48,12 +55,19 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 
   const supabase = createAdminClient();
+  if (parsed.data.status === CANCELLED_ORDER_STATUS) return cancelOrder(supabase, id);
+
   const requiresApprovedPayment = STATUSES_REQUIRING_APPROVED_PAYMENT.includes(parsed.data.status);
 
   // Para confirmar/despachar, el filtro hace atómico el chequeo del pago: solo matchea un pedido
   // sin pago online o con el pago vigente aprobado (un pago revertido conserva `paid_at`, por
   // eso se gatea por `payment_status`). Un pedido que no matchea se distingue de "no existe" más abajo.
-  let update = supabase.from("orders").update({ status: parsed.data.status }).eq("id", id);
+  // Un cancelado no se reabre: su stock ya se repuso y volvería a venderse sin descontar.
+  let update = supabase
+    .from("orders")
+    .update({ status: parsed.data.status })
+    .eq("id", id)
+    .neq("status", CANCELLED_ORDER_STATUS);
   if (requiresApprovedPayment) update = update.or("payment_status.is.null,payment_status.eq.approved");
 
   const { data, error } = await update.select("id, status").maybeSingle().returns<OrderStatusRow | null>();
@@ -64,9 +78,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 
   if (!data) {
-    return requiresApprovedPayment && (await orderExists(supabase, id))
-      ? NextResponse.json({ error: "El pago con tarjeta de este pedido todavía no está aprobado" }, { status: 409 })
-      : NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
+    return explainUnmatchedOrder(supabase, id);
   }
 
   const clearError = await clearReviewMark(supabase, id);
@@ -89,7 +101,45 @@ async function clearReviewMark(supabase: ReturnType<typeof createAdminClient>, i
   return error;
 }
 
-async function orderExists(supabase: ReturnType<typeof createAdminClient>, id: string): Promise<boolean> {
-  const { data } = await supabase.from("orders").select("id").eq("id", id).maybeSingle();
-  return data !== null;
+/** El UPDATE no matcheó: pedido inexistente (404), ya cancelado o con el pago sin aprobar (409). */
+async function explainUnmatchedOrder(
+  supabase: ReturnType<typeof createAdminClient>,
+  id: string
+): Promise<NextResponse> {
+  const { data } = await supabase
+    .from("orders")
+    .select("id, status")
+    .eq("id", id)
+    .maybeSingle()
+    .returns<OrderStatusRow | null>();
+
+  if (!data) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
+
+  const error =
+    data.status === CANCELLED_ORDER_STATUS
+      ? "Este pedido está cancelado y no se puede reabrir"
+      : "El pago con tarjeta de este pedido todavía no está aprobado";
+  return NextResponse.json({ error }, { status: 409 });
+}
+
+/** Cancela y repone el stock en una sola transacción (RPC `cancel_order`, migración 0015). */
+async function cancelOrder(supabase: ReturnType<typeof createAdminClient>, id: string): Promise<NextResponse> {
+  const { data, error } = await supabase
+    .rpc("cancel_order", { p_order_id: id })
+    .single()
+    .returns<CancelOrderRow>();
+
+  if (error || !data) {
+    console.error("[PATCH /api/orders/[id]/status] cancel_order", error);
+    return NextResponse.json({ error: "No se pudo cancelar el pedido" }, { status: 500 });
+  }
+  if (data.outcome === "not_found") {
+    return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
+  }
+
+  const clearError = await clearReviewMark(supabase, id);
+  if (clearError) console.error("[PATCH /api/orders/[id]/status] limpiar revisión", clearError);
+
+  revalidateStorefront("order-cancel");
+  return NextResponse.json({ _id: id, status: CANCELLED_ORDER_STATUS, skippedItems: data.skipped_items });
 }

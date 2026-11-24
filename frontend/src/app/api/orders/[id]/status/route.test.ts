@@ -1,14 +1,17 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createFakeSupabase, findCall, hasCall } from "../../../../../test/fakeSupabase";
+import { createFakeSupabase, findCall } from "../../../../../test/fakeSupabase";
 
 const mocks = vi.hoisted(() => ({
   createAdminClient: vi.fn(),
   requireAdmin: vi.fn(),
+  revalidateStorefront: vi.fn(),
 }));
 
 vi.mock("../../../../../lib/supabase/admin", () => ({ createAdminClient: mocks.createAdminClient }));
 vi.mock("../../../../../lib/auth/guards", () => ({ requireAdmin: mocks.requireAdmin }));
+
+vi.mock("../../../../../lib/revalidate", () => ({ revalidateStorefront: mocks.revalidateStorefront }));
 
 import { PATCH } from "./route";
 
@@ -73,32 +76,71 @@ describe("PATCH /api/orders/[id]/status", () => {
     expect(findCall(clear, "update")?.args[0]).toEqual({ needs_review: false });
   });
 
-  it("no limpia la revisión de un pago revertido o en disputa", async () => {
+  it("un pedido cancelado no se puede reabrir (su stock ya se repuso): 409", async () => {
     const fake = createFakeSupabase({
-      tables: { orders: { data: { id: ORDER_ID, status: "cancelled" }, error: null } },
+      tables: {
+        orders: [
+          { data: null, error: null },
+          { data: { id: ORDER_ID, status: "cancelled" }, error: null },
+        ],
+      },
     });
     mocks.createAdminClient.mockReturnValue(fake.client);
 
-    await patch("cancelled");
+    const response = await patch("confirmed");
 
-    const clear = fake.queriesFor("orders")[1];
-    expect(findCall(clear, "not")?.args).toEqual([
-      "review_reason",
-      "in",
-      "(pago_refunded,pago_charged_back,pago_in_mediation,pago_cancelled)",
-    ]);
+    expect(response.status).toBe(409);
+    expect((await response.json()).error).toContain("cancelado");
+    expect(findCall(fake.queriesFor("orders")[0], "neq")?.args).toEqual(["status", "cancelled"]);
   });
 
-  it("cancelar siempre está permitido: no agrega el filtro de pago", async () => {
-    const fake = createFakeSupabase({
-      tables: { orders: { data: { id: ORDER_ID, status: "cancelled" }, error: null } },
+  describe("cancelar", () => {
+    function fakeCancel(data: unknown, error: { message: string } | null = null) {
+      const fake = createFakeSupabase({ rpc: { data, error } });
+      mocks.createAdminClient.mockReturnValue(fake.client);
+      return fake;
+    }
+
+    it("cancela y repone el stock en una sola operación, y actualiza la vitrina", async () => {
+      const fake = fakeCancel({ outcome: "cancelled", restocked_items: 2, skipped_items: 0 });
+
+      const response = await patch("cancelled");
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ _id: ORDER_ID, status: "cancelled", skippedItems: 0 });
+      expect(fake.rpcCalls).toEqual([{ fn: "cancel_order", args: { p_order_id: ORDER_ID } }]);
+      expect(mocks.revalidateStorefront).toHaveBeenCalledWith("order-cancel");
     });
-    mocks.createAdminClient.mockReturnValue(fake.client);
 
-    const response = await patch("cancelled");
+    it("informa los productos cuyo stock no se pudo reponer", async () => {
+      fakeCancel({ outcome: "cancelled", restocked_items: 1, skipped_items: 1 });
 
-    expect(response.status).toBe(200);
-    const [update] = fake.queriesFor("orders");
-    expect(hasCall(update, "or")).toBe(false);
+      expect((await (await patch("cancelled")).json()).skippedItems).toBe(1);
+    });
+
+    it("pedido inexistente: 404", async () => {
+      fakeCancel({ outcome: "not_found", restocked_items: 0, skipped_items: 0 });
+
+      expect((await patch("cancelled")).status).toBe(404);
+      expect(mocks.revalidateStorefront).not.toHaveBeenCalled();
+    });
+
+    it("error de la base: 500", async () => {
+      fakeCancel(null, { message: "boom" });
+
+      expect((await patch("cancelled")).status).toBe(500);
+    });
+
+    it("no limpia la revisión de un pago revertido o en disputa", async () => {
+      const fake = fakeCancel({ outcome: "cancelled", restocked_items: 0, skipped_items: 0 });
+
+      await patch("cancelled");
+
+      expect(findCall(fake.queriesFor("orders")[0], "not")?.args).toEqual([
+        "review_reason",
+        "in",
+        "(pago_refunded,pago_charged_back,pago_in_mediation,pago_cancelled)",
+      ]);
+    });
   });
 });

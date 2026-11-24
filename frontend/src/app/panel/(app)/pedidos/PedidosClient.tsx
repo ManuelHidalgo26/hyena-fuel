@@ -123,6 +123,12 @@ export default function PedidosClient({ initialOrders }: PedidosClientProps) {
         setMutationError(await readErrorMessage(response, "No se pudo cancelar el pedido"));
         return;
       }
+      const { skippedItems } = await response.json();
+      if (skippedItems > 0) {
+        setMutationError(
+          "El pedido se canceló, pero parte del stock no se pudo reponer porque el producto o sabor ya no existe. Revisalo en Productos."
+        );
+      }
       setCancelTarget(null);
       router.refresh();
     } finally {
@@ -299,7 +305,7 @@ export default function PedidosClient({ initialOrders }: PedidosClientProps) {
         title="¿Cancelar este pedido?"
         description={
           cancelTarget
-            ? `El pedido de ${cancelTarget.customerName} pasa a estado cancelado. Esta acción no se puede deshacer.${
+            ? `El pedido de ${cancelTarget.customerName} pasa a estado cancelado y su stock vuelve a estar disponible. Esta acción no se puede deshacer.${
                 cancelTarget.paymentStatus === "approved"
                   ? " El cobro no se modifica desde acá: si hace falta revertirlo, hacelo desde tu cuenta de Mercado Pago."
                   : ""
