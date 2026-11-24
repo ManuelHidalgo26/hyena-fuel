@@ -62,6 +62,15 @@ type ProductRow = {
 const PRODUCT_COLUMNS =
   "id, name, slug, description, price, transfer_price, stock, images, brand, category, attributes, product_variants(name, image, stock)";
 
+/**
+ * Stock que se puede vender: con sabores activos manda la suma de los sabores (es de donde
+ * descuenta `create_order`); el `stock` propio del producto solo vale si no tiene sabores.
+ */
+function sellableStock(row: ProductRow): number {
+  const variants = row.product_variants ?? [];
+  return variants.length > 0 ? variants.reduce((sum, variant) => sum + variant.stock, 0) : row.stock;
+}
+
 function mapProduct(row: ProductRow): Product {
   return {
     _id: row.id,
@@ -70,7 +79,7 @@ function mapProduct(row: ProductRow): Product {
     description: row.description,
     price: Number(row.price),
     transferPrice: row.transfer_price === null ? null : Number(row.transfer_price),
-    stock: row.stock,
+    stock: sellableStock(row),
     images: row.images ?? [],
     brand: row.brand,
     category: row.category,
